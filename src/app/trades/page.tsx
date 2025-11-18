@@ -1,0 +1,469 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import {
+  Box,
+  Typography,
+  Button,
+  Container,
+  Paper,
+  CircularProgress,
+  TextField,
+  InputAdornment,
+  IconButton,
+  FormControl,
+  Select,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
+  Tabs,
+  Tab,
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import TradeCard from '@/components/TradeCard';
+import CreateTradeForm from '@/components/CreateTradeForm';
+import { useToast } from '@/components/ToastProvider';
+import { motion, AnimatePresence } from 'framer-motion';
+import SearchIcon from '@mui/icons-material/Search';
+import { useAccess } from '@/components/AccessProvider';
+import { apiRequest } from '@/lib/apiClient';
+import { isMarketOpen, getMarketStatusMessage } from '@/utils/marketHours';
+
+interface Trade {
+  _id: string;
+  ticker: string;
+  strike: number;
+  optionType: 'C' | 'P';
+  expiryDate: string;
+  contracts: number;
+  fillPrice: number;
+  status: 'OPEN' | 'CLOSED' | 'REJECTED';
+  remainingOpenContracts: number;
+  outcome?: 'WIN' | 'LOSS' | 'BREAKEVEN';
+  netPnl?: number;
+  totalBuyNotional?: number;
+  totalSellNotional?: number;
+  priceVerified: boolean;
+  createdAt: string;
+  fills?: Array<{
+    _id: string;
+    contracts: number;
+    fillPrice: number;
+    createdAt: string;
+    notional: number;
+  }>;
+}
+
+export default function TradesPage() {
+  const toast = useToast();
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [warningOpen, setWarningOpen] = useState(false);
+  const [hasCompanyId, setHasCompanyId] = useState<boolean | null>(null);
+  const { isAuthorized, loading: accessLoading, userId, companyId } = useAccess();
+  const [marketOpen, setMarketOpen] = useState(true);
+
+  // Pagination & search
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('All');
+
+  useEffect(() => {
+    if (!isAuthorized) return;
+    fetchTrades();
+    fetchUserProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize, isAuthorized]);
+
+  // Check market hours
+  useEffect(() => {
+    const checkMarket = () => {
+      setMarketOpen(isMarketOpen());
+    };
+    checkMarket();
+    const interval = setInterval(checkMarket, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  // Refresh companyId check when window regains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (isAuthorized) {
+        fetchUserProfile();
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [isAuthorized]);
+
+  const fetchUserProfile = async () => {
+    if (!isAuthorized || !userId) return;
+    try {
+      const response = await apiRequest('/api/user', { userId, companyId });
+      if (response.ok) {
+        const data = await response.json();
+        setHasCompanyId(!!data.user?.companyId);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+
+  const fetchTrades = async () => {
+    if (!isAuthorized || !userId) return;
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        pageSize: pageSize.toString(),
+      });
+      if (search) params.append('search', search);
+      if (selectedStatus !== 'All') params.append('status', selectedStatus);
+
+      const response = await apiRequest(`/api/trades?${params.toString()}`, { userId, companyId });
+      if (response.ok) {
+        const data = await response.json();
+        setTrades(data.trades || []);
+        setTotalPages(data.totalPages || 1);
+      } else {
+        const error = await response.json();
+        toast.showError(error.error || 'Failed to fetch trades');
+      }
+    } catch (error) {
+      console.error('Error fetching trades:', error);
+      toast.showError('Failed to fetch trades');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (accessLoading) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight={400}>
+          <CircularProgress />
+        </Box>
+      </Container>
+    );
+  }
+
+  if (!isAuthorized) {
+    return (
+      <Container maxWidth="md" sx={{ py: 6 }}>
+        <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 3 }}>
+          <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+            Access Restricted
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Only administrators and owners can manage trades.
+          </Typography>
+        </Paper>
+      </Container>
+    );
+  }
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <motion.div
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap" gap={2}>
+          <Box>
+            <Typography 
+              variant="h4" 
+              component="h1" 
+              fontWeight={700} 
+              gutterBottom
+              sx={{
+                background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              My Trades
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Track and manage your options trades
+            </Typography>
+          </Box>
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<AddIcon />}
+            onClick={() => {
+              if (hasCompanyId === false) {
+                setWarningOpen(true);
+              } else {
+                setCreateOpen(true);
+              }
+            }}
+            disabled={!marketOpen}
+            sx={{ 
+              px: 3, 
+              py: 1.5,
+              background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
+              boxShadow: '0 8px 32px rgba(99, 102, 241, 0.3)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #4f46e5 0%, #db2777 100%)',
+                boxShadow: '0 12px 40px rgba(99, 102, 241, 0.4)',
+                transform: 'translateY(-2px)',
+              },
+              '&:disabled': {
+                background: 'rgba(99, 102, 241, 0.3)',
+              },
+              transition: 'all 0.3s ease',
+            }}
+          >
+            Create Trade
+          </Button>
+        </Box>
+
+        {/* Market Status Alert */}
+        {!marketOpen && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            {getMarketStatusMessage()}
+          </Alert>
+        )}
+
+        {/* Status Filter Tabs */}
+        <Paper sx={{ mb: 3, bgcolor: 'rgba(17, 24, 39, 0.6)', backdropFilter: 'blur(6px)', borderRadius: 2 }}>
+          <Tabs
+            value={selectedStatus}
+            onChange={(_, newValue) => {
+              setSelectedStatus(newValue);
+              setPage(1);
+            }}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              '& .MuiTab-root': {
+                color: '#a1a1aa',
+                fontWeight: 500,
+                textTransform: 'none',
+                minHeight: 48,
+                '&.Mui-selected': {
+                  color: '#6366f1',
+                  fontWeight: 600,
+                },
+              },
+              '& .MuiTabs-indicator': {
+                backgroundColor: '#6366f1',
+                height: 3,
+                borderRadius: '3px 3px 0 0',
+              },
+            }}
+          >
+            <Tab label="All" value="All" />
+            <Tab label="Open" value="OPEN" />
+            <Tab label="Closed" value="CLOSED" />
+            <Tab label="Rejected" value="REJECTED" />
+          </Tabs>
+        </Paper>
+
+        {/* Search & Pagination controls */}
+        <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
+          <Paper sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'rgba(17, 24, 39, 0.6)', backdropFilter: 'blur(6px)' }}>
+            <TextField
+              variant="outlined"
+              size="small"
+              placeholder="Search trades (ticker)"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchTrades(); } }}
+              sx={{
+                minWidth: 320,
+                '& .MuiOutlinedInput-root': {
+                  color: '#fff',
+                  '& fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
+                  '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.5)' },
+                },
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: '#a1a1aa' }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => { setPage(1); fetchTrades(); }}>
+                      <SearchIcon />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Paper>
+
+          <Paper sx={{ p: 1.5, display: 'flex', gap: 1.5, alignItems: 'center', bgcolor: 'rgba(17, 24, 39, 0.6)', backdropFilter: 'blur(6px)' }}>
+            <Typography variant="body2" color="text.secondary">Page size</Typography>
+            <FormControl size="small">
+              <Select
+                value={pageSize}
+                onChange={(e) => { setPageSize(e.target.value as number); setPage(1); }}
+                sx={{
+                  minWidth: 80,
+                  color: '#fff',
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(99, 102, 241, 0.3)' },
+                }}
+              >
+                {[10, 20, 50].map((s) => (
+                  <MenuItem key={s} value={s}>{s}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Paper>
+        </Box>
+      </motion.div>
+
+      {loading ? (
+        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight={400} gap={3}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <CircularProgress 
+              size={60}
+              thickness={4}
+              sx={{ 
+                color: '#6366f1',
+                filter: 'drop-shadow(0 0 10px rgba(99, 102, 241, 0.5))',
+              }} 
+            />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                color: '#a1a1aa',
+                fontWeight: 500,
+                background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Loading your trades...
+            </Typography>
+          </motion.div>
+        </Box>
+      ) : trades.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 3, bgcolor: 'rgba(17, 24, 39, 0.6)', backdropFilter: 'blur(6px)' }}>
+            <Typography variant="h6" gutterBottom sx={{ color: '#a1a1aa', fontWeight: 600 }}>
+              No trades found
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              {search || selectedStatus !== 'All' 
+                ? 'Try adjusting your search or filters'
+                : 'Create your first trade to get started'}
+            </Typography>
+            {(!search && selectedStatus === 'All') && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => setCreateOpen(true)}
+                disabled={!marketOpen}
+                sx={{
+                  background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #db2777 100%)',
+                  },
+                }}
+              >
+                Create Trade
+              </Button>
+            )}
+          </Paper>
+        </motion.div>
+      ) : (
+        <>
+          <AnimatePresence>
+            {trades.map((trade) => (
+              <motion.div
+                key={trade._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <TradeCard trade={trade} onUpdate={fetchTrades} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Box display="flex" justifyContent="center" gap={1} mt={4}>
+              <Button
+                variant="outlined"
+                disabled={page === 1}
+                onClick={() => { setPage(p => Math.max(1, p - 1)); }}
+              >
+                Previous
+              </Button>
+              <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', px: 2, color: '#a1a1aa' }}>
+                Page {page} of {totalPages}
+              </Typography>
+              <Button
+                variant="outlined"
+                disabled={page >= totalPages}
+                onClick={() => { setPage(p => Math.min(totalPages, p + 1)); }}
+              >
+                Next
+              </Button>
+            </Box>
+          )}
+        </>
+      )}
+
+      {/* Create Trade Form */}
+      <CreateTradeForm
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onSuccess={fetchTrades}
+      />
+
+      {/* Warning Dialog */}
+      <Dialog open={warningOpen} onClose={() => setWarningOpen(false)}>
+        <DialogTitle>Company ID Required</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Please set up your company ID in your profile before creating trades.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setWarningOpen(false)}>Close</Button>
+          <Button 
+            variant="contained" 
+            onClick={() => {
+              setWarningOpen(false);
+              window.location.href = '/profile';
+            }}
+          >
+            Go to Profile
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
+  );
+}
+
