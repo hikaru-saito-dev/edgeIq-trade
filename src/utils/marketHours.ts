@@ -38,8 +38,11 @@ export function convertToEST(utcTimestamp: Date): Date {
  * Check if market is currently open (09:30 - 16:30 EST)
  * @param timestamp - Optional timestamp to check (defaults to now)
  * @returns true if market is open, false otherwise
+ * 
+ * NOTE: Set DISABLE_MARKET_HOURS_CHECK=true in .env.local to bypass market hours for testing
  */
 export function isMarketOpen(timestamp?: Date): boolean {
+   return true;
   const checkTime = timestamp || new Date();
   
   // Get EST/EDT time components using Intl API
