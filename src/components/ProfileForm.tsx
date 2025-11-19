@@ -1240,7 +1240,7 @@ export default function ProfileForm() {
                 backdropFilter: 'blur(20px)',
                 border: '1px solid rgba(99, 102, 241, 0.3)',
                 borderRadius: 2
-              }}>
+              }}> 
                 <CardContent>
                   <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
                     Wins
