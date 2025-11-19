@@ -128,7 +128,11 @@ export default function ProfileForm() {
       setLoading(false);
       return;
     }
-    fetchProfile(userId || '', companyId || '');
+    if (userId) {
+      fetchProfile(userId, companyId);
+    } else {
+      setLoading(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthorized]);
 
@@ -156,11 +160,16 @@ export default function ProfileForm() {
       setDiscordWebhookUrl(profileData.user.discordWebhookUrl || '');
       setNotifyOnSettlement(profileData.user.notifyOnSettlement ?? false);
       setMembershipPlans(profileData.user.membershipPlans || []);
-      setPersonalStats(profileData.personalStats);
+      setPersonalStats(profileData.personalStats || null);
       setCompanyStats(profileData.companyStats || null);
       setTrades(tradesData.trades || []);
     } catch (error) {
       console.error('Error fetching profile:', error);
+      toast.showError('Failed to load profile. Please try again.');
+      // Set defaults to prevent rendering errors
+      setPersonalStats(null);
+      setCompanyStats(null);
+      setTrades([]);
     } finally {
       setLoading(false);
     }
@@ -309,15 +318,15 @@ export default function ProfileForm() {
   }
 
   const pieData = personalStats ? [
-    { name: 'Wins', value: personalStats.winCount, color: '#10b981' },
-    { name: 'Losses', value: personalStats.lossCount, color: '#ef4444' },
-    { name: 'Breakeven', value: personalStats.breakevenCount, color: '#f59e0b' },
+    { name: 'Wins', value: personalStats.winCount || 0, color: '#10b981' },
+    { name: 'Losses', value: personalStats.lossCount || 0, color: '#ef4444' },
+    { name: 'Breakeven', value: personalStats.breakevenCount || 0, color: '#f59e0b' },
   ].filter(item => item.value > 0) : [];
 
   const barData = personalStats ? [
-    { name: 'Wins', value: personalStats.winCount, color: '#10b981' },
-    { name: 'Losses', value: personalStats.lossCount, color: '#ef4444' },
-    { name: 'Breakeven', value: personalStats.breakevenCount, color: '#f59e0b' },
+    { name: 'Wins', value: personalStats.winCount || 0, color: '#10b981' },
+    { name: 'Losses', value: personalStats.lossCount || 0, color: '#ef4444' },
+    { name: 'Breakeven', value: personalStats.breakevenCount || 0, color: '#f59e0b' },
   ] : [];
 
   // Prepare time series data for line charts
@@ -1130,7 +1139,7 @@ export default function ProfileForm() {
                   <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
                     Win Rate
                   </Typography>
-                  <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 700 }}>{personalStats?.winRate.toFixed(2) || '0.00'}%</Typography>
+                  <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 700 }}>{(personalStats?.winRate ?? 0).toFixed(2)}%</Typography>
                 </CardContent>
               </Card>
             </Box>
@@ -1152,7 +1161,7 @@ export default function ProfileForm() {
                       fontWeight: 700
                     }}
                   >
-                    {(personalStats?.roi || 0) >= 0 ? '+' : ''}{personalStats?.roi.toFixed(2) || '0.00'}%
+                    {(personalStats?.roi ?? 0) >= 0 ? '+' : ''}{(personalStats?.roi ?? 0).toFixed(2)}%
                   </Typography>
                 </CardContent>
               </Card>
@@ -1175,7 +1184,7 @@ export default function ProfileForm() {
                       fontWeight: 700
                     }}
                   >
-                    {(personalStats?.netPnl || 0) >= 0 ? '+' : ''}${(personalStats?.netPnl || 0).toFixed(2)}
+                    {(personalStats?.netPnl ?? 0) >= 0 ? '+' : ''}${(personalStats?.netPnl ?? 0).toFixed(2)}
                   </Typography>
                 </CardContent>
               </Card>
@@ -1290,7 +1299,7 @@ export default function ProfileForm() {
                   <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
                     Total Trades
                   </Typography>
-                  <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 700 }}>{companyStats.totalTrades || 0}</Typography>
+                  <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 700 }}>{companyStats?.totalTrades || 0}</Typography>
                 </CardContent>
               </Card>
             </Box>
@@ -1305,7 +1314,7 @@ export default function ProfileForm() {
                   <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
                     Win Rate
                   </Typography>
-                  <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 700 }}>{companyStats.winRate.toFixed(2) || '0.00'}%</Typography>
+                  <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 700 }}>{(companyStats?.winRate ?? 0).toFixed(2)}%</Typography>
                 </CardContent>
               </Card>
             </Box>
@@ -1323,11 +1332,11 @@ export default function ProfileForm() {
                   <Typography
                     variant="h4"
                     sx={{
-                      color: (companyStats.roi || 0) >= 0 ? '#10b981' : '#ef4444',
+                      color: (companyStats?.roi || 0) >= 0 ? '#10b981' : '#ef4444',
                       fontWeight: 700
                     }}
                   >
-                    {(companyStats.roi || 0) >= 0 ? '+' : ''}{companyStats.roi.toFixed(2) || '0.00'}%
+                    {(companyStats?.roi ?? 0) >= 0 ? '+' : ''}{(companyStats?.roi ?? 0).toFixed(2)}%
                   </Typography>
                 </CardContent>
               </Card>
@@ -1346,11 +1355,11 @@ export default function ProfileForm() {
                   <Typography
                     variant="h4"
                     sx={{
-                      color: (companyStats.netPnl || 0) >= 0 ? '#10b981' : '#ef4444',
+                      color: (companyStats?.netPnl || 0) >= 0 ? '#10b981' : '#ef4444',
                       fontWeight: 700
                     }}
                   >
-                    {(companyStats.netPnl || 0) >= 0 ? '+' : ''}${(companyStats.netPnl || 0).toFixed(2)}
+                    {(companyStats?.netPnl ?? 0) >= 0 ? '+' : ''}${(companyStats?.netPnl ?? 0).toFixed(2)}
                   </Typography>
                 </CardContent>
               </Card>
@@ -1366,7 +1375,7 @@ export default function ProfileForm() {
                   <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
                     Wins
                   </Typography>
-                  <Typography variant="h4" sx={{ color: '#10b981', fontWeight: 700 }}>{companyStats.winCount || 0}</Typography>
+                  <Typography variant="h4" sx={{ color: '#10b981', fontWeight: 700 }}>{companyStats?.winCount || 0}</Typography>
                 </CardContent>
               </Card>
             </Box>
@@ -1381,7 +1390,7 @@ export default function ProfileForm() {
                   <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
                     Losses
                   </Typography>
-                  <Typography variant="h4" sx={{ color: '#ef4444', fontWeight: 700 }}>{companyStats.lossCount || 0}</Typography>
+                  <Typography variant="h4" sx={{ color: '#ef4444', fontWeight: 700 }}>{companyStats?.lossCount || 0}</Typography>
                 </CardContent>
               </Card>
             </Box>

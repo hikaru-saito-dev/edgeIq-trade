@@ -77,7 +77,19 @@ export async function GET() {
       side: 'BUY', // Only count BUY trades (SELL fills are part of the trade)
       companyId: companyId
     }).lean();
-    const personalStats = calculateTradeStats(personalTrades as unknown as ITrade[]);
+    const personalStats = calculateTradeStats(personalTrades as unknown as ITrade[]) || {
+      totalTrades: 0,
+      winCount: 0,
+      lossCount: 0,
+      breakevenCount: 0,
+      winRate: 0,
+      netPnl: 0,
+      totalBuyNotional: 0,
+      totalSellNotional: 0,
+      averagePnl: 0,
+      currentStreak: 0,
+      longestStreak: 0,
+    };
 
     // Auto-fetch company name from Whop if not set
     if (user.companyId && !user.companyName) {
@@ -106,7 +118,19 @@ export async function GET() {
         side: 'BUY', // Only count BUY trades
         companyId: companyId
       }).lean();
-      companyStats = calculateTradeStats(companyTrades as unknown as ITrade[]);
+      companyStats = calculateTradeStats(companyTrades as unknown as ITrade[]) || {
+        totalTrades: 0,
+        winCount: 0,
+        lossCount: 0,
+        breakevenCount: 0,
+        winRate: 0,
+        netPnl: 0,
+        totalBuyNotional: 0,
+        totalSellNotional: 0,
+        averagePnl: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+      };
     }
 
     return NextResponse.json({
