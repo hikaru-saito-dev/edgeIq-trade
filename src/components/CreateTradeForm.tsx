@@ -151,8 +151,22 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
     : 0;
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Create New Trade</DialogTitle>
+    <Dialog 
+      open={open} 
+      onClose={handleClose} 
+      maxWidth="sm" 
+      fullWidth
+      PaperProps={{
+        sx: {
+          background: 'rgba(255, 255, 255, 0.98)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(45, 80, 61, 0.2)',
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(45, 80, 61, 0.2)',
+        },
+      }}
+    >
+      <DialogTitle sx={{ color: '#2D503D', fontWeight: 600 }}>Create New Trade</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -176,6 +190,27 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               required
               fullWidth
               helperText="Must be a positive integer"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  color: '#2D503D',
+                  backgroundColor: '#ffffff',
+                  '& fieldset': {
+                    borderColor: 'rgba(45, 80, 61, 0.3)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(45, 80, 61, 0.5)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#2D503D',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#6b7280',
+                },
+                '& .MuiFormHelperText-root': {
+                  color: '#6b7280',
+                },
+              }}
             />
 
             <TextField
@@ -186,6 +221,27 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               fullWidth
               helperText="Stock ticker symbol (e.g., AAPL)"
               inputProps={{ maxLength: 10, pattern: '[A-Z]+' }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  color: '#2D503D',
+                  backgroundColor: '#ffffff',
+                  '& fieldset': {
+                    borderColor: 'rgba(45, 80, 61, 0.3)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(45, 80, 61, 0.5)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#2D503D',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#6b7280',
+                },
+                '& .MuiFormHelperText-root': {
+                  color: '#6b7280',
+                },
+              }}
             />
 
             <TextField
@@ -197,14 +253,48 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               required
               fullWidth
               helperText="Strike price of the option"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  color: '#2D503D',
+                  backgroundColor: '#ffffff',
+                  '& fieldset': {
+                    borderColor: 'rgba(45, 80, 61, 0.3)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(45, 80, 61, 0.5)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#2D503D',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#6b7280',
+                },
+                '& .MuiFormHelperText-root': {
+                  color: '#6b7280',
+                },
+              }}
             />
 
             <FormControl fullWidth required>
-              <InputLabel>Option Type</InputLabel>
+              <InputLabel sx={{ color: '#6b7280' }}>Option Type</InputLabel>
               <Select
                 value={optionType}
                 onChange={(e) => setOptionType(e.target.value as 'C' | 'P')}
                 label="Option Type"
+                sx={{
+                  color: '#2D503D',
+                  backgroundColor: '#ffffff',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(45, 80, 61, 0.3)',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(45, 80, 61, 0.5)',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#2D503D',
+                  },
+                }}
               >
                 <MenuItem value="C">CALL</MenuItem>
                 <MenuItem value="P">PUT</MenuItem>
@@ -220,6 +310,27 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               fullWidth
               helperText="Format: MM/DD/YYYY (e.g., 01/17/2025)"
               inputProps={{ pattern: '\\d{2}/\\d{2}/\\d{4}' }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  color: '#2D503D',
+                  backgroundColor: '#ffffff',
+                  '& fieldset': {
+                    borderColor: 'rgba(45, 80, 61, 0.3)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(45, 80, 61, 0.5)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#2D503D',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#6b7280',
+                },
+                '& .MuiFormHelperText-root': {
+                  color: '#6b7280',
+                },
+              }}
             />
 
             <TextField
@@ -232,7 +343,28 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               fullWidth
               helperText="Price per contract (must be within ±5% of market price)"
               InputProps={{
-                startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
+                startAdornment: <Typography sx={{ mr: 1, color: '#2D503D' }}>$</Typography>,
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  color: '#2D503D',
+                  backgroundColor: '#ffffff',
+                  '& fieldset': {
+                    borderColor: 'rgba(45, 80, 61, 0.3)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(45, 80, 61, 0.5)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#2D503D',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#6b7280',
+                },
+                '& .MuiFormHelperText-root': {
+                  color: '#6b7280',
+                },
               }}
             />
 
@@ -254,8 +386,17 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
             </Alert>
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} disabled={loading}>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button 
+            onClick={handleClose} 
+            disabled={loading}
+            sx={{
+              color: '#6b7280',
+              '&:hover': {
+                backgroundColor: 'rgba(45, 80, 61, 0.05)',
+              },
+            }}
+          >
             Cancel
           </Button>
           <Button 
@@ -263,6 +404,16 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
             variant="contained" 
             disabled={loading || !marketOpen}
             startIcon={loading ? <CircularProgress size={16} /> : <AddIcon />}
+            sx={{
+              background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
+              color: '#ffffff',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #16a34a 0%, #047857 100%)',
+              },
+              '&:disabled': {
+                background: 'rgba(34, 197, 94, 0.3)',
+              },
+            }}
           >
             {loading ? 'Creating...' : 'Create Trade'}
           </Button>

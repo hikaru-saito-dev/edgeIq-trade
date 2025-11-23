@@ -272,7 +272,7 @@ export default function ProfileForm() {
           <Typography
             variant="h6"
             sx={{
-              color: '#a1a1aa',
+              color: '#6b7280',
               fontWeight: 500,
               background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
               backgroundClip: 'text',
@@ -284,14 +284,14 @@ export default function ProfileForm() {
           </Typography>
         </motion.div>
         <Box sx={{ width: '100%', mt: 4 }}>
-          <Paper sx={{ p: 3, mb: 3, background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: 2 }}>
+          <Paper sx={{ p: 3, mb: 3, background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', border: '1px solid rgba(45, 80, 61, 0.2)', borderRadius: 2 }}>
             <Skeleton variant="text" width="30%" height={32} sx={{ bgcolor: 'rgba(255, 255, 255, 0.1)', mb: 2 }} />
             <Skeleton variant="rectangular" width="100%" height={56} sx={{ borderRadius: 1, bgcolor: 'rgba(255, 255, 255, 0.05)', mb: 2 }} />
             <Skeleton variant="rectangular" width="100%" height={40} sx={{ borderRadius: 1, bgcolor: 'rgba(255, 255, 255, 0.05)' }} />
           </Paper>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' }, background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: 2 }}>
+              <Card key={i} sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' }, background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', border: '1px solid rgba(45, 80, 61, 0.2)', borderRadius: 2 }}>
                 <CardContent>
                   <Skeleton variant="text" width="60%" height={20} sx={{ bgcolor: 'rgba(255, 255, 255, 0.1)', mb: 1 }} />
                   <Skeleton variant="text" width="40%" height={32} sx={{ bgcolor: 'rgba(255, 255, 255, 0.15)' }} />
@@ -306,7 +306,7 @@ export default function ProfileForm() {
 
   if (!isAuthorized) {
     return (
-      <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 3, background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(34, 197, 94, 0.3)' }}>
+      <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 3, background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', border: '1px solid rgba(45, 80, 61, 0.2)' }}>
         <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
           Access Restricted
         </Typography>
@@ -399,7 +399,7 @@ export default function ProfileForm() {
           sx={{
             width: 64,
             height: 64,
-            border: '3px solid rgba(34, 197, 94, 0.5)',
+            border: '3px solid rgba(45, 80, 61, 0.4)',
             background: 'linear-gradient(135deg, #22c55e, #059669)',
             boxShadow: '0 4px 20px rgba(34, 197, 94, 0.3)',
           }}
@@ -407,11 +407,11 @@ export default function ProfileForm() {
           {(userData?.whopDisplayName || userData?.alias || 'U').charAt(0).toUpperCase()}
         </Avatar>
         <Box>
-          <Typography variant="h4" component="h1" sx={{ color: '#ffffff', fontWeight: 700 }}>
+          <Typography variant="h4" component="h1" sx={{ color: '#2D503D', fontWeight: 700 }}>
             {userData?.whopDisplayName || userData?.alias || 'Profile'}
           </Typography>
           {userData?.whopUsername && (
-            <Typography variant="body2" sx={{ color: '#a1a1aa', mt: 0.5 }}>
+            <Typography variant="body2" sx={{ color: '#6b7280', mt: 0.5 }}>
               @{userData.whopUsername}
             </Typography>
           )}
@@ -420,23 +420,23 @@ export default function ProfileForm() {
 
       {/* Tabs for owners and companyOwners to switch between Personal and Company profiles */}
       {(role === 'companyOwner') && (
-        <Paper sx={{ mb: 3, background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: 2 }}>
+        <Paper sx={{ mb: 3, background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(20px)', border: '1px solid rgba(45, 80, 61, 0.2)', borderRadius: 2 }}>
           <Tabs
             value={activeTab}
             onChange={(_, newValue) => setActiveTab(newValue as 'personal' | 'company')}
             sx={{
-              borderBottom: '1px solid rgba(34, 197, 94, 0.3)',
+              borderBottom: '1px solid rgba(45, 80, 61, 0.2)',
               '& .MuiTab-root': {
-                color: '#a1a1aa',
+                color: '#6b7280',
                 textTransform: 'none',
                 fontSize: '1rem',
                 fontWeight: 500,
                 '&.Mui-selected': {
-                  color: '#22c55e',
+                  color: '#2D503D',
                 },
               },
               '& .MuiTabs-indicator': {
-                backgroundColor: '#22c55e',
+                backgroundColor: '#2D503D',
               },
             }}
           >
@@ -448,8 +448,8 @@ export default function ProfileForm() {
 
       {/* Personal Profile Tab */}
         {(activeTab === 'personal' || (role !== 'companyOwner')) && (
-        <Paper sx={{ p: 3, mb: 3, background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: 2 }}>
-          <Typography variant="h6" sx={{ color: '#ffffff', mb: 3, fontWeight: 600 }}>
+        <Paper sx={{ p: 3, mb: 3, background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', border: '1px solid rgba(45, 80, 61, 0.2)', borderRadius: 2 }}>
+          <Typography variant="h6" sx={{ color: '#2D503D', mb: 3, fontWeight: 600 }}>
             Personal Profile
           </Typography>
           <TextField
@@ -460,19 +460,20 @@ export default function ProfileForm() {
             margin="normal"
           sx={{
             '& .MuiOutlinedInput-root': {
-              color: '#ffffff',
+              color: '#2D503D',
+              backgroundColor: '#ffffff',
               '& fieldset': {
-                borderColor: 'rgba(34, 197, 94, 0.3)',
+                borderColor: 'rgba(45, 80, 61, 0.3)',
               },
               '&:hover fieldset': {
-                borderColor: 'rgba(34, 197, 94, 0.5)',
+                borderColor: 'rgba(45, 80, 61, 0.5)',
               },
               '&.Mui-focused fieldset': {
-                borderColor: '#22c55e',
+                borderColor: '#2D503D',
               },
             },
             '& .MuiInputLabel-root': {
-              color: '#a1a1aa',
+              color: '#6b7280',
             },
           }}
         />
@@ -480,10 +481,10 @@ export default function ProfileForm() {
         {/* Notification Webhooks - For owners and admins */}
         {(role === 'companyOwner' || role === 'owner' || role === 'admin') && (
           <>
-            <Typography variant="h6" sx={{ color: '#ffffff', mt: 3, mb: 2, fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ color: '#2D503D', mt: 3, mb: 2, fontWeight: 600 }}>
               Notification Webhooks
             </Typography>
-            <Typography variant="body2" sx={{ color: '#a1a1aa', mb: 2 }}>
+            <Typography variant="body2" sx={{ color: '#6b7280', mb: 2 }}>
               Configure webhook URLs to receive trade notifications.
             </Typography>
         <TextField
@@ -495,19 +496,20 @@ export default function ProfileForm() {
           margin="normal"
           sx={{
             '& .MuiOutlinedInput-root': {
-              color: '#ffffff',
+              color: '#2D503D',
+              backgroundColor: '#ffffff',
               '& fieldset': {
-                borderColor: 'rgba(34, 197, 94, 0.3)',
+                borderColor: 'rgba(45, 80, 61, 0.3)',
               },
               '&:hover fieldset': {
-                borderColor: 'rgba(34, 197, 94, 0.5)',
+                borderColor: 'rgba(45, 80, 61, 0.5)',
               },
               '&.Mui-focused fieldset': {
-                borderColor: '#22c55e',
+                borderColor: '#2D503D',
               },
             },
             '& .MuiInputLabel-root': {
-              color: '#a1a1aa',
+              color: '#6b7280',
             },
           }}
         />
@@ -520,19 +522,20 @@ export default function ProfileForm() {
           margin="normal"
           sx={{
             '& .MuiOutlinedInput-root': {
-              color: '#ffffff',
+              color: '#2D503D',
+              backgroundColor: '#ffffff',
               '& fieldset': {
-                borderColor: 'rgba(34, 197, 94, 0.3)',
+                borderColor: 'rgba(45, 80, 61, 0.3)',
               },
               '&:hover fieldset': {
-                borderColor: 'rgba(34, 197, 94, 0.5)',
+                borderColor: 'rgba(45, 80, 61, 0.5)',
               },
               '&.Mui-focused fieldset': {
-                borderColor: '#22c55e',
+                borderColor: '#2D503D',
               },
             },
             '& .MuiInputLabel-root': {
-              color: '#a1a1aa',
+              color: '#6b7280',
             },
           }}
         />
@@ -553,15 +556,15 @@ export default function ProfileForm() {
           }
           label={
             <Box>
-              <Typography variant="body2" sx={{ color: '#ffffff', fontWeight: 500 }}>
+              <Typography variant="body2" sx={{ color: '#2D503D', fontWeight: 500 }}>
                 Notify on Trade Settlement
               </Typography>
-              <Typography variant="caption" sx={{ color: '#a1a1aa', display: 'block' }}>
+              <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
                 Receive notifications when trades are settled (win/loss, P&L, and trade details)
               </Typography>
             </Box>
           }
-          sx={{ mt: 2, color: '#ffffff' }}
+          sx={{ mt: 2, color: '#2D503D' }}
         />
           </>
         )}
@@ -578,7 +581,7 @@ export default function ProfileForm() {
               py: 1.5,
               fontWeight: 600,
               '&:hover': {
-                background: 'linear-gradient(135deg, #5855eb, #db2777)',
+                background: 'linear-gradient(135deg, #16a34a, #047857)',
                 transform: 'translateY(-2px)',
                 boxShadow: '0 4px 12px rgba(34, 197, 94, 0.4)',
               },
@@ -597,11 +600,11 @@ export default function ProfileForm() {
 
       {/* Company Profile Tab - Only for owners and companyOwners */}
       {(role === 'companyOwner') && activeTab === 'company' && (
-        <Paper sx={{ p: 3, mb: 3, background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: 2 }}>
-          <Typography variant="h6" sx={{ color: '#ffffff', mb: 3, fontWeight: 600 }}>
+        <Paper sx={{ p: 3, mb: 3, background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', border: '1px solid rgba(45, 80, 61, 0.2)', borderRadius: 2 }}>
+          <Typography variant="h6" sx={{ color: '#2D503D', mb: 3, fontWeight: 600 }}>
             Company Profile
           </Typography>
-          <Typography variant="body2" sx={{ color: '#a1a1aa', mb: 3 }}>
+          <Typography variant="body2" sx={{ color: '#6b7280', mb: 3 }}>
             Company information is automatically set from your Whop account. Company ID, name, and description are managed through Whop.
           </Typography>
 
@@ -623,24 +626,24 @@ export default function ProfileForm() {
             }
             label={
               <Box>
-                <Typography variant="body2" sx={{ color: '#ffffff', fontWeight: 500 }}>
+                <Typography variant="body2" sx={{ color: '#2D503D', fontWeight: 500 }}>
                   Opt-in to Leaderboard
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#a1a1aa', display: 'block' }}>
+                <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
                   Your company will appear on the leaderboard with aggregated stats from all company trades.
                 </Typography>
               </Box>
             }
-            sx={{ mt: 2, color: '#ffffff' }}
+            sx={{ mt: 2 }}
           />
 
           {/* Membership Plans Section */}
-          <Divider sx={{ my: 4, borderColor: 'rgba(34, 197, 94, 0.3)' }} />
+          <Divider sx={{ my: 4, borderColor: 'rgba(45, 80, 61, 0.3)' }} />
           <Box mb={3}>
-            <Typography variant="h6" sx={{ color: '#ffffff', mb: 1, fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ color: '#2D503D', mb: 1, fontWeight: 600 }}>
               Membership Plans
             </Typography>
-            <Typography variant="body2" sx={{ color: '#a1a1aa' }}>
+            <Typography variant="body2" sx={{ color: '#6b7280' }}>
               Add your whop link that you want connected to the leaderboard. Only owners can manage membership plans.
             </Typography>
           </Box>
@@ -652,12 +655,12 @@ export default function ProfileForm() {
               p: 3,
               mb: 3,
               background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.8), rgba(220, 252, 231, 0.6))',
-              border: '1px solid rgba(34, 197, 94, 0.3)',
+              border: '1px solid rgba(45, 80, 61, 0.2)',
               borderRadius: 3,
               boxShadow: '0 4px 20px rgba(34, 197, 94, 0.1)',
               transition: 'all 0.3s ease',
               '&:hover': {
-                borderColor: 'rgba(34, 197, 94, 0.5)',
+                borderColor: 'rgba(45, 80, 61, 0.5)',
                 boxShadow: '0 6px 30px rgba(34, 197, 94, 0.2)',
               },
             }}
@@ -669,7 +672,7 @@ export default function ProfileForm() {
                   size="small"
                   sx={{
                     background: 'linear-gradient(135deg, #22c55e, #059669)',
-                    color: '#ffffff',
+                    color: '#2D503D',
                     fontWeight: 600,
                   }}
                 />
@@ -710,19 +713,19 @@ export default function ProfileForm() {
               required
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  color: '#ffffff',
+                  color: '#2D503D',
                   '& fieldset': {
-                    borderColor: 'rgba(34, 197, 94, 0.3)',
+                    borderColor: 'rgba(45, 80, 61, 0.3)',
                   },
                   '&:hover fieldset': {
-                    borderColor: 'rgba(34, 197, 94, 0.5)',
+                    borderColor: 'rgba(45, 80, 61, 0.5)',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#22c55e',
+                    borderColor: '#2D503D',
                   },
                 },
                 '& .MuiInputLabel-root': {
-                  color: '#a1a1aa',
+                  color: '#6b7280',
                 },
               }}
             />
@@ -739,19 +742,19 @@ export default function ProfileForm() {
               rows={2}
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  color: '#ffffff',
+                  color: '#2D503D',
                   '& fieldset': {
-                    borderColor: 'rgba(34, 197, 94, 0.3)',
+                    borderColor: 'rgba(45, 80, 61, 0.3)',
                   },
                   '&:hover fieldset': {
-                    borderColor: 'rgba(34, 197, 94, 0.5)',
+                    borderColor: 'rgba(45, 80, 61, 0.5)',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#22c55e',
+                    borderColor: '#2D503D',
                   },
                 },
                 '& .MuiInputLabel-root': {
-                  color: '#a1a1aa',
+                  color: '#6b7280',
                 },
               }}
             />
@@ -768,19 +771,19 @@ export default function ProfileForm() {
                 required
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    color: '#ffffff',
+                    color: '#2D503D',
                     '& fieldset': {
-                      borderColor: 'rgba(34, 197, 94, 0.3)',
+                      borderColor: 'rgba(45, 80, 61, 0.3)',
                     },
                     '&:hover fieldset': {
-                      borderColor: 'rgba(34, 197, 94, 0.5)',
+                      borderColor: 'rgba(45, 80, 61, 0.5)',
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: '#22c55e',
+                      borderColor: '#2D503D',
                     },
                   },
                   '& .MuiInputLabel-root': {
-                    color: '#a1a1aa',
+                    color: '#6b7280',
                   },
                 }}
               />
@@ -800,7 +803,7 @@ export default function ProfileForm() {
                   />
                 }
                 label="Premium"
-                sx={{ mt: 2, color: '#ffffff' }}
+                sx={{ mt: 2 }}
               />
             </Box>
 
@@ -816,22 +819,22 @@ export default function ProfileForm() {
               helperText="Enter the base product page URL (not a checkout link)"
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  color: '#ffffff',
+                  color: '#2D503D',
                   '& fieldset': {
-                    borderColor: 'rgba(34, 197, 94, 0.3)',
+                    borderColor: 'rgba(45, 80, 61, 0.3)',
                   },
                   '&:hover fieldset': {
-                    borderColor: 'rgba(34, 197, 94, 0.5)',
+                    borderColor: 'rgba(45, 80, 61, 0.5)',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#22c55e',
+                    borderColor: '#2D503D',
                   },
                 },
                 '& .MuiInputLabel-root': {
-                  color: '#a1a1aa',
+                  color: '#6b7280',
                 },
                 '& .MuiFormHelperText-root': {
-                  color: '#a1a1aa',
+                  color: '#6b7280',
                 },
               }}
             />
@@ -845,12 +848,12 @@ export default function ProfileForm() {
             onClick={handleAddMembershipPlan}
             sx={{
               color: '#22c55e',
-              borderColor: 'rgba(34, 197, 94, 0.3)',
+              borderColor: 'rgba(45, 80, 61, 0.3)',
               px: 3,
               py: 1.5,
               fontWeight: 600,
               '&:hover': {
-                borderColor: '#22c55e',
+                borderColor: '#2D503D',
                 background: 'rgba(34, 197, 94, 0.1)',
                 transform: 'translateY(-2px)',
                 boxShadow: '0 4px 12px rgba(34, 197, 94, 0.2)',
@@ -869,7 +872,7 @@ export default function ProfileForm() {
             disabled={saving}
             sx={{
               background: 'linear-gradient(135deg, #22c55e, #059669)',
-              color: '#ffffff',
+              color: '#2D503D',
               px: 4,
               py: 1.5,
               fontWeight: 600,
@@ -893,7 +896,7 @@ export default function ProfileForm() {
 
       {personalStats && (
         <Box>
-          <Typography variant="h5" component="h2" mb={3} sx={{ color: '#ffffff', fontWeight: 600 }}>
+          <Typography variant="h5" component="h2" mb={3} sx={{ color: '#2D503D', fontWeight: 600 }}>
             Personal Stats
           </Typography>
 
@@ -905,12 +908,12 @@ export default function ProfileForm() {
               <Paper sx={{
                 p: 3,
                 flex: 1,
-                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: '1px solid rgba(45, 80, 61, 0.2)',
                 borderRadius: 2
               }}>
-                <Typography variant="h6" mb={2} sx={{ color: '#ffffff', fontWeight: 600 }}>
+                <Typography variant="h6" mb={2} sx={{ color: '#2D503D', fontWeight: 600 }}>
                   Trade Results Breakdown
                 </Typography>
                 {pieData.length > 0 ? (
@@ -933,19 +936,19 @@ export default function ProfileForm() {
                       <Tooltip
                         contentStyle={{
                           backgroundColor: 'rgba(240, 253, 244, 0.95)',
-                          border: '1px solid rgba(34, 197, 94, 0.3)',
+                          border: '1px solid rgba(45, 80, 61, 0.2)',
                           borderRadius: '8px',
-                          color: '#ffffff'
+                          color: '#2D503D'
                         }}
                       />
                       <Legend
-                        wrapperStyle={{ color: '#ffffff' }}
+                        wrapperStyle={{ color: '#2D503D' }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
                   <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Typography sx={{ color: '#a1a1aa', textAlign: 'center' }}>
+                    <Typography sx={{ color: '#6b7280', textAlign: 'center' }}>
                       No trade data available yet.<br />
                       Create your first trade to see the breakdown!
                     </Typography>
@@ -957,12 +960,12 @@ export default function ProfileForm() {
               <Paper sx={{
                 p: 3,
                 flex: 1,
-                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: '1px solid rgba(45, 80, 61, 0.2)',
                 borderRadius: 2
               }}>
-                <Typography variant="h6" mb={2} sx={{ color: '#ffffff', fontWeight: 600 }}>
+                <Typography variant="h6" mb={2} sx={{ color: '#2D503D', fontWeight: 600 }}>
                   Trade Results Comparison
                 </Typography>
                 {barData.length > 0 && barData.some(d => d.value > 0) ? (
@@ -981,9 +984,9 @@ export default function ProfileForm() {
                       <Tooltip
                         contentStyle={{
                           backgroundColor: 'rgba(240, 253, 244, 0.95)',
-                          border: '1px solid rgba(34, 197, 94, 0.3)',
+                          border: '1px solid rgba(45, 80, 61, 0.2)',
                           borderRadius: '8px',
-                          color: '#ffffff'
+                          color: '#2D503D'
                         }}
                       />
                       <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="#22c55e">
@@ -995,7 +998,7 @@ export default function ProfileForm() {
                   </ResponsiveContainer>
                 ) : (
                   <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Typography sx={{ color: '#a1a1aa', textAlign: 'center' }}>
+                    <Typography sx={{ color: '#6b7280', textAlign: 'center' }}>
                       No trade data available yet.<br />
                       Create your first trade to see the comparison!
                     </Typography>
@@ -1011,12 +1014,12 @@ export default function ProfileForm() {
                 <Paper sx={{
                   p: 3,
                   flex: 1,
-                  background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                  background: 'rgba(255, 255, 255, 0.95)',
                   backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(34, 197, 94, 0.3)',
+                  border: '1px solid rgba(45, 80, 61, 0.2)',
                   borderRadius: 2
                 }}>
-                  <Typography variant="h6" mb={2} sx={{ color: '#ffffff', fontWeight: 600 }}>
+                  <Typography variant="h6" mb={2} sx={{ color: '#2D503D', fontWeight: 600 }}>
                     ROI Trend
                   </Typography>
                   <ResponsiveContainer width="100%" height={300}>
@@ -1041,9 +1044,9 @@ export default function ProfileForm() {
                       <Tooltip
                         contentStyle={{
                           backgroundColor: 'rgba(240, 253, 244, 0.95)',
-                          border: '1px solid rgba(34, 197, 94, 0.3)',
+                          border: '1px solid rgba(45, 80, 61, 0.2)',
                           borderRadius: '8px',
-                          color: '#ffffff'
+                          color: '#2D503D'
                         }}
                       />
                       <Area
@@ -1062,12 +1065,12 @@ export default function ProfileForm() {
                 <Paper sx={{
                   p: 3,
                   flex: 1,
-                  background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                  background: 'rgba(255, 255, 255, 0.95)',
                   backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(34, 197, 94, 0.3)',
+                  border: '1px solid rgba(45, 80, 61, 0.2)',
                   borderRadius: 2
                 }}>
-                  <Typography variant="h6" mb={2} sx={{ color: '#ffffff', fontWeight: 600 }}>
+                  <Typography variant="h6" mb={2} sx={{ color: '#2D503D', fontWeight: 600 }}>
                     Units Profit/Loss Trend
                   </Typography>
                   <ResponsiveContainer width="100%" height={300}>
@@ -1092,9 +1095,9 @@ export default function ProfileForm() {
                       <Tooltip
                         contentStyle={{
                           backgroundColor: 'rgba(240, 253, 244, 0.95)',
-                          border: '1px solid rgba(34, 197, 94, 0.3)',
+                          border: '1px solid rgba(45, 80, 61, 0.2)',
                           borderRadius: '8px',
-                          color: '#ffffff'
+                          color: '#2D503D'
                         }}
                       />
                       <Area
@@ -1115,43 +1118,43 @@ export default function ProfileForm() {
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: '1px solid rgba(45, 80, 61, 0.2)',
                 borderRadius: 2
               }}>
                 <CardContent>
-                  <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
+                  <Typography sx={{ color: '#6b7280', mb: 1 }} gutterBottom>
                     Total Trades
                   </Typography>
-                  <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 700 }}>{personalStats?.totalTrades || 0}</Typography>
+                  <Typography variant="h4" sx={{ color: '#2D503D', fontWeight: 700 }}>{personalStats?.totalTrades || 0}</Typography>
                 </CardContent>
               </Card>
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: '1px solid rgba(45, 80, 61, 0.2)',
                 borderRadius: 2
               }}>
                 <CardContent>
-                  <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
+                  <Typography sx={{ color: '#6b7280', mb: 1 }} gutterBottom>
                     Win Rate
                   </Typography>
-                  <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 700 }}>{(personalStats?.winRate ?? 0).toFixed(2)}%</Typography>
+                  <Typography variant="h4" sx={{ color: '#2D503D', fontWeight: 700 }}>{(personalStats?.winRate ?? 0).toFixed(2)}%</Typography>
                 </CardContent>
               </Card>
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: '1px solid rgba(45, 80, 61, 0.2)',
                 borderRadius: 2
               }}>
                 <CardContent>
-                  <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
+                  <Typography sx={{ color: '#6b7280', mb: 1 }} gutterBottom>
                     ROI
                   </Typography>
                   <Typography
@@ -1168,13 +1171,13 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: '1px solid rgba(45, 80, 61, 0.2)',
                 borderRadius: 2
               }}>
                 <CardContent>
-                  <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
+                  <Typography sx={{ color: '#6b7280', mb: 1 }} gutterBottom>
                     Net P&L
                   </Typography>
                   <Typography
@@ -1191,13 +1194,13 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: '1px solid rgba(45, 80, 61, 0.2)',
                 borderRadius: 2
               }}>
                 <CardContent>
-                  <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
+                  <Typography sx={{ color: '#6b7280', mb: 1 }} gutterBottom>
                     Current Streak
                   </Typography>
                   <Typography 
@@ -1218,13 +1221,13 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: '1px solid rgba(45, 80, 61, 0.2)',
                 borderRadius: 2
               }}>
                 <CardContent>
-                  <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
+                  <Typography sx={{ color: '#6b7280', mb: 1 }} gutterBottom>
                     Longest Streak
                   </Typography>
                   <Typography 
@@ -1245,13 +1248,13 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: '1px solid rgba(45, 80, 61, 0.2)',
                 borderRadius: 2
               }}> 
                 <CardContent>
-                  <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
+                  <Typography sx={{ color: '#6b7280', mb: 1 }} gutterBottom>
                     Wins
                   </Typography>
                   <Typography variant="h4" sx={{ color: '#10b981', fontWeight: 700 }}>{personalStats?.winCount || 0}</Typography>
@@ -1260,13 +1263,13 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: '1px solid rgba(45, 80, 61, 0.2)',
                 borderRadius: 2
               }}>
                 <CardContent>
-                  <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
+                  <Typography sx={{ color: '#6b7280', mb: 1 }} gutterBottom>
                     Losses
                   </Typography>
                   <Typography variant="h4" sx={{ color: '#ef4444', fontWeight: 700 }}>{personalStats?.lossCount || 0}</Typography>
@@ -1280,53 +1283,53 @@ export default function ProfileForm() {
       {/* Company Stats - Only for owners and companyOwners */}
       {( role === 'owner' || role === 'companyOwner') && companyStats && (
         <Box mt={4}>
-          <Typography variant="h5" component="h2" mb={3} sx={{ color: '#ffffff', fontWeight: 600 }}>
+          <Typography variant="h5" component="h2" mb={3} sx={{ color: '#2D503D', fontWeight: 600 }}>
             Company Stats (Aggregated)
           </Typography>
-          <Typography variant="body2" sx={{ color: '#a1a1aa', mb: 3 }}>
+          <Typography variant="body2" sx={{ color: '#6b7280', mb: 3 }}>
             These stats include all trades from all users (owners and admins) in your company.
           </Typography>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: '1px solid rgba(45, 80, 61, 0.2)',
                 borderRadius: 2
               }}>
                 <CardContent>
-                  <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
+                  <Typography sx={{ color: '#6b7280', mb: 1 }} gutterBottom>
                     Total Trades
                   </Typography>
-                  <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 700 }}>{companyStats?.totalTrades || 0}</Typography>
+                  <Typography variant="h4" sx={{ color: '#2D503D', fontWeight: 700 }}>{companyStats?.totalTrades || 0}</Typography>
                 </CardContent>
               </Card>
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: '1px solid rgba(45, 80, 61, 0.2)',
                 borderRadius: 2
               }}>
                 <CardContent>
-                  <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
+                  <Typography sx={{ color: '#6b7280', mb: 1 }} gutterBottom>
                     Win Rate
                   </Typography>
-                  <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 700 }}>{(companyStats?.winRate ?? 0).toFixed(2)}%</Typography>
+                  <Typography variant="h4" sx={{ color: '#2D503D', fontWeight: 700 }}>{(companyStats?.winRate ?? 0).toFixed(2)}%</Typography>
                 </CardContent>
               </Card>
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: '1px solid rgba(45, 80, 61, 0.2)',
                 borderRadius: 2
               }}>
                 <CardContent>
-                  <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
+                  <Typography sx={{ color: '#6b7280', mb: 1 }} gutterBottom>
                     ROI
                   </Typography>
                   <Typography
@@ -1343,13 +1346,13 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: '1px solid rgba(45, 80, 61, 0.2)',
                 borderRadius: 2
               }}>
                 <CardContent>
-                  <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
+                  <Typography sx={{ color: '#6b7280', mb: 1 }} gutterBottom>
                     Net P&L
                   </Typography>
                   <Typography
@@ -1366,13 +1369,13 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: '1px solid rgba(45, 80, 61, 0.2)',
                 borderRadius: 2
               }}>
                 <CardContent>
-                  <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
+                  <Typography sx={{ color: '#6b7280', mb: 1 }} gutterBottom>
                     Wins
                   </Typography>
                   <Typography variant="h4" sx={{ color: '#10b981', fontWeight: 700 }}>{companyStats?.winCount || 0}</Typography>
@@ -1381,13 +1384,13 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: '1px solid rgba(45, 80, 61, 0.2)',
                 borderRadius: 2
               }}>
                 <CardContent>
-                  <Typography sx={{ color: '#a1a1aa', mb: 1 }} gutterBottom>
+                  <Typography sx={{ color: '#6b7280', mb: 1 }} gutterBottom>
                     Losses
                   </Typography>
                   <Typography variant="h4" sx={{ color: '#ef4444', fontWeight: 700 }}>{companyStats?.lossCount || 0}</Typography>
