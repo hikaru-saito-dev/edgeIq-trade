@@ -237,13 +237,13 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
             />
 
             {notional > 0 && (
-              <Box sx={{ p: 1.5, background: 'rgba(99, 102, 241, 0.1)', borderRadius: 1 }}>
-                <Typography variant="body2" sx={{ color: '#a1a1aa' }}>
-                  Total Notional: <strong style={{ color: '#ffffff' }}>
+              <Box sx={{ p: 1.5, background: 'rgba(34, 197, 94, 0.1)', borderRadius: 1 }}>
+                <Typography variant="body2" sx={{ color: '#166534' }}>
+                  Total Notional: <strong style={{ color: '#064e3b' }}>
                     ${notional.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </strong>
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#a1a1aa' }}>
+                <Typography variant="caption" sx={{ color: '#166534' }}>
                   (Contracts × Fill Price × 100)
                 </Typography>
               </Box>

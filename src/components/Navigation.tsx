@@ -1,8 +1,9 @@
 'use client';
 
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
+import { AppBar, Toolbar, Button, Box } from '@mui/material';
 import Link from 'next/link';
 import { useAccess } from './AccessProvider';
+import Logo from './Logo';
 
 export default function Navigation() {
   const { isAuthorized, role, loading } = useAccess();
@@ -12,37 +13,34 @@ export default function Navigation() {
       position="static" 
       elevation={0}
       sx={{
-        background: 'rgba(15, 15, 35, 0.8)',
+        background: 'linear-gradient(180deg, #1e3a2a 0%, #2D503D 100%)',
         backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+        color: '#ffffff',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
       }}
     >
-      <Toolbar sx={{ py: 1 }}>
-        <Typography 
-          variant="h6" 
-          component="div" 
-          sx={{ 
-            flexGrow: 1,
-            fontWeight: 800,
-            background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}
-        >
-          EdgeIQ Trades
-        </Typography>
+      <Toolbar sx={{ py: 2, px: { xs: 2, sm: 3 } }}>
+        <Box sx={{ flexGrow: 1 }}>
+          <Logo textColor="white" />
+        </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
           {!loading && isAuthorized && (
             <Button 
               component={Link} 
               href="/trades"
               sx={{
-                color: 'rgba(255, 255, 255, 0.7)',
-                fontWeight: 600,
+                color: '#ffffff',
+                fontWeight: 500,
+                textTransform: 'none',
+                fontSize: '0.95rem',
+                px: 2,
+                borderRadius: 1,
+                transition: 'all 0.2s ease',
                 '&:hover': {
                   color: '#ffffff',
-                  background: 'rgba(99, 102, 241, 0.1)',
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  transform: 'translateY(-1px)',
                 },
               }}
             >
@@ -53,11 +51,12 @@ export default function Navigation() {
             component={Link} 
             href="/leaderboard"
             sx={{
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: '#ffffff',
               fontWeight: 600,
+              textTransform: 'none',
               '&:hover': {
                 color: '#ffffff',
-                background: 'rgba(99, 102, 241, 0.1)',
+                background: 'rgba(255, 255, 255, 0.1)',
               },
             }}
           >
@@ -68,11 +67,17 @@ export default function Navigation() {
               component={Link} 
               href="/profile"
               sx={{
-                color: 'rgba(255, 255, 255, 0.7)',
-                fontWeight: 600,
+                color: '#ffffff',
+                fontWeight: 500,
+                textTransform: 'none',
+                fontSize: '0.95rem',
+                px: 2,
+                borderRadius: 1,
+                transition: 'all 0.2s ease',
                 '&:hover': {
                   color: '#ffffff',
-                  background: 'rgba(99, 102, 241, 0.1)',
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  transform: 'translateY(-1px)',
                 },
               }}
             >
@@ -84,11 +89,17 @@ export default function Navigation() {
               component={Link} 
               href="/users"
               sx={{
-                color: 'rgba(255, 255, 255, 0.7)',
-                fontWeight: 600,
+                color: '#ffffff',
+                fontWeight: 500,
+                textTransform: 'none',
+                fontSize: '0.95rem',
+                px: 2,
+                borderRadius: 1,
+                transition: 'all 0.2s ease',
                 '&:hover': {
                   color: '#ffffff',
-                  background: 'rgba(99, 102, 241, 0.1)',
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  transform: 'translateY(-1px)',
                 },
               }}
             >

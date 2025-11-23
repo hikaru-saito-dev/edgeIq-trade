@@ -6,22 +6,22 @@ const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#6366f1',
-      light: '#818cf8',
-      dark: '#4f46e5',
+      main: '#22c55e', // Green-500
+      light: '#4ade80', // Green-400
+      dark: '#16a34a', // Green-600
     },
     secondary: {
-      main: '#ec4899',
-      light: '#f472b6',
-      dark: '#db2777',
+      main: '#10b981', // Emerald-500
+      light: '#34d399', // Emerald-400
+      dark: '#059669', // Emerald-600
     },
     background: {
-      default: '#0f0f23',
-      paper: 'rgba(15, 15, 35, 0.8)',
+      default: '#f0fdf4', // Light green background
+      paper: 'rgba(240, 253, 244, 0.9)',
     },
     text: {
-      primary: '#ffffff',
-      secondary: '#a1a1aa',
+      primary: '#064e3b', // Dark green text
+      secondary: '#166534', // Medium green text
     },
   },
   typography: {
@@ -29,7 +29,7 @@ const theme = createTheme({
     h1: {
       fontSize: '3rem',
       fontWeight: 800,
-      background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
+      background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
       backgroundClip: 'text',
       WebkitBackgroundClip: 'text',
       WebkitTextFillColor: 'transparent',
@@ -47,18 +47,18 @@ const theme = createTheme({
     MuiPaper: {
       styleOverrides: {
         root: {
-          background: 'rgba(15, 15, 35, 0.8)',
+          background: 'rgba(240, 253, 244, 0.9)',
           backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          border: '1px solid rgba(34, 197, 94, 0.2)',
         },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          background: 'rgba(15, 15, 35, 0.8)',
+          background: 'rgba(240, 253, 244, 0.9)',
           backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          border: '1px solid rgba(34, 197, 94, 0.2)',
         },
       },
     },

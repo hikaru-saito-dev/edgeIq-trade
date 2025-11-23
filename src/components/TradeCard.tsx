@@ -179,31 +179,36 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
       <Card 
         sx={{ 
           mb: 2,
-          background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+          background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.95), rgba(220, 252, 231, 0.9))',
           backdropFilter: 'blur(20px)',
           border: trade.status === 'REJECTED' 
             ? '2px solid rgba(239, 68, 68, 0.5)' 
             : trade.status === 'CLOSED'
             ? '2px solid rgba(34, 197, 94, 0.5)'
-            : '1px solid rgba(99, 102, 241, 0.3)',
+            : '1px solid rgba(34, 197, 94, 0.3)',
           borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 8px 32px rgba(34, 197, 94, 0.15), inset 0 1px 0 rgba(34, 197, 94, 0.1)',
           transition: 'all 0.3s ease',
           '&:hover': {
-            boxShadow: '0 12px 40px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 12px 40px rgba(34, 197, 94, 0.25), inset 0 1px 0 rgba(34, 197, 94, 0.15)',
             transform: 'translateY(-4px)',
+            borderColor: trade.status === 'REJECTED' 
+              ? 'rgba(239, 68, 68, 0.7)' 
+              : trade.status === 'CLOSED'
+              ? 'rgba(34, 197, 94, 0.7)'
+              : 'rgba(34, 197, 94, 0.5)',
           }
         }}
       >
         <CardContent>
           <Box display="flex" justifyContent="space-between" alignItems="start" mb={2}>
             <Box flex={1}>
-              <Typography variant="h6" component="div" fontWeight={600} mb={0.5} sx={{ color: '#ffffff' }}>
+              <Typography variant="h6" component="div" fontWeight={600} mb={0.5} sx={{ color: '#064e3b' }}>
                 {formatTradeLabel()}
               </Typography>
               <Box display="flex" alignItems="center" gap={1} mb={1}>
-                <EventIcon fontSize="small" sx={{ color: '#a1a1aa' }} />
-                <Typography variant="body2" sx={{ color: '#a1a1aa' }}>
+                <EventIcon fontSize="small" sx={{ color: '#166534' }} />
+                <Typography variant="body2" sx={{ color: '#166534' }}>
                   {new Date(trade.createdAt).toLocaleString()}
                 </Typography>
                 {!trade.priceVerified && (
@@ -229,19 +234,19 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
             <Box 
               sx={{ 
                 p: 1.5, 
-                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(99, 102, 241, 0.1))',
+                background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1))',
                 borderRadius: 2,
                 textAlign: 'center',
                 width: { xs: 'calc(50% - 8px)', sm: 'calc(25% - 12px)' },
                 minWidth: { xs: 'calc(50% - 8px)', sm: 'calc(25% - 12px)' },
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
               }}
             >
-              <TrendingUpIcon fontSize="small" sx={{ mb: 0.5, color: '#818cf8' }} />
-              <Typography variant="caption" display="block" sx={{ color: '#a1a1aa', fontWeight: 600 }}>
+              <TrendingUpIcon fontSize="small" sx={{ mb: 0.5, color: '#059669' }} />
+              <Typography variant="caption" display="block" sx={{ color: '#166534', fontWeight: 600 }}>
                 Contracts
               </Typography>
-              <Typography variant="h6" fontWeight={700} sx={{ color: '#ffffff' }}>
+              <Typography variant="h6" fontWeight={700} sx={{ color: '#064e3b' }}>
                 {trade.contracts}
               </Typography>
             </Box>
@@ -256,30 +261,30 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
                 border: '1px solid rgba(34, 197, 94, 0.3)',
               }}
             >
-              <AttachMoneyIcon fontSize="small" sx={{ mb: 0.5, color: '#4ade80' }} />
-              <Typography variant="caption" display="block" sx={{ color: '#a1a1aa', fontWeight: 600 }}>
+              <AttachMoneyIcon fontSize="small" sx={{ mb: 0.5, color: '#059669' }} />
+              <Typography variant="caption" display="block" sx={{ color: '#166534', fontWeight: 600 }}>
                 Fill Price
               </Typography>
-              <Typography variant="h6" fontWeight={700} sx={{ color: '#ffffff' }}>
+              <Typography variant="h6" fontWeight={700} sx={{ color: '#064e3b' }}>
                 ${trade.fillPrice.toFixed(2)}
               </Typography>
             </Box>
             <Box 
               sx={{ 
                 p: 1.5, 
-                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1))',
+                background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.08))',
                 borderRadius: 2,
                 textAlign: 'center',
                 width: { xs: 'calc(50% - 8px)', sm: 'calc(25% - 12px)' },
                 minWidth: { xs: 'calc(50% - 8px)', sm: 'calc(25% - 12px)' },
-                border: '1px solid rgba(59, 130, 246, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.25)',
               }}
             >
-              <CalculateIcon fontSize="small" sx={{ mb: 0.5, color: '#60a5fa' }} />
-              <Typography variant="caption" display="block" sx={{ color: '#a1a1aa', fontWeight: 600 }}>
+              <CalculateIcon fontSize="small" sx={{ mb: 0.5, color: '#059669' }} />
+              <Typography variant="caption" display="block" sx={{ color: '#166534', fontWeight: 600 }}>
                 Buy Notional
               </Typography>
-              <Typography variant="h6" fontWeight={700} sx={{ color: '#ffffff' }}>
+              <Typography variant="h6" fontWeight={700} sx={{ color: '#064e3b' }}>
                 {formatNotional(buyNotional)}
               </Typography>
             </Box>
@@ -298,23 +303,23 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
                   : '1px solid rgba(239, 68, 68, 0.3)',
               }}
             >
-              <AttachMoneyIcon fontSize="small" sx={{ mb: 0.5, color: currentPnl >= 0 ? '#4ade80' : '#ef4444' }} />
-              <Typography variant="caption" display="block" sx={{ color: '#a1a1aa', fontWeight: 600 }}>
+              <AttachMoneyIcon fontSize="small" sx={{ mb: 0.5, color: currentPnl >= 0 ? '#059669' : '#ef4444' }} />
+              <Typography variant="caption" display="block" sx={{ color: '#166534', fontWeight: 600 }}>
                 P&L
               </Typography>
-              <Typography variant="h6" fontWeight={700} sx={{ color: '#ffffff' }}>
+              <Typography variant="h6" fontWeight={700} sx={{ color: currentPnl >= 0 ? '#064e3b' : '#dc2626' }}>
                 {currentPnl >= 0 ? '+' : ''}{formatNotional(currentPnl)}
               </Typography>
             </Box>
           </Box>
 
           {trade.status === 'OPEN' && (
-            <Box sx={{ mb: 2, p: 1.5, background: 'rgba(99, 102, 241, 0.1)', borderRadius: 2 }}>
-              <Typography variant="body2" sx={{ color: '#a1a1aa', mb: 1 }}>
-                Remaining Contracts: <strong style={{ color: '#ffffff' }}>{trade.remainingOpenContracts}</strong>
+            <Box sx={{ mb: 2, p: 1.5, background: 'rgba(34, 197, 94, 0.1)', borderRadius: 2 }}>
+              <Typography variant="body2" sx={{ color: '#166534', mb: 1 }}>
+                Remaining Contracts: <strong style={{ color: '#064e3b' }}>{trade.remainingOpenContracts}</strong>
               </Typography>
               {trade.fills && trade.fills.length > 0 && (
-                <Typography variant="caption" sx={{ color: '#a1a1aa' }}>
+                <Typography variant="caption" sx={{ color: '#166534' }}>
                   {trade.fills.length} sell order{trade.fills.length !== 1 ? 's' : ''} placed
                 </Typography>
               )}
@@ -393,9 +398,9 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
               fullWidth
             />
             {settlePrice && !isNaN(parseFloat(settlePrice)) && (
-              <Box sx={{ p: 1.5, background: 'rgba(99, 102, 241, 0.1)', borderRadius: 1 }}>
-                <Typography variant="body2" sx={{ color: '#a1a1aa' }}>
-                  Total Notional: <strong style={{ color: '#ffffff' }}>
+              <Box sx={{ p: 1.5, background: 'rgba(34, 197, 94, 0.1)', borderRadius: 1 }}>
+                <Typography variant="body2" sx={{ color: '#166534' }}>
+                  Total Notional: <strong style={{ color: '#064e3b' }}>
                     {formatNotional(settleContracts * parseFloat(settlePrice) * 100)}
                   </strong>
                 </Typography>

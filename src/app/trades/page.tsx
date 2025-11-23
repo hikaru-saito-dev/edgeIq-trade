@@ -146,8 +146,18 @@ export default function TradesPage() {
   if (accessLoading) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight={400}>
-          <CircularProgress />
+        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight={400} gap={3}>
+          <CircularProgress 
+            size={60}
+            thickness={4}
+            sx={{ 
+              color: '#22c55e',
+              filter: 'drop-shadow(0 0 10px rgba(34, 197, 94, 0.5))',
+            }} 
+          />
+          <Typography variant="h6" sx={{ color: '#2D503D', fontWeight: 500 }}>
+            Checking access...
+          </Typography>
         </Box>
       </Container>
     );
@@ -183,7 +193,7 @@ export default function TradesPage() {
               fontWeight={700} 
               gutterBottom
               sx={{
-                background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
+                background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -210,15 +220,15 @@ export default function TradesPage() {
             sx={{ 
               px: 3, 
               py: 1.5,
-              background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
-              boxShadow: '0 8px 32px rgba(99, 102, 241, 0.3)',
+              background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
+              boxShadow: '0 8px 32px rgba(34, 197, 94, 0.3)',
               '&:hover': {
-                background: 'linear-gradient(135deg, #4f46e5 0%, #db2777 100%)',
-                boxShadow: '0 12px 40px rgba(99, 102, 241, 0.4)',
+                background: 'linear-gradient(135deg, #16a34a 0%, #047857 100%)',
+                boxShadow: '0 12px 40px rgba(34, 197, 94, 0.4)',
                 transform: 'translateY(-2px)',
               },
               '&:disabled': {
-                background: 'rgba(99, 102, 241, 0.3)',
+                background: 'rgba(34, 197, 94, 0.3)',
               },
               transition: 'all 0.3s ease',
             }}
@@ -235,7 +245,7 @@ export default function TradesPage() {
         )}
 
         {/* Status Filter Tabs */}
-        <Paper sx={{ mb: 3, bgcolor: 'rgba(17, 24, 39, 0.6)', backdropFilter: 'blur(6px)', borderRadius: 2 }}>
+        <Paper sx={{ mb: 3, bgcolor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(6px)', borderRadius: 2, border: '1px solid rgba(45, 80, 61, 0.2)' }}>
           <Tabs
             value={selectedStatus}
             onChange={(_, newValue) => {
@@ -246,17 +256,17 @@ export default function TradesPage() {
             scrollButtons="auto"
             sx={{
               '& .MuiTab-root': {
-                color: '#a1a1aa',
+                color: '#6b7280',
                 fontWeight: 500,
                 textTransform: 'none',
                 minHeight: 48,
                 '&.Mui-selected': {
-                  color: '#6366f1',
+                  color: '#2D503D',
                   fontWeight: 600,
                 },
               },
               '& .MuiTabs-indicator': {
-                backgroundColor: '#6366f1',
+                backgroundColor: '#2D503D',
                 height: 3,
                 borderRadius: '3px 3px 0 0',
               },
@@ -271,7 +281,7 @@ export default function TradesPage() {
 
         {/* Search & Pagination controls */}
         <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-          <Paper sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'rgba(17, 24, 39, 0.6)', backdropFilter: 'blur(6px)' }}>
+          <Paper sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(6px)', border: '1px solid rgba(45, 80, 61, 0.2)' }}>
             <TextField
               variant="outlined"
               size="small"
@@ -282,20 +292,26 @@ export default function TradesPage() {
               sx={{
                 minWidth: 320,
                 '& .MuiOutlinedInput-root': {
-                  color: '#fff',
-                  '& fieldset': { borderColor: 'rgba(99, 102, 241, 0.3)' },
-                  '&:hover fieldset': { borderColor: 'rgba(99, 102, 241, 0.5)' },
+                  color: '#2D503D',
+                  backgroundColor: '#ffffff',
+                  '& fieldset': { borderColor: 'rgba(45, 80, 61, 0.3)' },
+                  '&:hover fieldset': { borderColor: 'rgba(45, 80, 61, 0.5)' },
+                  '&.Mui-focused fieldset': { borderColor: '#2D503D' },
+                },
+                '& .MuiInputBase-input::placeholder': {
+                  color: '#9ca3af',
+                  opacity: 1,
                 },
               }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: '#a1a1aa' }} />
+                    <SearchIcon sx={{ color: '#6b7280' }} />
                   </InputAdornment>
                 ),
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => { setPage(1); fetchTrades(); }}>
+                    <IconButton size="small" onClick={() => { setPage(1); fetchTrades(); }} sx={{ color: '#2D503D' }}>
                       <SearchIcon />
                     </IconButton>
                   </InputAdornment>
@@ -304,16 +320,19 @@ export default function TradesPage() {
             />
           </Paper>
 
-          <Paper sx={{ p: 1.5, display: 'flex', gap: 1.5, alignItems: 'center', bgcolor: 'rgba(17, 24, 39, 0.6)', backdropFilter: 'blur(6px)' }}>
-            <Typography variant="body2" color="text.secondary">Page size</Typography>
+          <Paper sx={{ p: 1.5, display: 'flex', gap: 1.5, alignItems: 'center', bgcolor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(6px)', border: '1px solid rgba(45, 80, 61, 0.2)' }}>
+            <Typography variant="body2" sx={{ color: '#2D503D' }}>Page size</Typography>
             <FormControl size="small">
               <Select
                 value={pageSize}
                 onChange={(e) => { setPageSize(e.target.value as number); setPage(1); }}
                 sx={{
                   minWidth: 80,
-                  color: '#fff',
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(99, 102, 241, 0.3)' },
+                  color: '#2D503D',
+                  backgroundColor: '#ffffff',
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(45, 80, 61, 0.3)' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(45, 80, 61, 0.5)' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#2D503D' },
                 }}
               >
                 {[10, 20, 50].map((s) => (
@@ -336,8 +355,8 @@ export default function TradesPage() {
               size={60}
               thickness={4}
               sx={{ 
-                color: '#6366f1',
-                filter: 'drop-shadow(0 0 10px rgba(99, 102, 241, 0.5))',
+                color: '#22c55e',
+                filter: 'drop-shadow(0 0 10px rgba(34, 197, 94, 0.5))',
               }} 
             />
           </motion.div>
@@ -349,12 +368,8 @@ export default function TradesPage() {
             <Typography 
               variant="h6" 
               sx={{ 
-                color: '#a1a1aa',
+                color: '#2D503D',
                 fontWeight: 500,
-                background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
               }}
             >
               Loading your trades...
@@ -367,29 +382,39 @@ export default function TradesPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 3, bgcolor: 'rgba(17, 24, 39, 0.6)', backdropFilter: 'blur(6px)' }}>
-            <Typography variant="h6" gutterBottom sx={{ color: '#a1a1aa', fontWeight: 600 }}>
-              No trades found
+          <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 3 }}>
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              {search || selectedStatus !== 'All' ? 'No trades found' : 'No trades yet'}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography variant="body2" color="text.secondary" mb={3}>
               {search || selectedStatus !== 'All' 
                 ? 'Try adjusting your search or filters'
-                : 'Create your first trade to get started'}
+                : 'Create your first trade to start tracking your performance'}
             </Typography>
             {(!search && selectedStatus === 'All') && (
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
-                onClick={() => setCreateOpen(true)}
+                onClick={() => {
+                  if (hasCompanyId === false) {
+                    setWarningOpen(true);
+                  } else {
+                    setCreateOpen(true);
+                  }
+                }}
                 disabled={!marketOpen}
                 sx={{
-                  background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
+                  background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
+                  boxShadow: '0 8px 32px rgba(34, 197, 94, 0.3)',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #db2777 100%)',
+                    background: 'linear-gradient(135deg, #16a34a 0%, #047857 100%)',
+                    boxShadow: '0 12px 40px rgba(34, 197, 94, 0.4)',
+                    transform: 'translateY(-2px)',
                   },
+                  transition: 'all 0.3s ease',
                 }}
               >
-                Create Trade
+                Create Your First Trade
               </Button>
             )}
           </Paper>
@@ -420,8 +445,8 @@ export default function TradesPage() {
               >
                 Previous
               </Button>
-              <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', px: 2, color: '#a1a1aa' }}>
-                Page {page} of {totalPages}
+              <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', px: 2, color: 'text.secondary' }}>
+                Page {page} / {totalPages}
               </Typography>
               <Button
                 variant="outlined"
@@ -442,21 +467,64 @@ export default function TradesPage() {
         onSuccess={fetchTrades}
       />
 
-      {/* Warning Dialog */}
-      <Dialog open={warningOpen} onClose={() => setWarningOpen(false)}>
-        <DialogTitle>Company ID Required</DialogTitle>
+      {/* Warning Dialog for Missing Company ID */}
+      <Dialog
+        open={warningOpen}
+        onClose={() => setWarningOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: 'rgba(255, 255, 255, 0.98)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: 3,
+            boxShadow: '0 8px 32px rgba(45, 80, 61, 0.2)',
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: '#2D503D', fontWeight: 600 }}>
+          Company Access Required
+        </DialogTitle>
         <DialogContent>
-          <Typography>
-            Please set up your company ID in your profile before creating trades.
-          </Typography>
+          <Alert 
+            severity="warning" 
+            sx={{ 
+              mb: 2,
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              '& .MuiAlert-icon': {
+                color: '#ef4444',
+              },
+            }}
+          >
+            You need to access this app through a Whop company to create trades.
+          </Alert>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setWarningOpen(false)}>Close</Button>
-          <Button 
-            variant="contained" 
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button
+            onClick={() => setWarningOpen(false)}
+            sx={{
+              color: '#6b7280',
+              '&:hover': {
+                backgroundColor: 'rgba(45, 80, 61, 0.05)',
+              },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
             onClick={() => {
               setWarningOpen(false);
               window.location.href = '/profile';
+            }}
+            sx={{
+              background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
+              color: '#ffffff',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #16a34a 0%, #047857 100%)',
+              },
             }}
           >
             Go to Profile

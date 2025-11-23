@@ -20,103 +20,210 @@ function HomeContent() {
   }, [experienceId]);
 
   return (
-    <Container maxWidth="lg" sx={{ py: 8 }}>
-      <motion.div
-        initial={{ opacity: 0, y: -30, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
-      >
-        <Typography 
-          variant="h1" 
-          component="h1" 
-          sx={{ 
-            textAlign: 'center', 
-            mb: 4,
-            background: 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f59e0b 100%)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            filter: 'drop-shadow(0 0 25px rgba(139, 92, 246, 0.8))',
-          }}
-        >
-          EdgeIQ Trades
-        </Typography>
-      </motion.div>
+    <Box
+      sx={{
+        minHeight: 'calc(100vh - 64px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        py: { xs: 4, md: 8 },
+        px: { xs: 2, sm: 4 },
+        background: 'linear-gradient(180deg, #0a1f0f 0%, #1a3a2a 50%, #2d503d 100%)',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: `
+            repeating-linear-gradient(
+              90deg,
+              transparent,
+              transparent 20px,
+              rgba(34, 197, 94, 0.08) 20px,
+              rgba(34, 197, 94, 0.08) 22px
+            )
+          `,
+          zIndex: 0,
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          bottom: '10%',
+          left: 0,
+          right: 0,
+          height: '200px',
+          background: `
+            radial-gradient(ellipse at 20% 50%, rgba(34, 197, 94, 0.3) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 30%, rgba(34, 197, 94, 0.25) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 60%, rgba(34, 197, 94, 0.2) 0%, transparent 50%)
+          `,
+          zIndex: 0,
+          animation: 'pulse 4s ease-in-out infinite',
+        },
+      }}
+    >
+      {/* Animated glowing wavy lines at bottom */}
+      <Box
+        className="wavy-lines"
+        sx={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '35%',
+          zIndex: 0,
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            bottom: '5%',
+            left: 0,
+            right: 0,
+            height: '3px',
+            background: 'linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.6) 20%, rgba(34, 197, 94, 0.8) 50%, rgba(34, 197, 94, 0.6) 80%, transparent)',
+            filter: 'blur(3px)',
+            boxShadow: '0 0 20px rgba(34, 197, 94, 0.6)',
+            animation: 'wave 8s ease-in-out infinite',
+          },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            bottom: '15%',
+            left: 0,
+            right: 0,
+            height: '2px',
+            background: 'linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.5) 25%, rgba(34, 197, 94, 0.7) 50%, rgba(34, 197, 94, 0.5) 75%, transparent)',
+            filter: 'blur(2px)',
+            boxShadow: '0 0 15px rgba(34, 197, 94, 0.5)',
+            animation: 'wave 10s ease-in-out infinite reverse',
+          },
+        }}
+      />
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
-      >
-        <Typography 
-          variant="h5" 
-          sx={{ 
-            textAlign: 'center',
-            color: 'text.secondary',
-            mb: 6,
-            fontWeight: 300,
-          }}
+      <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1 }}>
+        <motion.div
+          initial={{ opacity: 0, y: -30, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
         >
-          Track your options trades, compete on leaderboards, and prove your edge
-        </Typography>
-      </motion.div>
+          <Typography 
+            variant="h1" 
+            component="h1" 
+            sx={{ 
+              textAlign: 'center', 
+              mb: 3,
+              fontSize: { xs: '3rem', sm: '4rem', md: '5rem' },
+              fontWeight: 800,
+              color: '#22c55e', // Bright green to match logo
+              lineHeight: 1.1,
+              textShadow: '0 0 20px rgba(34, 197, 94, 0.5), 0 0 40px rgba(34, 197, 94, 0.3)',
+            }}
+          >
+            EdgeIQ Trades
+          </Typography>
+        </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.4 }}
-      >
-        <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
-          {!loading && isAuthorized && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <Typography 
+            variant="h5" 
+            sx={{ 
+              textAlign: 'center',
+              color: '#a7f3d0', // Light green for contrast on dark background
+              mb: 6,
+              fontWeight: 400,
+              fontSize: { xs: '1.1rem', sm: '1.25rem' },
+              maxWidth: '600px',
+              mx: 'auto',
+              lineHeight: 1.6,
+            }}
+          >
+            Track your options trades, compete on leaderboards, and prove your edge
+          </Typography>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              gap: 3, 
+              justifyContent: 'center', 
+              flexWrap: 'wrap',
+              mt: 4,
+            }}
+          >
+            {!loading && isAuthorized && (
+              <Button 
+                variant="contained" 
+                size="large" 
+                component={Link} 
+                href="/trades"
+                sx={{
+                  background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
+                  color: 'white',
+                  px: 5,
+                  py: 1.75,
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                  borderRadius: 3,
+                  boxShadow: '0 8px 24px rgba(34, 197, 94, 0.3)',
+                  textTransform: 'none',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #16a34a 0%, #047857 100%)',
+                    boxShadow: '0 12px 32px rgba(34, 197, 94, 0.4)',
+                    transform: 'translateY(-2px)',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                View My Trades
+              </Button>
+            )}
             <Button 
-              variant="contained" 
+              variant="outlined" 
               size="large" 
               component={Link} 
-              href="/trades"
+              href="/leaderboard"
               sx={{
-                background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
-                color: 'white',
-                px: 4,
-                py: 1.5,
+                borderColor: '#22c55e',
+                borderWidth: 2,
+                color: '#22c55e',
+                px: 5,
+                py: 1.75,
                 fontSize: '1.1rem',
                 fontWeight: 600,
-                boxShadow: '0 8px 32px rgba(99, 102, 241, 0.3)',
+                borderRadius: 2,
+                textTransform: 'none',
+                backgroundColor: 'transparent',
+                boxShadow: '0 0 20px rgba(34, 197, 94, 0.2)',
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #4f46e5 0%, #db2777 100%)',
-                  boxShadow: '0 12px 40px rgba(99, 102, 241, 0.4)',
+                  borderColor: '#34d399',
+                  borderWidth: 2,
+                  backgroundColor: 'rgba(34, 197, 94, 0.1)',
                   transform: 'translateY(-2px)',
+                  color: '#34d399',
+                  boxShadow: '0 0 30px rgba(34, 197, 94, 0.4)',
                 },
                 transition: 'all 0.3s ease',
               }}
             >
-              View My Trades
+              View Leaderboard
             </Button>
-          )}
-          <Button 
-            variant="outlined" 
-            size="large" 
-            component={Link} 
-            href="/leaderboard"
-            sx={{
-              borderColor: 'rgba(99, 102, 241, 0.5)',
-              color: 'white',
-              px: 4,
-              py: 1.5,
-              fontSize: '1.1rem',
-              fontWeight: 600,
-              '&:hover': {
-                borderColor: '#6366f1',
-                background: 'rgba(99, 102, 241, 0.1)',
-                transform: 'translateY(-2px)',
-              },
-              transition: 'all 0.3s ease',
-            }}
-          >
-            View Leaderboard
-          </Button>
-        </Box>
-      </motion.div>
-    </Container>
+          </Box>
+        </motion.div>
+      </Container>
+    </Box>
   );
 }
 

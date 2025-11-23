@@ -259,8 +259,8 @@ export default function ProfileForm() {
             size={60}
             thickness={4}
             sx={{
-              color: '#6366f1',
-              filter: 'drop-shadow(0 0 10px rgba(99, 102, 241, 0.5))',
+              color: '#22c55e',
+              filter: 'drop-shadow(0 0 10px rgba(34, 197, 94, 0.5))',
             }}
           />
         </motion.div>
@@ -274,7 +274,7 @@ export default function ProfileForm() {
             sx={{
               color: '#a1a1aa',
               fontWeight: 500,
-              background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
+              background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -284,14 +284,14 @@ export default function ProfileForm() {
           </Typography>
         </motion.div>
         <Box sx={{ width: '100%', mt: 4 }}>
-          <Paper sx={{ p: 3, mb: 3, background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: 2 }}>
+          <Paper sx={{ p: 3, mb: 3, background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: 2 }}>
             <Skeleton variant="text" width="30%" height={32} sx={{ bgcolor: 'rgba(255, 255, 255, 0.1)', mb: 2 }} />
             <Skeleton variant="rectangular" width="100%" height={56} sx={{ borderRadius: 1, bgcolor: 'rgba(255, 255, 255, 0.05)', mb: 2 }} />
             <Skeleton variant="rectangular" width="100%" height={40} sx={{ borderRadius: 1, bgcolor: 'rgba(255, 255, 255, 0.05)' }} />
           </Paper>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' }, background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: 2 }}>
+              <Card key={i} sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' }, background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: 2 }}>
                 <CardContent>
                   <Skeleton variant="text" width="60%" height={20} sx={{ bgcolor: 'rgba(255, 255, 255, 0.1)', mb: 1 }} />
                   <Skeleton variant="text" width="40%" height={32} sx={{ bgcolor: 'rgba(255, 255, 255, 0.15)' }} />
@@ -306,7 +306,7 @@ export default function ProfileForm() {
 
   if (!isAuthorized) {
     return (
-      <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 3, background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
+      <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 3, background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(34, 197, 94, 0.3)' }}>
         <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
           Access Restricted
         </Typography>
@@ -399,9 +399,9 @@ export default function ProfileForm() {
           sx={{
             width: 64,
             height: 64,
-            border: '3px solid rgba(99, 102, 241, 0.5)',
-            background: 'linear-gradient(135deg, #6366f1, #ec4899)',
-            boxShadow: '0 4px 20px rgba(99, 102, 241, 0.3)',
+            border: '3px solid rgba(34, 197, 94, 0.5)',
+            background: 'linear-gradient(135deg, #22c55e, #059669)',
+            boxShadow: '0 4px 20px rgba(34, 197, 94, 0.3)',
           }}
         >
           {(userData?.whopDisplayName || userData?.alias || 'U').charAt(0).toUpperCase()}
@@ -420,23 +420,23 @@ export default function ProfileForm() {
 
       {/* Tabs for owners and companyOwners to switch between Personal and Company profiles */}
       {(role === 'companyOwner') && (
-        <Paper sx={{ mb: 3, background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: 2 }}>
+        <Paper sx={{ mb: 3, background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: 2 }}>
           <Tabs
             value={activeTab}
             onChange={(_, newValue) => setActiveTab(newValue as 'personal' | 'company')}
             sx={{
-              borderBottom: '1px solid rgba(99, 102, 241, 0.3)',
+              borderBottom: '1px solid rgba(34, 197, 94, 0.3)',
               '& .MuiTab-root': {
                 color: '#a1a1aa',
                 textTransform: 'none',
                 fontSize: '1rem',
                 fontWeight: 500,
                 '&.Mui-selected': {
-                  color: '#6366f1',
+                  color: '#22c55e',
                 },
               },
               '& .MuiTabs-indicator': {
-                backgroundColor: '#6366f1',
+                backgroundColor: '#22c55e',
               },
             }}
           >
@@ -448,7 +448,7 @@ export default function ProfileForm() {
 
       {/* Personal Profile Tab */}
         {(activeTab === 'personal' || (role !== 'companyOwner')) && (
-        <Paper sx={{ p: 3, mb: 3, background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: 2 }}>
+        <Paper sx={{ p: 3, mb: 3, background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: 2 }}>
           <Typography variant="h6" sx={{ color: '#ffffff', mb: 3, fontWeight: 600 }}>
             Personal Profile
           </Typography>
@@ -462,13 +462,13 @@ export default function ProfileForm() {
             '& .MuiOutlinedInput-root': {
               color: '#ffffff',
               '& fieldset': {
-                borderColor: 'rgba(99, 102, 241, 0.3)',
+                borderColor: 'rgba(34, 197, 94, 0.3)',
               },
               '&:hover fieldset': {
-                borderColor: 'rgba(99, 102, 241, 0.5)',
+                borderColor: 'rgba(34, 197, 94, 0.5)',
               },
               '&.Mui-focused fieldset': {
-                borderColor: '#6366f1',
+                borderColor: '#22c55e',
               },
             },
             '& .MuiInputLabel-root': {
@@ -497,13 +497,13 @@ export default function ProfileForm() {
             '& .MuiOutlinedInput-root': {
               color: '#ffffff',
               '& fieldset': {
-                borderColor: 'rgba(99, 102, 241, 0.3)',
+                borderColor: 'rgba(34, 197, 94, 0.3)',
               },
               '&:hover fieldset': {
-                borderColor: 'rgba(99, 102, 241, 0.5)',
+                borderColor: 'rgba(34, 197, 94, 0.5)',
               },
               '&.Mui-focused fieldset': {
-                borderColor: '#6366f1',
+                borderColor: '#22c55e',
               },
             },
             '& .MuiInputLabel-root': {
@@ -522,13 +522,13 @@ export default function ProfileForm() {
             '& .MuiOutlinedInput-root': {
               color: '#ffffff',
               '& fieldset': {
-                borderColor: 'rgba(99, 102, 241, 0.3)',
+                borderColor: 'rgba(34, 197, 94, 0.3)',
               },
               '&:hover fieldset': {
-                borderColor: 'rgba(99, 102, 241, 0.5)',
+                borderColor: 'rgba(34, 197, 94, 0.5)',
               },
               '&.Mui-focused fieldset': {
-                borderColor: '#6366f1',
+                borderColor: '#22c55e',
               },
             },
             '& .MuiInputLabel-root': {
@@ -543,10 +543,10 @@ export default function ProfileForm() {
               onChange={(e) => setNotifyOnSettlement(e.target.checked)}
               sx={{
                 '& .MuiSwitch-switchBase.Mui-checked': {
-                  color: '#6366f1',
+                  color: '#22c55e',
                 },
                 '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                  backgroundColor: '#6366f1',
+                  backgroundColor: '#22c55e',
                 },
               }}
             />
@@ -572,7 +572,7 @@ export default function ProfileForm() {
             onClick={handleSave}
             disabled={saving}
             sx={{
-              background: 'linear-gradient(135deg, #6366f1, #ec4899)',
+              background: 'linear-gradient(135deg, #22c55e, #059669)',
               color: '#ffffff',
               px: 4,
               py: 1.5,
@@ -580,10 +580,10 @@ export default function ProfileForm() {
               '&:hover': {
                 background: 'linear-gradient(135deg, #5855eb, #db2777)',
                 transform: 'translateY(-2px)',
-                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
+                boxShadow: '0 4px 12px rgba(34, 197, 94, 0.4)',
               },
               '&:disabled': {
-                background: 'rgba(99, 102, 241, 0.3)',
+                background: 'rgba(34, 197, 94, 0.3)',
                 color: 'rgba(255, 255, 255, 0.5)',
               },
               transition: 'all 0.3s ease',
@@ -597,7 +597,7 @@ export default function ProfileForm() {
 
       {/* Company Profile Tab - Only for owners and companyOwners */}
       {(role === 'companyOwner') && activeTab === 'company' && (
-        <Paper sx={{ p: 3, mb: 3, background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: 2 }}>
+        <Paper sx={{ p: 3, mb: 3, background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))', backdropFilter: 'blur(20px)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: 2 }}>
           <Typography variant="h6" sx={{ color: '#ffffff', mb: 3, fontWeight: 600 }}>
             Company Profile
           </Typography>
@@ -613,10 +613,10 @@ export default function ProfileForm() {
                 onChange={(e) => setOptIn(e.target.checked)}
                 sx={{
                   '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#6366f1',
+                    color: '#22c55e',
                   },
                   '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: '#6366f1',
+                    backgroundColor: '#22c55e',
                   },
                 }}
               />
@@ -635,7 +635,7 @@ export default function ProfileForm() {
           />
 
           {/* Membership Plans Section */}
-          <Divider sx={{ my: 4, borderColor: 'rgba(99, 102, 241, 0.3)' }} />
+          <Divider sx={{ my: 4, borderColor: 'rgba(34, 197, 94, 0.3)' }} />
           <Box mb={3}>
             <Typography variant="h6" sx={{ color: '#ffffff', mb: 1, fontWeight: 600 }}>
               Membership Plans
@@ -651,14 +651,14 @@ export default function ProfileForm() {
             sx={{
               p: 3,
               mb: 3,
-              background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.8), rgba(30, 30, 60, 0.6))',
-              border: '1px solid rgba(99, 102, 241, 0.3)',
+              background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.8), rgba(220, 252, 231, 0.6))',
+              border: '1px solid rgba(34, 197, 94, 0.3)',
               borderRadius: 3,
-              boxShadow: '0 4px 20px rgba(99, 102, 241, 0.1)',
+              boxShadow: '0 4px 20px rgba(34, 197, 94, 0.1)',
               transition: 'all 0.3s ease',
               '&:hover': {
-                borderColor: 'rgba(99, 102, 241, 0.5)',
-                boxShadow: '0 6px 30px rgba(99, 102, 241, 0.2)',
+                borderColor: 'rgba(34, 197, 94, 0.5)',
+                boxShadow: '0 6px 30px rgba(34, 197, 94, 0.2)',
               },
             }}
           >
@@ -668,7 +668,7 @@ export default function ProfileForm() {
                   label={`Plan ${index + 1}`}
                   size="small"
                   sx={{
-                    background: 'linear-gradient(135deg, #6366f1, #ec4899)',
+                    background: 'linear-gradient(135deg, #22c55e, #059669)',
                     color: '#ffffff',
                     fontWeight: 600,
                   }}
@@ -679,7 +679,7 @@ export default function ProfileForm() {
                     size="small"
                     sx={{
                       background: 'rgba(236, 72, 153, 0.2)',
-                      color: '#ec4899',
+                      color: '#059669',
                       border: '1px solid rgba(236, 72, 153, 0.3)',
                     }}
                   />
@@ -712,13 +712,13 @@ export default function ProfileForm() {
                 '& .MuiOutlinedInput-root': {
                   color: '#ffffff',
                   '& fieldset': {
-                    borderColor: 'rgba(99, 102, 241, 0.3)',
+                    borderColor: 'rgba(34, 197, 94, 0.3)',
                   },
                   '&:hover fieldset': {
-                    borderColor: 'rgba(99, 102, 241, 0.5)',
+                    borderColor: 'rgba(34, 197, 94, 0.5)',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#6366f1',
+                    borderColor: '#22c55e',
                   },
                 },
                 '& .MuiInputLabel-root': {
@@ -741,13 +741,13 @@ export default function ProfileForm() {
                 '& .MuiOutlinedInput-root': {
                   color: '#ffffff',
                   '& fieldset': {
-                    borderColor: 'rgba(99, 102, 241, 0.3)',
+                    borderColor: 'rgba(34, 197, 94, 0.3)',
                   },
                   '&:hover fieldset': {
-                    borderColor: 'rgba(99, 102, 241, 0.5)',
+                    borderColor: 'rgba(34, 197, 94, 0.5)',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#6366f1',
+                    borderColor: '#22c55e',
                   },
                 },
                 '& .MuiInputLabel-root': {
@@ -770,13 +770,13 @@ export default function ProfileForm() {
                   '& .MuiOutlinedInput-root': {
                     color: '#ffffff',
                     '& fieldset': {
-                      borderColor: 'rgba(99, 102, 241, 0.3)',
+                      borderColor: 'rgba(34, 197, 94, 0.3)',
                     },
                     '&:hover fieldset': {
-                      borderColor: 'rgba(99, 102, 241, 0.5)',
+                      borderColor: 'rgba(34, 197, 94, 0.5)',
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: '#6366f1',
+                      borderColor: '#22c55e',
                     },
                   },
                   '& .MuiInputLabel-root': {
@@ -791,10 +791,10 @@ export default function ProfileForm() {
                     onChange={(e) => handleMembershipPlanChange(plan.id, 'isPremium', e.target.checked)}
                     sx={{
                       '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#6366f1',
+                        color: '#22c55e',
                       },
                       '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#6366f1',
+                        backgroundColor: '#22c55e',
                       },
                     }}
                   />
@@ -818,13 +818,13 @@ export default function ProfileForm() {
                 '& .MuiOutlinedInput-root': {
                   color: '#ffffff',
                   '& fieldset': {
-                    borderColor: 'rgba(99, 102, 241, 0.3)',
+                    borderColor: 'rgba(34, 197, 94, 0.3)',
                   },
                   '&:hover fieldset': {
-                    borderColor: 'rgba(99, 102, 241, 0.5)',
+                    borderColor: 'rgba(34, 197, 94, 0.5)',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#6366f1',
+                    borderColor: '#22c55e',
                   },
                 },
                 '& .MuiInputLabel-root': {
@@ -844,16 +844,16 @@ export default function ProfileForm() {
             startIcon={<AddIcon />}
             onClick={handleAddMembershipPlan}
             sx={{
-              color: '#6366f1',
-              borderColor: 'rgba(99, 102, 241, 0.3)',
+              color: '#22c55e',
+              borderColor: 'rgba(34, 197, 94, 0.3)',
               px: 3,
               py: 1.5,
               fontWeight: 600,
               '&:hover': {
-                borderColor: '#6366f1',
-                background: 'rgba(99, 102, 241, 0.1)',
+                borderColor: '#22c55e',
+                background: 'rgba(34, 197, 94, 0.1)',
                 transform: 'translateY(-2px)',
-                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.2)',
+                boxShadow: '0 4px 12px rgba(34, 197, 94, 0.2)',
               },
               transition: 'all 0.3s ease',
             }}
@@ -868,7 +868,7 @@ export default function ProfileForm() {
             onClick={handleSave}
             disabled={saving}
             sx={{
-              background: 'linear-gradient(135deg, #6366f1, #ec4899)',
+              background: 'linear-gradient(135deg, #22c55e, #059669)',
               color: '#ffffff',
               px: 4,
               py: 1.5,
@@ -876,10 +876,10 @@ export default function ProfileForm() {
               '&:hover': {
                 background: 'linear-gradient(135deg, #5855eb, #db2777)',
                 transform: 'translateY(-2px)',
-                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
+                boxShadow: '0 4px 12px rgba(34, 197, 94, 0.4)',
               },
               '&:disabled': {
-                background: 'rgba(99, 102, 241, 0.3)',
+                background: 'rgba(34, 197, 94, 0.3)',
                 color: 'rgba(255, 255, 255, 0.5)',
               },
               transition: 'all 0.3s ease',
@@ -905,9 +905,9 @@ export default function ProfileForm() {
               <Paper sx={{
                 p: 3,
                 flex: 1,
-                background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: 2
               }}>
                 <Typography variant="h6" mb={2} sx={{ color: '#ffffff', fontWeight: 600 }}>
@@ -932,8 +932,8 @@ export default function ProfileForm() {
                       </Pie>
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: 'rgba(15, 15, 35, 0.95)',
-                          border: '1px solid rgba(99, 102, 241, 0.3)',
+                          backgroundColor: 'rgba(240, 253, 244, 0.95)',
+                          border: '1px solid rgba(34, 197, 94, 0.3)',
                           borderRadius: '8px',
                           color: '#ffffff'
                         }}
@@ -957,9 +957,9 @@ export default function ProfileForm() {
               <Paper sx={{
                 p: 3,
                 flex: 1,
-                background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: 2
               }}>
                 <Typography variant="h6" mb={2} sx={{ color: '#ffffff', fontWeight: 600 }}>
@@ -968,7 +968,7 @@ export default function ProfileForm() {
                 {barData.length > 0 && barData.some(d => d.value > 0) ? (
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={barData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(99, 102, 241, 0.2)" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 197, 94, 0.2)" />
                       <XAxis
                         dataKey="name"
                         stroke="#a1a1aa"
@@ -980,13 +980,13 @@ export default function ProfileForm() {
                       />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: 'rgba(15, 15, 35, 0.95)',
-                          border: '1px solid rgba(99, 102, 241, 0.3)',
+                          backgroundColor: 'rgba(240, 253, 244, 0.95)',
+                          border: '1px solid rgba(34, 197, 94, 0.3)',
                           borderRadius: '8px',
                           color: '#ffffff'
                         }}
                       />
-                      <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="#6366f1">
+                      <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="#22c55e">
                         {barData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
@@ -1011,9 +1011,9 @@ export default function ProfileForm() {
                 <Paper sx={{
                   p: 3,
                   flex: 1,
-                  background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                  background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                   backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  border: '1px solid rgba(34, 197, 94, 0.3)',
                   borderRadius: 2
                 }}>
                   <Typography variant="h6" mb={2} sx={{ color: '#ffffff', fontWeight: 600 }}>
@@ -1023,11 +1023,11 @@ export default function ProfileForm() {
                     <AreaChart data={timeSeriesData}>
                       <defs>
                         <linearGradient id="roiGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                          <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(99, 102, 241, 0.2)" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 197, 94, 0.2)" />
                       <XAxis
                         dataKey="date"
                         stroke="#a1a1aa"
@@ -1040,8 +1040,8 @@ export default function ProfileForm() {
                       />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: 'rgba(15, 15, 35, 0.95)',
-                          border: '1px solid rgba(99, 102, 241, 0.3)',
+                          backgroundColor: 'rgba(240, 253, 244, 0.95)',
+                          border: '1px solid rgba(34, 197, 94, 0.3)',
                           borderRadius: '8px',
                           color: '#ffffff'
                         }}
@@ -1049,7 +1049,7 @@ export default function ProfileForm() {
                       <Area
                         type="monotone"
                         dataKey="roi"
-                        stroke="#6366f1"
+                        stroke="#22c55e"
                         strokeWidth={3}
                         fillOpacity={1}
                         fill="url(#roiGradient)"
@@ -1062,9 +1062,9 @@ export default function ProfileForm() {
                 <Paper sx={{
                   p: 3,
                   flex: 1,
-                  background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                  background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                   backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  border: '1px solid rgba(34, 197, 94, 0.3)',
                   borderRadius: 2
                 }}>
                   <Typography variant="h6" mb={2} sx={{ color: '#ffffff', fontWeight: 600 }}>
@@ -1078,7 +1078,7 @@ export default function ProfileForm() {
                           <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(99, 102, 241, 0.2)" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 197, 94, 0.2)" />
                       <XAxis
                         dataKey="date"
                         stroke="#a1a1aa"
@@ -1091,8 +1091,8 @@ export default function ProfileForm() {
                       />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: 'rgba(15, 15, 35, 0.95)',
-                          border: '1px solid rgba(99, 102, 241, 0.3)',
+                          backgroundColor: 'rgba(240, 253, 244, 0.95)',
+                          border: '1px solid rgba(34, 197, 94, 0.3)',
                           borderRadius: '8px',
                           color: '#ffffff'
                         }}
@@ -1115,9 +1115,9 @@ export default function ProfileForm() {
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: 2
               }}>
                 <CardContent>
@@ -1130,9 +1130,9 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: 2
               }}>
                 <CardContent>
@@ -1145,9 +1145,9 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: 2
               }}>
                 <CardContent>
@@ -1168,9 +1168,9 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: 2
               }}>
                 <CardContent>
@@ -1191,9 +1191,9 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: 2
               }}>
                 <CardContent>
@@ -1218,9 +1218,9 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: 2
               }}>
                 <CardContent>
@@ -1245,9 +1245,9 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: 2
               }}> 
                 <CardContent>
@@ -1260,9 +1260,9 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: 2
               }}>
                 <CardContent>
@@ -1290,9 +1290,9 @@ export default function ProfileForm() {
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: 2
               }}>
                 <CardContent>
@@ -1305,9 +1305,9 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: 2
               }}>
                 <CardContent>
@@ -1320,9 +1320,9 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: 2
               }}>
                 <CardContent>
@@ -1343,9 +1343,9 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: 2
               }}>
                 <CardContent>
@@ -1366,9 +1366,9 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: 2
               }}>
                 <CardContent>
@@ -1381,9 +1381,9 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(30, 30, 60, 0.8))',
+                background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.9), rgba(220, 252, 231, 0.8))',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
                 borderRadius: 2
               }}>
                 <CardContent>

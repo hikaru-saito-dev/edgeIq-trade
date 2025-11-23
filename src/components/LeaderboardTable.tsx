@@ -122,7 +122,23 @@ export default function LeaderboardTable() {
   return (
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} gap={2} flexWrap="wrap">
-        <Tabs value={range} onChange={(_, v) => { setRange(v); setPage(1); }}>
+        <Tabs 
+          value={range} 
+          onChange={(_, v) => { setRange(v); setPage(1); }}
+          sx={{
+            '& .MuiTab-root': {
+              color: '#6b7280',
+              fontWeight: 500,
+              '&.Mui-selected': {
+                color: '#2D503D',
+                fontWeight: 600,
+              },
+            },
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#2D503D',
+            },
+          }}
+        >
           <Tab label="All" value="all" />
           <Tab label="30d" value="30d" />
           <Tab label="7d" value="7d" />
@@ -133,17 +149,32 @@ export default function LeaderboardTable() {
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchLeaderboard(); } }}
             placeholder="Search users (alias/display/username)"
-            style={{ background: 'transparent', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 6, padding: '8px 10px', color: '#fff', width: 260 }}
+            style={{ background: '#ffffff', border: '1px solid rgba(45,80,61,0.3)', borderRadius: 6, padding: '8px 10px', color: '#2D503D', width: 260 }}
           />
-          <Button variant="outlined" size="small" onClick={() => { setPage(1); fetchLeaderboard(); }}>Search</Button>
-          <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>Page size</Typography>
+          <Button 
+            variant="outlined" 
+            size="small" 
+            onClick={() => { setPage(1); fetchLeaderboard(); }}
+            sx={{
+              color: '#2D503D',
+              borderColor: 'rgba(45,80,61,0.3)',
+              backgroundColor: '#ffffff',
+              '&:hover': {
+                borderColor: '#2D503D',
+                backgroundColor: 'rgba(45,80,61,0.1)',
+              },
+            }}
+          >
+            Search
+          </Button>
+          <Typography variant="body2" sx={{ ml: 2, color: '#2D503D' }}>Page size</Typography>
           <select
             value={pageSize}
             onChange={(e) => { setPageSize(parseInt(e.target.value, 10)); setPage(1); }}
-            style={{ background: 'transparent', color: '#fff', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 6, padding: '8px 10px' }}
+            style={{ background: '#ffffff', color: '#2D503D', border: '1px solid rgba(45,80,61,0.3)', borderRadius: 6, padding: '8px 10px' }}
           >
             {[10, 20, 50].map((s) => (
-              <option key={s} value={s} style={{ color: '#000' }}>{s}</option>
+              <option key={s} value={s} style={{ color: '#2D503D' }}>{s}</option>
             ))}
           </select>
         </Box>
@@ -152,23 +183,30 @@ export default function LeaderboardTable() {
       {loading ? (
         <Box>
           {[...Array(5)].map((_, i) => (
-            <Paper key={i} sx={{ p: 2, mb: 2 }}>
+            <Paper key={i} sx={{ p: 2, mb: 2, background: 'rgba(255, 255, 255, 0.9)', border: '1px solid rgba(45, 80, 61, 0.2)' }}>
               <Box display="flex" alignItems="center" gap={2}>
-                <Skeleton variant="circular" width={32} height={32} sx={{ bgcolor: 'rgba(255,255,255,0.12)' }} />
+                <Skeleton variant="circular" width={32} height={32} sx={{ bgcolor: 'rgba(45, 80, 61, 0.1)' }} />
                 <Box flex={1}>
-                  <Skeleton variant="text" width="40%" height={24} sx={{ bgcolor: 'rgba(255, 255, 255, 0.1)', mb: 1 }} />
-                  <Skeleton variant="text" width="60%" height={20} sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)' }} />
+                  <Skeleton variant="text" width="40%" height={24} sx={{ bgcolor: 'rgba(45, 80, 61, 0.1)', mb: 1 }} />
+                  <Skeleton variant="text" width="60%" height={20} sx={{ bgcolor: 'rgba(45, 80, 61, 0.05)' }} />
                 </Box>
                 <Box display="flex" gap={2}>
-                  <Skeleton variant="rectangular" width={80} height={40} sx={{ borderRadius: 2, bgcolor: 'rgba(99, 102, 241, 0.2)' }} />
-                  <Skeleton variant="rectangular" width={80} height={40} sx={{ borderRadius: 2, bgcolor: 'rgba(236, 72, 153, 0.2)' }} />
+                  <Skeleton variant="rectangular" width={80} height={40} sx={{ borderRadius: 2, bgcolor: 'rgba(45, 80, 61, 0.1)' }} />
+                  <Skeleton variant="rectangular" width={80} height={40} sx={{ borderRadius: 2, bgcolor: 'rgba(45, 80, 61, 0.1)' }} />
                 </Box>
               </Box>
             </Paper>
           ))}
         </Box>
       ) : (
-        <TableContainer component={Paper}>
+        <TableContainer 
+          component={Paper}
+          sx={{
+            background: 'rgba(255, 255, 255, 0.9)',
+            border: '1px solid rgba(45, 80, 61, 0.2)',
+            boxShadow: '0 4px 16px rgba(45, 80, 61, 0.1)',
+          }}
+        >
           <Table>
             <TableHead>
               <TableRow>
@@ -208,11 +246,11 @@ export default function LeaderboardTable() {
                           {(entry.alias || entry.whopDisplayName || '?').charAt(0).toUpperCase()}
                         </Avatar>
                         <Box>
-                          <Typography variant="body2" sx={{ color: '#fff', fontWeight: 500 }}>
+                          <Typography variant="body2" sx={{ color: '#2D503D', fontWeight: 500 }}>
                             {entry.alias || entry.whopDisplayName}
                           </Typography>
                           {entry.whopUsername && (
-                            <Typography variant="caption" sx={{ color: '#a1a1aa' }}>
+                            <Typography variant="caption" sx={{ color: '#6b7280' }}>
                               @{entry.whopUsername}
                             </Typography>
                           )}
@@ -240,7 +278,7 @@ export default function LeaderboardTable() {
                         size="small"
                       />
                     </TableCell>
-                    <TableCell align="right">{entry.plays}</TableCell>
+                    <TableCell align="right" sx={{ color: '#2D503D' }}>{entry.plays}</TableCell>
                     <TableCell align="right">
                       <Chip 
                         label={entry.winCount || 0}
@@ -256,38 +294,56 @@ export default function LeaderboardTable() {
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <Chip 
-                        label={
-                          <Box display="flex" alignItems="center" gap={0.5}>
-                            {(entry.currentStreak || 0) > 0 && (
-                              <LocalFireDepartmentIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
-                            )}
-                            <span>{entry.currentStreak || 0}</span>
-                          </Box>
-                        }
-                        color={(entry.currentStreak || 0) > 0 ? 'success' : (entry.currentStreak || 0) < 0 ? 'error' : 'default'}
-                        size="small"
-                        sx={{
-                          color: (entry.currentStreak || 0) > 0 ? '#10b981' : (entry.currentStreak || 0) < 0 ? '#ef4444' : undefined,
-                        }}
-                      />
+                      {(entry.currentStreak || 0) > 0 ? (
+                        <Chip 
+                          icon={<LocalFireDepartmentIcon sx={{ fontSize: 16, color: '#f59e0b' }} />}
+                          label={entry.currentStreak}
+                          size="small"
+                          sx={{
+                            backgroundColor: 'rgba(240, 253, 244, 0.9)',
+                            color: '#059669',
+                            border: '1px solid rgba(34, 197, 94, 0.2)',
+                            fontWeight: 600,
+                            '& .MuiChip-icon': {
+                              color: '#f59e0b',
+                            },
+                          }}
+                        />
+                      ) : (entry.currentStreak || 0) < 0 ? (
+                        <Chip 
+                          label={Math.abs(entry.currentStreak)}
+                          size="small"
+                          color="error"
+                        />
+                      ) : (
+                        <Typography variant="body2" sx={{ color: '#6b7280' }}>-</Typography>
+                      )}
                     </TableCell>
                     <TableCell align="right">
-                      <Chip 
-                        label={
-                          <Box display="flex" alignItems="center" gap={0.5}>
-                            {(entry.longestStreak || 0) > 0 && (
-                              <LocalFireDepartmentIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
-                            )}
-                            <span>{entry.longestStreak || 0}</span>
-                          </Box>
-                        }
-                        color={(entry.longestStreak || 0) > 0 ? 'success' : (entry.longestStreak || 0) < 0 ? 'error' : 'default'}
-                        size="small"
-                        sx={{
-                          color: (entry.longestStreak || 0) > 0 ? '#10b981' : (entry.longestStreak || 0) < 0 ? '#ef4444' : undefined,
-                        }}
-                      />
+                      {(entry.longestStreak || 0) > 0 ? (
+                        <Chip 
+                          icon={<LocalFireDepartmentIcon sx={{ fontSize: 16, color: '#f59e0b' }} />}
+                          label={entry.longestStreak}
+                          size="small"
+                          sx={{
+                            backgroundColor: 'rgba(240, 253, 244, 0.9)',
+                            color: '#059669',
+                            border: '1px solid rgba(34, 197, 94, 0.2)',
+                            fontWeight: 600,
+                            '& .MuiChip-icon': {
+                              color: '#f59e0b',
+                            },
+                          }}
+                        />
+                      ) : (entry.longestStreak || 0) < 0 ? (
+                        <Chip 
+                          label={Math.abs(entry.longestStreak)}
+                          size="small"
+                          color="error"
+                        />
+                      ) : (
+                        <Typography variant="body2" sx={{ color: '#6b7280' }}>-</Typography>
+                      )}
                     </TableCell>
                     <TableCell align="center">
                       {entry.membershipPlans && entry.membershipPlans.length > 0 ? (
@@ -296,17 +352,17 @@ export default function LeaderboardTable() {
                           size="small"
                           onClick={() => handleViewMembership(entry)}
                           sx={{
-                            background: 'linear-gradient(135deg, #6366f1, #ec4899)',
+                            background: 'linear-gradient(135deg, #22c55e, #059669)',
                             color: 'white',
                             '&:hover': {
-                              background: 'linear-gradient(135deg, #4f46e5, #db2777)',
+                              background: 'linear-gradient(135deg, #16a34a, #047857)',
                             },
                           }}
                         >
                           View Membership
                         </Button>
                       ) : (
-                        <Typography variant="caption" sx={{ color: '#a1a1aa' }}>
+                        <Typography variant="caption" sx={{ color: '#6b7280' }}>
                           No membership
                         </Typography>
                       )}
@@ -317,9 +373,45 @@ export default function LeaderboardTable() {
             </TableBody>
           </Table>
           <Box display="flex" justifyContent="center" py={2} gap={2} alignItems="center">
-            <Button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Prev</Button>
-            <Typography variant="body2" color="text.secondary">Page {page} / {totalPages}</Typography>
-            <Button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+            <Button 
+              disabled={page <= 1} 
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              sx={{
+                color: '#2D503D',
+                borderColor: 'rgba(45,80,61,0.3)',
+                backgroundColor: '#ffffff',
+                '&:hover': {
+                  borderColor: '#2D503D',
+                  backgroundColor: 'rgba(45,80,61,0.1)',
+                },
+                '&:disabled': {
+                  borderColor: 'rgba(45,80,61,0.2)',
+                  color: 'rgba(45,80,61,0.4)',
+                },
+              }}
+            >
+              Prev
+            </Button>
+            <Typography variant="body2" sx={{ color: '#2D503D' }}>Page {page} / {totalPages}</Typography>
+            <Button 
+              disabled={page >= totalPages} 
+              onClick={() => setPage((p) => p + 1)}
+              sx={{
+                color: '#2D503D',
+                borderColor: 'rgba(45,80,61,0.3)',
+                backgroundColor: '#ffffff',
+                '&:hover': {
+                  borderColor: '#2D503D',
+                  backgroundColor: 'rgba(45,80,61,0.1)',
+                },
+                '&:disabled': {
+                  borderColor: 'rgba(45,80,61,0.2)',
+                  color: 'rgba(45,80,61,0.4)',
+                },
+              }}
+            >
+              Next
+            </Button>
           </Box>
         </TableContainer>
       )}
@@ -332,14 +424,15 @@ export default function LeaderboardTable() {
         fullWidth
         PaperProps={{
           sx: {
-            background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.95), rgba(30, 30, 60, 0.95))',
+            background: 'rgba(255, 255, 255, 0.98)',
             backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(99, 102, 241, 0.3)',
+            border: '1px solid rgba(45, 80, 61, 0.2)',
             borderRadius: 3,
+            boxShadow: '0 8px 32px rgba(45, 80, 61, 0.2)',
           },
         }}
       >
-        <DialogTitle sx={{ color: '#ffffff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <DialogTitle sx={{ color: '#2D503D', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box display="flex" alignItems="center" gap={2}>
             {selectedCompany?.whopAvatarUrl && (
               <Avatar src={selectedCompany.whopAvatarUrl} sx={{ width: 40, height: 40 }}>
@@ -347,27 +440,27 @@ export default function LeaderboardTable() {
               </Avatar>
             )}
             <Box>
-              <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 600 }}>
+              <Typography variant="h6" sx={{ color: '#2D503D', fontWeight: 600 }}>
                 {selectedCompany?.whopDisplayName || selectedCompany?.alias}
               </Typography>
               {selectedCompany?.whopUsername && (
-                <Typography variant="caption" sx={{ color: '#a1a1aa' }}>
+                <Typography variant="caption" sx={{ color: '#6b7280' }}>
                   @{selectedCompany.whopUsername}
                 </Typography>
               )}
-              <Typography variant="caption" sx={{ color: '#a1a1aa', display: 'block', mt: 0.5 }}>
+              <Typography variant="caption" sx={{ color: '#6b7280', display: 'block', mt: 0.5 }}>
                 Membership Plans
               </Typography>
             </Box>
           </Box>
           <IconButton
             onClick={handleCloseModal}
-            sx={{ color: '#a1a1aa', '&:hover': { color: '#ffffff' } }}
+            sx={{ color: '#6b7280', '&:hover': { color: '#2D503D' } }}
           >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <Divider sx={{ borderColor: 'rgba(99, 102, 241, 0.3)' }} />
+        <Divider sx={{ borderColor: 'rgba(45, 80, 61, 0.2)' }} />
         <DialogContent sx={{ mt: 2 }}>
           {selectedCompany?.membershipPlans && selectedCompany.membershipPlans.length > 0 ? (
             <Box display="flex" flexDirection="column" gap={3}>
@@ -376,20 +469,20 @@ export default function LeaderboardTable() {
                   key={plan.id}
                   sx={{
                     p: 3,
-                    background: 'linear-gradient(135deg, rgba(15, 15, 35, 0.8), rgba(30, 30, 60, 0.6))',
-                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                    background: 'rgba(240, 253, 244, 0.8)',
+                    border: '1px solid rgba(45, 80, 61, 0.2)',
                     borderRadius: 2,
                     transition: 'all 0.3s ease',
                     '&:hover': {
-                      borderColor: 'rgba(99, 102, 241, 0.5)',
-                      boxShadow: '0 4px 20px rgba(99, 102, 241, 0.2)',
+                      borderColor: 'rgba(45, 80, 61, 0.4)',
+                      boxShadow: '0 4px 20px rgba(45, 80, 61, 0.15)',
                     },
                   }}
                 >
                   <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
                     <Box flex={1}>
                       <Box display="flex" alignItems="center" gap={1} mb={1}>
-                        <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 600 }}>
+                        <Typography variant="h6" sx={{ color: '#2D503D', fontWeight: 600 }}>
                           {plan.name}
                         </Typography>
                         {plan.isPremium && (
@@ -397,19 +490,19 @@ export default function LeaderboardTable() {
                             label="Premium"
                             size="small"
                             sx={{
-                              background: 'rgba(236, 72, 153, 0.2)',
-                              color: '#ec4899',
-                              border: '1px solid rgba(236, 72, 153, 0.3)',
+                              background: 'rgba(34, 197, 94, 0.2)',
+                              color: '#059669',
+                              border: '1px solid rgba(34, 197, 94, 0.3)',
                             }}
                           />
                         )}
                       </Box>
                       {plan.description && (
-                        <Typography variant="body2" sx={{ color: '#a1a1aa', mb: 1 }}>
+                        <Typography variant="body2" sx={{ color: '#6b7280', mb: 1 }}>
                           {plan.description}
                         </Typography>
                       )}
-                      <Typography variant="body2" sx={{ color: '#6366f1', fontWeight: 600 }}>
+                      <Typography variant="body2" sx={{ color: '#2D503D', fontWeight: 600 }}>
                         {plan.price}
                       </Typography>
                     </Box>
@@ -423,15 +516,15 @@ export default function LeaderboardTable() {
                         onClick={() => window.open(plan.affiliateLink!, '_blank', 'noopener,noreferrer')}
                         startIcon={<LaunchIcon />}
                         sx={{
-                          background: 'linear-gradient(135deg, #6366f1, #ec4899)',
+                          background: 'linear-gradient(135deg, #22c55e, #059669)',
                           color: 'white',
                           py: 1.5,
                           fontWeight: 600,
-                          boxShadow: '0 4px 20px rgba(99, 102, 241, 0.3)',
+                          boxShadow: '0 4px 20px rgba(34, 197, 94, 0.3)',
                           '&:hover': {
-                            background: 'linear-gradient(135deg, #4f46e5, #db2777)',
+                            background: 'linear-gradient(135deg, #16a34a, #047857)',
                             transform: 'translateY(-2px)',
-                            boxShadow: '0 6px 30px rgba(99, 102, 241, 0.4)',
+                            boxShadow: '0 6px 30px rgba(34, 197, 94, 0.4)',
                           },
                           transition: 'all 0.3s ease',
                         }}
@@ -445,19 +538,19 @@ export default function LeaderboardTable() {
             </Box>
           ) : (
             <Box textAlign="center" py={4}>
-              <Typography variant="body1" sx={{ color: '#a1a1aa' }}>
+              <Typography variant="body1" sx={{ color: '#6b7280' }}>
                 No membership plans available
               </Typography>
             </Box>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 2, borderTop: '1px solid rgba(99, 102, 241, 0.3)' }}>
+        <DialogActions sx={{ p: 2, borderTop: '1px solid rgba(45, 80, 61, 0.2)' }}>
           <Button
             onClick={handleCloseModal}
             sx={{
-              color: '#ffffff',
+              color: '#2D503D',
               '&:hover': {
-                background: 'rgba(99, 102, 241, 0.1)',
+                background: 'rgba(45, 80, 61, 0.1)',
               },
             }}
           >
