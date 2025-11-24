@@ -21,7 +21,11 @@ const dateStringSchema = z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, {
  * Schema for creating a new BUY trade
  */
 export const createTradeSchema = z.object({
-  contracts: z.number().int().positive('Number of contracts must be greater than 0'),
+  contracts: z
+    .number()
+    .int()
+    .positive('Number of contracts must be greater than 0')
+    .max(5, 'A maximum of 5 contracts can be submitted per trade'),
   ticker: z.string().min(1).max(10).regex(/^[A-Z]+$/, {
     message: 'Ticker must be alphabetic (e.g., "AAPL")',
   }).transform((val) => val.toUpperCase()),

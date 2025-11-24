@@ -185,11 +185,25 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               label="Number of Contracts"
               type="number"
               value={contracts}
-              onChange={(e) => setContracts(e.target.value)}
-              inputProps={{ min: 1 }}
+              onChange={(e) => {
+                const nextValue = e.target.value;
+                if (nextValue === '') {
+                  setContracts('');
+                  return;
+                }
+
+                const parsed = parseInt(nextValue, 10);
+                if (Number.isNaN(parsed)) {
+                  return;
+                }
+
+                const clamped = Math.max(1, Math.min(5, parsed));
+                setContracts(clamped.toString());
+              }}
+              inputProps={{ min: 1, max: 5 }}
               required
               fullWidth
-              helperText="Must be a positive integer"
+              helperText="Enter between 1 and 5 contracts per trade"
               sx={{
                 '& .MuiOutlinedInput-root': {
                   color: '#2D503D',
