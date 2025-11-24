@@ -19,6 +19,7 @@ const dateStringSchema = z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, {
 
 /**
  * Schema for creating a new BUY trade
+ * All trades must use market orders (fill price determined automatically)
  */
 export const createTradeSchema = z.object({
   contracts: z
@@ -32,33 +33,20 @@ export const createTradeSchema = z.object({
   strike: z.number().positive('Strike price must be greater than 0'),
   optionType: optionTypeSchema,
   expiryDate: dateStringSchema,
-  fillPrice: z.number().positive('Fill price must be greater than 0').optional(),
-  marketOrder: z.boolean().optional(),
-}).refine(
-  (data) => data.marketOrder || typeof data.fillPrice === 'number',
-  {
-    message: 'Fill price is required for limit orders',
-    path: ['fillPrice'],
-  }
-);
+  marketOrder: z.boolean().default(true), // Always true - market orders only
+});
 
 export type CreateTradeInput = z.infer<typeof createTradeSchema>;
 
 /**
  * Schema for settling a trade (SELL/scale-out)
+ * All settlements must use market orders (fill price determined automatically)
  */
 export const settleTradeSchema = z.object({
   tradeId: z.string().min(1, 'Trade ID is required'),
   contracts: z.number().int().positive('Number of contracts must be greater than 0'),
-  fillPrice: z.number().positive('Fill price must be greater than 0').optional(),
-  marketOrder: z.boolean().optional(),
-}).refine(
-  (data) => data.marketOrder || typeof data.fillPrice === 'number',
-  {
-    message: 'Fill price is required for limit orders',
-    path: ['fillPrice'],
-  }
-);
+  marketOrder: z.boolean().default(true), // Always true - market orders only
+});
 
 export type SettleTradeInput = z.infer<typeof settleTradeSchema>;
 

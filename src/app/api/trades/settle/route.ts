@@ -6,7 +6,7 @@ import { User } from '@/models/User';
 import { Log } from '@/models/Log';
 import { settleTradeSchema } from '@/utils/tradeValidation';
 import { isMarketOpen } from '@/utils/marketHours';
-import { validateOptionPrice, formatExpiryDateForAPI, getContractByTicker, getOptionContractSnapshot, getMarketFillPrice } from '@/lib/polygon';
+import { formatExpiryDateForAPI, getContractByTicker, getOptionContractSnapshot, getMarketFillPrice } from '@/lib/polygon';
 import { notifyTradeSettled } from '@/lib/tradeNotifications';
 import { z } from 'zod';
 
@@ -93,94 +93,48 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Price verification via Massive.com API
+    // Always use market orders - fetch market price via Massive.com API
     // Use stored option contract if available, otherwise reconstruct
     const expiryDateAPI = formatExpiryDateForAPI(
       `${String(trade.expiryDate.getMonth() + 1).padStart(2, '0')}/${String(trade.expiryDate.getDate()).padStart(2, '0')}/${trade.expiryDate.getFullYear()}`
     );
     const contractType = trade.optionType === 'C' ? 'call' : 'put';
     
-    const isMarketOrder = !!validated.marketOrder;
-    let finalFillPrice: number | null = null;
-    let referencePrice: number | null = null;
-    let refTimestamp = new Date();
+    let snapshot = null;
 
-    if (isMarketOrder) {
-      let snapshot = null;
+    if (trade.optionContract) {
+      snapshot = await getContractByTicker(trade.ticker, trade.optionContract);
+    }
 
-      if (trade.optionContract) {
-        snapshot = await getContractByTicker(trade.ticker, trade.optionContract);
-      }
-
-      if (!snapshot) {
-        snapshot = await getOptionContractSnapshot(
-          trade.ticker,
-          trade.strike,
-          expiryDateAPI,
-          contractType
-        );
-      }
-
-      if (!snapshot) {
-        return NextResponse.json({
-          error: 'Unable to fetch market data to settle trade. Please try again.',
-        }, { status: 400 });
-      }
-
-      const marketFillPrice = getMarketFillPrice(snapshot);
-      if (marketFillPrice === null) {
-        return NextResponse.json({
-          error: 'Unable to determine market price. Please try again.',
-        }, { status: 400 });
-      }
-
-      finalFillPrice = marketFillPrice;
-      referencePrice = snapshot.last_quote?.midpoint ?? snapshot.last_trade?.price ?? marketFillPrice;
-      refTimestamp = new Date();
-
-      const optionContractTicker = snapshot.details?.ticker || snapshot.ticker || null;
-      if (!trade.optionContract && optionContractTicker) {
-        trade.optionContract = optionContractTicker;
-      }
-    } else {
-      const priceValidation = await validateOptionPrice(
+    if (!snapshot) {
+      snapshot = await getOptionContractSnapshot(
         trade.ticker,
         trade.strike,
         expiryDateAPI,
-        contractType,
-        validated.fillPrice,
-        trade.optionContract || undefined
+        contractType
       );
-
-      if (!priceValidation.isValid || !priceValidation.refPrice) {
-        // Reject SELL fill - price is outside ±5% band
-        await Log.create({
-          userId: user._id,
-          action: 'trade_settle_rejected',
-          metadata: {
-            tradeId: trade._id,
-            reason: priceValidation.error || 'Fill price is outside allowed 5% range vs market at time of submission.',
-          },
-        });
-
-        return NextResponse.json({
-          error: priceValidation.error || 'Fill price is outside allowed 5% range vs market at time of submission. Trade not recorded.',
-        }, { status: 400 });
-      }
-
-      finalFillPrice = validated.fillPrice!;
-      referencePrice = priceValidation.refPrice;
-      refTimestamp = priceValidation.refTimestamp || new Date();
-
-      if (!trade.optionContract && priceValidation.optionContract) {
-        trade.optionContract = priceValidation.optionContract;
-      }
     }
 
-    if (finalFillPrice === null) {
+    if (!snapshot) {
       return NextResponse.json({
-        error: 'Unable to determine fill price. Please try again.',
+        error: 'Unable to fetch market data to settle trade. Please try again.',
       }, { status: 400 });
+    }
+
+    const marketFillPrice = getMarketFillPrice(snapshot);
+    if (marketFillPrice === null) {
+      return NextResponse.json({
+        error: 'Unable to determine market price. Please try again.',
+      }, { status: 400 });
+    }
+
+    const finalFillPrice = marketFillPrice;
+    const referencePrice = snapshot.last_quote?.midpoint ?? snapshot.last_trade?.price ?? marketFillPrice;
+    const refTimestamp = new Date();
+
+    const optionContractTicker = snapshot.details?.ticker || snapshot.ticker || null;
+    if (!trade.optionContract && optionContractTicker) {
+      trade.optionContract = optionContractTicker;
     }
 
     // Calculate notional for this SELL fill
@@ -197,6 +151,7 @@ export async function POST(request: NextRequest) {
       refTimestamp,
       notional: sellNotional,
       companyId: companyId,
+      isMarketOrder: true, // Always market orders
     });
 
     // Update trade: reduce remaining contracts

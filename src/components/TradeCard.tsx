@@ -13,8 +13,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  FormControlLabel,
-  Switch,
   Alert,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -66,8 +64,6 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
   const [loading, setLoading] = useState(false);
   const [settleOpen, setSettleOpen] = useState(false);
   const [settleContracts, setSettleContracts] = useState<number>(1);
-  const [settlePrice, setSettlePrice] = useState<string>('');
-  const [settleOrderType, setSettleOrderType] = useState<'market' | 'limit'>('limit');
   const [fillsExpanded, setFillsExpanded] = useState(false);
   const { userId, companyId } = useAccess();
 
@@ -102,14 +98,6 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
   };
 
   const handleSettle = async () => {
-    if (
-      settleOrderType === 'limit' &&
-      (!settlePrice || isNaN(parseFloat(settlePrice)) || parseFloat(settlePrice) <= 0)
-    ) {
-      toast.showError('Please enter a valid fill price');
-      return;
-    }
-
     if (settleContracts > trade.remainingOpenContracts) {
       toast.showError(`Cannot sell ${settleContracts} contracts. Only ${trade.remainingOpenContracts} remaining.`);
       return;
@@ -117,16 +105,11 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
 
     setLoading(true);
     try {
-      const payload: Record<string, unknown> = {
+      const payload = {
         tradeId: trade._id,
         contracts: settleContracts,
+        marketOrder: true, // Always use market orders
       };
-
-      if (settleOrderType === 'market') {
-        payload.marketOrder = true;
-      } else {
-        payload.fillPrice = parseFloat(settlePrice);
-      }
 
       const res = await apiRequest('/api/trades/settle', {
         method: 'POST',
@@ -140,8 +123,6 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
         toast.showSuccess(data.message || 'Trade settled successfully');
         setSettleOpen(false);
         setSettleContracts(1);
-        setSettlePrice('');
-        setSettleOrderType('limit');
         if (onUpdate) onUpdate();
       } else {
         const error = await res.json();
@@ -407,8 +388,6 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
                 disabled={loading}
                 onClick={() => {
                   setSettleContracts(Math.min(1, trade.remainingOpenContracts));
-                  setSettlePrice('');
-                  setSettleOrderType('limit');
                   setSettleOpen(true);
                 }}
               >
@@ -432,33 +411,12 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
 
       {/* Settle Dialog */}
       <Dialog open={settleOpen} onClose={() => setSettleOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Settle Trade</DialogTitle>
+        <DialogTitle sx={{ color: '#2D503D', fontWeight: 600 }}>Settle Trade</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={settleOrderType === 'market'}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    setSettleOrderType(checked ? 'market' : 'limit');
-                    if (checked) {
-                      setSettlePrice('');
-                    }
-                  }}
-                />
-              }
-              label={
-                <Box>
-                  <Typography variant="body2" sx={{ color: '#2D503D', fontWeight: 600 }}>
-                    Market Sell
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
-                    Automatically sells at the latest midpoint or last trade price.
-                  </Typography>
-                </Box>
-              }
-            />
+            <Alert severity="info" sx={{ backgroundColor: 'rgba(45, 80, 61, 0.1)', color: '#2D503D' }}>
+              Sell price will be automatically determined using the latest midpoint or last trade price from the market.
+            </Alert>
             <TextField
               label="Contracts to Sell"
               type="number"
@@ -470,48 +428,57 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
               inputProps={{ min: 1, max: trade.remainingOpenContracts }}
               helperText={`Remaining: ${trade.remainingOpenContracts} contracts`}
               fullWidth
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  color: '#2D503D',
+                  backgroundColor: '#ffffff',
+                  '& fieldset': {
+                    borderColor: 'rgba(45, 80, 61, 0.3)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(45, 80, 61, 0.5)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#2D503D',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#6b7280',
+                },
+                '& .MuiFormHelperText-root': {
+                  color: '#6b7280',
+                },
+              }}
             />
-            {settleOrderType === 'limit' ? (
-              <TextField
-                label="Fill Price (per contract)"
-                type="number"
-                value={settlePrice}
-                onChange={(e) => setSettlePrice(e.target.value)}
-                inputProps={{ step: '0.01', min: '0.01' }}
-                InputProps={{
-                  startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
-                }}
-                helperText="Price per contract (must be within ±5% of market price)"
-                fullWidth
-              />
-            ) : (
-              <Alert severity="info">
-                Price will be fetched automatically using the latest midpoint or last trade price.
-              </Alert>
-            )}
-            {settleOrderType === 'limit' && settlePrice && !isNaN(parseFloat(settlePrice)) && (
-              <Box sx={{ p: 1.5, background: 'rgba(34, 197, 94, 0.1)', borderRadius: 1 }}>
-                <Typography variant="body2" sx={{ color: '#166534' }}>
-                  Total Notional: <strong style={{ color: '#064e3b' }}>
-                    {formatNotional(settleContracts * parseFloat(settlePrice) * 100)}
-                  </strong>
-                </Typography>
-              </Box>
-            )}
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => { setSettleOpen(false); setSettleOrderType('limit'); }}>
+          <Button 
+            onClick={() => setSettleOpen(false)} 
+            disabled={loading}
+            sx={{
+              color: '#6b7280',
+              '&:hover': {
+                backgroundColor: 'rgba(45, 80, 61, 0.05)',
+              },
+            }}
+          >
             Cancel
           </Button>
           <Button 
             variant="contained" 
             onClick={handleSettle}
-            disabled={
-              loading ||
-              (settleOrderType === 'limit' &&
-                (!settlePrice || isNaN(parseFloat(settlePrice)) || parseFloat(settlePrice) <= 0))
-            }
+            disabled={loading}
+            sx={{
+              background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
+              color: '#ffffff',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #16a34a 0%, #047857 100%)',
+              },
+              '&:disabled': {
+                background: 'rgba(34, 197, 94, 0.3)',
+              },
+            }}
           >
             {loading ? 'Settling...' : 'Settle'}
           </Button>

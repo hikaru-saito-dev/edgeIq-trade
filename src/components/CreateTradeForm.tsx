@@ -16,8 +16,6 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
-  FormControlLabel,
-  Switch,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useToast } from './ToastProvider';
@@ -44,8 +42,6 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
   const [strike, setStrike] = useState<string>('');
   const [optionType, setOptionType] = useState<'C' | 'P'>('C');
   const [expiryDate, setExpiryDate] = useState<string>('');
-  const [fillPrice, setFillPrice] = useState<string>('');
-  const [useMarketOrder, setUseMarketOrder] = useState<boolean>(false);
 
   // Check market hours
   useEffect(() => {
@@ -68,14 +64,13 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
     }
 
     // Validate form
-    if (!contracts || !ticker || !strike || !expiryDate || (!useMarketOrder && !fillPrice)) {
+    if (!contracts || !ticker || !strike || !expiryDate) {
       toast.showError('Please fill in all required fields');
       return;
     }
 
     const contractsNum = parseInt(contracts);
     const strikeNum = parseFloat(strike);
-    let fillPriceNum: number | undefined;
 
     if (contractsNum <= 0) {
       toast.showError('Number of contracts must be greater than 0');
@@ -87,14 +82,6 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
       return;
     }
 
-    if (!useMarketOrder) {
-      fillPriceNum = parseFloat(fillPrice);
-      if (!fillPrice || Number.isNaN(fillPriceNum) || fillPriceNum <= 0) {
-        toast.showError('Fill price must be greater than 0');
-        return;
-      }
-    }
-
     // Validate expiry date format (MM/DD/YYYY)
     const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
     if (!dateRegex.test(expiryDate)) {
@@ -104,19 +91,14 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
 
     setLoading(true);
     try {
-      const payload: Record<string, unknown> = {
+      const payload = {
         contracts: contractsNum,
         ticker: ticker.toUpperCase().trim(),
         strike: strikeNum,
         optionType,
         expiryDate,
+        marketOrder: true, // Always use market orders
       };
-
-      if (useMarketOrder) {
-        payload.marketOrder = true;
-      } else if (fillPriceNum !== undefined) {
-        payload.fillPrice = fillPriceNum;
-      }
 
       const res = await apiRequest('/api/trades', {
         method: 'POST',
@@ -134,8 +116,6 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
         setStrike('');
         setOptionType('C');
         setExpiryDate('');
-        setFillPrice('');
-        setUseMarketOrder(false);
         if (onSuccess) onSuccess();
         onClose();
       } else {
@@ -159,10 +139,7 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
     }
   };
 
-  // Calculate notional
-  const notional = !useMarketOrder && contracts && fillPrice 
-    ? parseFloat(contracts) * parseFloat(fillPrice) * 100 
-    : 0;
+  // Notional will be calculated on the backend using market price
 
   return (
     <Dialog 
@@ -195,30 +172,9 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               Market Hours: {getMarketHoursString()} (Weekdays only)
             </Alert>
 
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={useMarketOrder}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    setUseMarketOrder(checked);
-                    if (checked) {
-                      setFillPrice('');
-                    }
-                  }}
-                />
-              }
-              label={
-                <Box>
-                  <Typography variant="body2" sx={{ color: '#2D503D', fontWeight: 600 }}>
-                    Market Order
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
-                    Automatically fills at the latest midpoint or last trade price.
-                  </Typography>
-                </Box>
-              }
-            />
+            <Alert severity="info" sx={{ mb: 1 }}>
+              Fill price will be automatically determined using the latest midpoint or last trade price from the market.
+            </Alert>
 
             <TextField
               label="Number of Contracts"
@@ -386,69 +342,6 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               }}
             />
 
-            {!useMarketOrder ? (
-              <TextField
-                label="Fill Price (per contract)"
-                type="number"
-                value={fillPrice}
-                onChange={(e) => setFillPrice(e.target.value)}
-                inputProps={{ step: '0.01', min: '0.01' }}
-                required
-                fullWidth
-                helperText="Price per contract (must be within ±5% of market price)"
-                InputProps={{
-                  startAdornment: <Typography sx={{ mr: 1, color: '#2D503D' }}>$</Typography>,
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    color: '#2D503D',
-                    backgroundColor: '#ffffff',
-                    '& fieldset': {
-                      borderColor: 'rgba(45, 80, 61, 0.3)',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'rgba(45, 80, 61, 0.5)',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#2D503D',
-                    },
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: '#6b7280',
-                  },
-                  '& .MuiFormHelperText-root': {
-                    color: '#6b7280',
-                  },
-                }}
-              />
-            ) : (
-              <Alert severity="info">
-                Fill price will be fetched automatically using the latest midpoint or last trade price when you submit this order.
-              </Alert>
-            )}
-
-            {notional > 0 && (
-              <Box sx={{ p: 1.5, background: 'rgba(34, 197, 94, 0.1)', borderRadius: 1 }}>
-                <Typography variant="body2" sx={{ color: '#166534' }}>
-                  Total Notional: <strong style={{ color: '#064e3b' }}>
-                    ${notional.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </strong>
-                </Typography>
-                <Typography variant="caption" sx={{ color: '#166534' }}>
-                  (Contracts × Fill Price × 100)
-                </Typography>
-              </Box>
-            )}
-
-            {useMarketOrder ? (
-              <Alert severity="info" sx={{ mt: 1 }}>
-                Market orders use the latest midpoint/last trade price pulled from Massive at submission time.
-              </Alert>
-            ) : (
-              <Alert severity="info" sx={{ mt: 1 }}>
-                Fill price will be verified against market data. Trade will be rejected if price is outside ±5% range.
-              </Alert>
-            )}
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2, gap: 1 }}>
@@ -467,11 +360,7 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
           <Button 
             type="submit" 
             variant="contained" 
-            disabled={
-              loading ||
-              !marketOpen ||
-              (!useMarketOrder && (!fillPrice || Number.isNaN(parseFloat(fillPrice)) || parseFloat(fillPrice) <= 0))
-            }
+            disabled={loading || !marketOpen}
             startIcon={loading ? <CircularProgress size={16} /> : <AddIcon />}
             sx={{
               background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
