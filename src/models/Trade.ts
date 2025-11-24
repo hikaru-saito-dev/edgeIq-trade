@@ -25,6 +25,7 @@ export interface ITrade extends Document {
   totalBuyNotional?: number; // Total buy notional (contracts * fill_price * 100)
   totalSellNotional?: number; // Total sell notional (sum of all SELL fills)
   companyId?: string; // Whop company ID
+  isMarketOrder?: boolean; // Whether this was a market order (always true now)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,6 +55,7 @@ const TradeSchema = new Schema<ITrade>({
   totalBuyNotional: { type: Number },
   totalSellNotional: { type: Number },
   companyId: { type: String, index: true },
+  isMarketOrder: { type: Boolean, default: true }, // Always true - market orders only
 }, {
   timestamps: true,
 });
