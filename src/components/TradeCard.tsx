@@ -414,9 +414,6 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
         <DialogTitle sx={{ color: '#2D503D', fontWeight: 600 }}>Settle Trade</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <Alert severity="info" sx={{ backgroundColor: 'rgba(45, 80, 61, 0.1)', color: '#2D503D' }}>
-              Sell price will be automatically determined using the latest midpoint or last trade price from the market.
-            </Alert>
             <TextField
               label="Contracts to Sell"
               type="number"

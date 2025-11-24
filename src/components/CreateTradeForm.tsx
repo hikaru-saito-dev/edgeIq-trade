@@ -172,10 +172,6 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               Market Hours: {getMarketHoursString()} (Weekdays only)
             </Alert>
 
-            <Alert severity="info" sx={{ mb: 1 }}>
-              Fill price will be automatically determined using the latest midpoint or last trade price from the market.
-            </Alert>
-
             <TextField
               label="Number of Contracts"
               type="number"
