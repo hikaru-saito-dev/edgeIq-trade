@@ -6,7 +6,7 @@ import { User } from '@/models/User';
 import { Log } from '@/models/Log';
 import { createTradeSchema, parseExpiryDate } from '@/utils/tradeValidation';
 import { isMarketOpen } from '@/utils/marketHours';
-import { validateOptionPrice, formatExpiryDateForAPI } from '@/lib/polygon';
+import { validateOptionPrice, formatExpiryDateForAPI, getOptionContractSnapshot, getMarketFillPrice } from '@/lib/polygon';
 import { notifyTradeCreated, notifyTradeDeleted } from '@/lib/tradeNotifications';
 import { z } from 'zod';
 
@@ -176,56 +176,99 @@ export async function POST(request: NextRequest) {
     // Parse expiry date
     const expiryDate = parseExpiryDate(validated.expiryDate);
     const expiryDateAPI = formatExpiryDateForAPI(validated.expiryDate);
-
-    // Price verification via Massive.com API
     const contractType = validated.optionType === 'C' ? 'call' : 'put';
-    const priceValidation = await validateOptionPrice(
-      validated.ticker,
-      validated.strike,
-      expiryDateAPI,
-      contractType,
-      validated.fillPrice
-    );
+    const isMarketOrder = !!validated.marketOrder;
 
-    if (!priceValidation.isValid || !priceValidation.refPrice || !priceValidation.optionContract) {
-      // Reject trade - price is outside ±5% band or API error
-      const trade = await Trade.create({
-        userId: user._id,
-        side: 'BUY',
-        contracts: validated.contracts,
-        ticker: validated.ticker,
-        strike: validated.strike,
-        optionType: validated.optionType,
-        expiryDate: expiryDate,
-        fillPrice: validated.fillPrice,
-        status: 'REJECTED',
-        priceVerified: false,
-        remainingOpenContracts: validated.contracts,
-        companyId: finalCompanyId,
-      });
+    let finalFillPrice: number | null = null;
+    let optionContractTicker: string | null = null;
+    let referencePrice: number | null = null;
+    let refTimestamp = new Date();
 
-      await Log.create({
-        userId: user._id,
-        action: 'trade_rejected',
-        metadata: {
-          reason: priceValidation.error || 'Fill price is outside allowed 5% range vs market at time of submission.',
+    if (isMarketOrder) {
+      const snapshot = await getOptionContractSnapshot(
+        validated.ticker,
+        validated.strike,
+        expiryDateAPI,
+        contractType
+      );
+
+      if (!snapshot) {
+        return NextResponse.json({
+          error: 'Unable to fetch market data to place order. Please try again.',
+        }, { status: 400 });
+      }
+
+      const marketFillPrice = getMarketFillPrice(snapshot);
+      if (marketFillPrice === null) {
+        return NextResponse.json({
+          error: 'Unable to determine market price. Please try again.',
+        }, { status: 400 });
+      }
+
+      finalFillPrice = marketFillPrice;
+      optionContractTicker = snapshot.details?.ticker || snapshot.ticker || null;
+      referencePrice = snapshot.last_quote?.midpoint ?? snapshot.last_trade?.price ?? marketFillPrice;
+      refTimestamp = new Date();
+    } else {
+      const priceValidation = await validateOptionPrice(
+        validated.ticker,
+        validated.strike,
+        expiryDateAPI,
+        contractType,
+        validated.fillPrice
+      );
+
+      if (!priceValidation.isValid || !priceValidation.refPrice || !priceValidation.optionContract) {
+        // Reject trade - price is outside ±5% band or API error
+        const trade = await Trade.create({
+          userId: user._id,
+          side: 'BUY',
+          contracts: validated.contracts,
           ticker: validated.ticker,
           strike: validated.strike,
           optionType: validated.optionType,
-        },
-      });
+          expiryDate: expiryDate,
+          fillPrice: validated.fillPrice!,
+          status: 'REJECTED',
+          priceVerified: false,
+          remainingOpenContracts: validated.contracts,
+          companyId: finalCompanyId,
+        });
 
-      // Send notification for rejected trade
-      await notifyTradeCreated(trade, user, finalCompanyId);
+        await Log.create({
+          userId: user._id,
+          action: 'trade_rejected',
+          metadata: {
+            reason: priceValidation.error || 'Fill price is outside allowed 5% range vs market at time of submission.',
+            ticker: validated.ticker,
+            strike: validated.strike,
+            optionType: validated.optionType,
+          },
+        });
 
+        // Send notification for rejected trade
+        await notifyTradeCreated(trade, user, finalCompanyId);
+
+        return NextResponse.json({
+          error: priceValidation.error || 'Fill price is outside allowed 5% range vs market at time of submission. Trade not recorded.',
+          trade,
+        }, { status: 400 });
+      }
+
+      finalFillPrice = validated.fillPrice!;
+      optionContractTicker = priceValidation.optionContract;
+      referencePrice = priceValidation.refPrice;
+      refTimestamp = priceValidation.refTimestamp || new Date();
+    }
+
+    if (finalFillPrice === null) {
       return NextResponse.json({
-        error: priceValidation.error || 'Fill price is outside allowed 5% range vs market at time of submission. Trade not recorded.',
-        trade,
+        error: 'Unable to determine fill price. Please try again.',
       }, { status: 400 });
     }
 
     // Calculate notional
-    const notional = validated.contracts * validated.fillPrice * 100;
+    const notional = validated.contracts * finalFillPrice * 100;
 
     // Create trade
     const trade = await Trade.create({
@@ -236,12 +279,12 @@ export async function POST(request: NextRequest) {
       strike: validated.strike,
       optionType: validated.optionType,
       expiryDate: expiryDate,
-      fillPrice: validated.fillPrice,
+      fillPrice: finalFillPrice,
       status: 'OPEN',
       priceVerified: true,
-      optionContract: priceValidation.optionContract,
-      refPrice: priceValidation.refPrice,
-      refTimestamp: priceValidation.refTimestamp || new Date(),
+      optionContract: optionContractTicker || undefined,
+      refPrice: referencePrice || undefined,
+      refTimestamp,
       remainingOpenContracts: validated.contracts,
       totalBuyNotional: notional,
       companyId: finalCompanyId,
@@ -257,7 +300,7 @@ export async function POST(request: NextRequest) {
         strike: validated.strike,
         optionType: validated.optionType,
         contracts: validated.contracts,
-        fillPrice: validated.fillPrice,
+        fillPrice: finalFillPrice,
       },
     });
 
@@ -266,7 +309,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       trade,
-      message: `Buy Order: ${validated.contracts}x ${validated.ticker} ${validated.strike}${validated.optionType} ${validated.expiryDate} @ $${validated.fillPrice.toFixed(2)}`,
+      message: `Buy Order: ${validated.contracts}x ${validated.ticker} ${validated.strike}${validated.optionType} ${validated.expiryDate} @ $${finalFillPrice.toFixed(2)}`,
     }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

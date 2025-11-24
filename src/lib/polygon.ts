@@ -299,12 +299,41 @@ export function getReferencePrice(snapshot: OptionContractSnapshot): number | nu
  * @param storedOptionContract - Optional: stored option contract ticker (for SELL validation)
  * @returns Object with validation result and reference data
  */
+export function getMarketFillPrice(snapshot: OptionContractSnapshot): number | null {
+  if (snapshot.last_trade?.price !== undefined && snapshot.last_trade?.price !== null) {
+    return snapshot.last_trade.price;
+  }
+
+  if (snapshot.last_quote?.midpoint !== undefined && snapshot.last_quote?.midpoint !== null) {
+    return snapshot.last_quote.midpoint;
+  }
+
+  if (
+    snapshot.last_quote?.bid !== undefined &&
+    snapshot.last_quote?.ask !== undefined &&
+    snapshot.last_quote?.bid !== null &&
+    snapshot.last_quote?.ask !== null
+  ) {
+    return (snapshot.last_quote.bid + snapshot.last_quote.ask) / 2;
+  }
+
+  if (snapshot.day?.close !== undefined && snapshot.day.close !== null) {
+    return snapshot.day.close;
+  }
+
+  if (snapshot.session?.close !== undefined && snapshot.session.close !== null) {
+    return snapshot.session.close;
+  }
+
+  return null;
+}
+
 export async function validateOptionPrice(
   underlyingAsset: string,
   strike: number,
   expiryDate: string, // YYYY-MM-DD
   contractType: 'call' | 'put',
-  userFillPrice: number,
+  userFillPrice?: number,
   storedOptionContract?: string
 ): Promise<{
   isValid: boolean;
@@ -348,11 +377,14 @@ export async function validateOptionPrice(
     }
 
     // Calculate ±5% band
-    const allowedLow = refPrice * 0.95;
-    const allowedHigh = refPrice * 1.05;
+    const shouldValidateBand = typeof userFillPrice === 'number' && !Number.isNaN(userFillPrice);
+    let isValid = true;
 
-    // Check if user price is within band
-    const isValid = userFillPrice >= allowedLow && userFillPrice <= allowedHigh;
+    if (shouldValidateBand) {
+      const allowedLow = refPrice * 0.95;
+      const allowedHigh = refPrice * 1.05;
+      isValid = userFillPrice! >= allowedLow && userFillPrice! <= allowedHigh;
+    }
 
     // Extract contract ticker - always in details object based on actual API responses
     const contractTicker = snapshot.details?.ticker || snapshot.ticker || null;

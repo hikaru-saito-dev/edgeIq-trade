@@ -32,8 +32,15 @@ export const createTradeSchema = z.object({
   strike: z.number().positive('Strike price must be greater than 0'),
   optionType: optionTypeSchema,
   expiryDate: dateStringSchema,
-  fillPrice: z.number().positive('Fill price must be greater than 0'),
-});
+  fillPrice: z.number().positive('Fill price must be greater than 0').optional(),
+  marketOrder: z.boolean().optional(),
+}).refine(
+  (data) => data.marketOrder || typeof data.fillPrice === 'number',
+  {
+    message: 'Fill price is required for limit orders',
+    path: ['fillPrice'],
+  }
+);
 
 export type CreateTradeInput = z.infer<typeof createTradeSchema>;
 
@@ -43,8 +50,15 @@ export type CreateTradeInput = z.infer<typeof createTradeSchema>;
 export const settleTradeSchema = z.object({
   tradeId: z.string().min(1, 'Trade ID is required'),
   contracts: z.number().int().positive('Number of contracts must be greater than 0'),
-  fillPrice: z.number().positive('Fill price must be greater than 0'),
-});
+  fillPrice: z.number().positive('Fill price must be greater than 0').optional(),
+  marketOrder: z.boolean().optional(),
+}).refine(
+  (data) => data.marketOrder || typeof data.fillPrice === 'number',
+  {
+    message: 'Fill price is required for limit orders',
+    path: ['fillPrice'],
+  }
+);
 
 export type SettleTradeInput = z.infer<typeof settleTradeSchema>;
 

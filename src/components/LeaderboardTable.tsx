@@ -122,8 +122,8 @@ export default function LeaderboardTable() {
   return (
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} gap={2} flexWrap="wrap">
-        <Tabs 
-          value={range} 
+        <Tabs
+          value={range}
           onChange={(_, v) => { setRange(v); setPage(1); }}
           sx={{
             '& .MuiTab-root': {
@@ -151,9 +151,9 @@ export default function LeaderboardTable() {
             placeholder="Search users (alias/display/username)"
             style={{ background: '#ffffff', border: '1px solid rgba(45,80,61,0.3)', borderRadius: 6, padding: '8px 10px', color: '#2D503D', width: 260 }}
           />
-          <Button 
-            variant="outlined" 
-            size="small" 
+          <Button
+            variant="outlined"
+            size="small"
             onClick={() => { setPage(1); fetchLeaderboard(); }}
             sx={{
               color: '#2D503D',
@@ -199,7 +199,7 @@ export default function LeaderboardTable() {
           ))}
         </Box>
       ) : (
-        <TableContainer 
+        <TableContainer
           component={Paper}
           sx={{
             background: 'rgba(255, 255, 255, 0.9)',
@@ -234,7 +234,7 @@ export default function LeaderboardTable() {
                 leaderboard.map((entry) => (
                   <TableRow key={entry.userId} hover>
                     <TableCell>
-                      <Chip 
+                      <Chip
                         label={`#${entry.rank}`}
                         color="primary"
                         size="small"
@@ -258,21 +258,21 @@ export default function LeaderboardTable() {
                       </Box>
                     </TableCell>
                     <TableCell align="right">
-                      <Chip 
+                      <Chip
                         label={`${entry.winRate.toFixed(1)}%`}
                         color={entry.winRate >= 50 ? 'success' : 'default'}
                         size="small"
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <Chip 
+                      <Chip
                         label={`${entry.roi >= 0 ? '+' : ''}${entry.roi.toFixed(2)}%`}
                         color={getRoiColor(entry.roi)}
                         size="small"
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <Chip 
+                      <Chip
                         label={`${entry.netPnl >= 0 ? '+' : ''}$${entry.netPnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                         color={entry.netPnl >= 0 ? 'success' : 'error'}
                         size="small"
@@ -280,14 +280,14 @@ export default function LeaderboardTable() {
                     </TableCell>
                     <TableCell align="right" sx={{ color: '#2D503D' }}>{entry.plays}</TableCell>
                     <TableCell align="right">
-                      <Chip 
+                      <Chip
                         label={entry.winCount || 0}
                         color="success"
                         size="small"
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <Chip 
+                      <Chip
                         label={entry.lossCount || 0}
                         color="error"
                         size="small"
@@ -295,7 +295,7 @@ export default function LeaderboardTable() {
                     </TableCell>
                     <TableCell align="right">
                       {(entry.currentStreak || 0) > 0 ? (
-                        <Chip 
+                        <Chip
                           icon={<LocalFireDepartmentIcon sx={{ fontSize: 16, color: '#f59e0b' }} />}
                           label={entry.currentStreak}
                           size="small"
@@ -310,7 +310,7 @@ export default function LeaderboardTable() {
                           }}
                         />
                       ) : (entry.currentStreak || 0) < 0 ? (
-                        <Chip 
+                        <Chip
                           label={Math.abs(entry.currentStreak)}
                           size="small"
                           color="error"
@@ -321,7 +321,7 @@ export default function LeaderboardTable() {
                     </TableCell>
                     <TableCell align="right">
                       {(entry.longestStreak || 0) > 0 ? (
-                        <Chip 
+                        <Chip
                           icon={<LocalFireDepartmentIcon sx={{ fontSize: 16, color: '#f59e0b' }} />}
                           label={entry.longestStreak}
                           size="small"
@@ -336,7 +336,7 @@ export default function LeaderboardTable() {
                           }}
                         />
                       ) : (entry.longestStreak || 0) < 0 ? (
-                        <Chip 
+                        <Chip
                           label={Math.abs(entry.longestStreak)}
                           size="small"
                           color="error"
@@ -373,8 +373,8 @@ export default function LeaderboardTable() {
             </TableBody>
           </Table>
           <Box display="flex" justifyContent="center" py={2} gap={2} alignItems="center">
-            <Button 
-              disabled={page <= 1} 
+            <Button
+              disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               sx={{
                 color: '#2D503D',
@@ -393,8 +393,8 @@ export default function LeaderboardTable() {
               Prev
             </Button>
             <Typography variant="body2" sx={{ color: '#2D503D' }}>Page {page} / {totalPages}</Typography>
-            <Button 
-              disabled={page >= totalPages} 
+            <Button
+              disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
               sx={{
                 color: '#2D503D',
@@ -507,7 +507,7 @@ export default function LeaderboardTable() {
                       </Typography>
                     </Box>
                   </Box>
-                  
+
                   {plan.affiliateLink && (
                     <Box mt={2} display="flex" gap={1}>
                       <Button

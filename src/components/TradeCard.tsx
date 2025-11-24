@@ -13,6 +13,9 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  FormControlLabel,
+  Switch,
+  Alert,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -22,6 +25,8 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import EventIcon from '@mui/icons-material/Event';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import SellIcon from '@mui/icons-material/Sell';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { apiRequest } from '@/lib/apiClient';
 import { useAccess } from './AccessProvider';
 import { useToast } from './ToastProvider';
@@ -62,6 +67,8 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
   const [settleOpen, setSettleOpen] = useState(false);
   const [settleContracts, setSettleContracts] = useState<number>(1);
   const [settlePrice, setSettlePrice] = useState<string>('');
+  const [settleOrderType, setSettleOrderType] = useState<'market' | 'limit'>('limit');
+  const [fillsExpanded, setFillsExpanded] = useState(false);
   const { userId, companyId } = useAccess();
 
   const getStatusColor = () => {
@@ -95,7 +102,10 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
   };
 
   const handleSettle = async () => {
-    if (!settlePrice || isNaN(parseFloat(settlePrice)) || parseFloat(settlePrice) <= 0) {
+    if (
+      settleOrderType === 'limit' &&
+      (!settlePrice || isNaN(parseFloat(settlePrice)) || parseFloat(settlePrice) <= 0)
+    ) {
       toast.showError('Please enter a valid fill price');
       return;
     }
@@ -107,13 +117,20 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
 
     setLoading(true);
     try {
+      const payload: Record<string, unknown> = {
+        tradeId: trade._id,
+        contracts: settleContracts,
+      };
+
+      if (settleOrderType === 'market') {
+        payload.marketOrder = true;
+      } else {
+        payload.fillPrice = parseFloat(settlePrice);
+      }
+
       const res = await apiRequest('/api/trades/settle', {
         method: 'POST',
-        body: JSON.stringify({
-          tradeId: trade._id,
-          contracts: settleContracts,
-          fillPrice: parseFloat(settlePrice),
-        }),
+        body: JSON.stringify(payload),
         userId,
         companyId,
       });
@@ -124,6 +141,7 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
         setSettleOpen(false);
         setSettleContracts(1);
         setSettlePrice('');
+        setSettleOrderType('limit');
         if (onUpdate) onUpdate();
       } else {
         const error = await res.json();
@@ -313,15 +331,58 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
             </Box>
           </Box>
 
-          {trade.status === 'OPEN' && (
+          {(trade.status === 'OPEN' || (trade.fills && trade.fills.length > 0)) && (
             <Box sx={{ mb: 2, p: 1.5, background: 'rgba(34, 197, 94, 0.1)', borderRadius: 2 }}>
-              <Typography variant="body2" sx={{ color: '#166534', mb: 1 }}>
-                Remaining Contracts: <strong style={{ color: '#064e3b' }}>{trade.remainingOpenContracts}</strong>
-              </Typography>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="body2" sx={{ color: '#166534', mb: 1 }}>
+                  Remaining Contracts:{' '}
+                  <strong style={{ color: '#064e3b' }}>{trade.remainingOpenContracts}</strong>
+                </Typography>
+                {trade.fills && trade.fills.length > 0 && (
+                  <Button
+                    size="small"
+                    variant="text"
+                    onClick={() => setFillsExpanded((prev) => !prev)}
+                    sx={{ color: '#059669', fontWeight: 600, textTransform: 'none' }}
+                    endIcon={fillsExpanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                  >
+                    {fillsExpanded ? 'Hide Fills' : 'View Fills'}
+                  </Button>
+                )}
+              </Box>
               {trade.fills && trade.fills.length > 0 && (
                 <Typography variant="caption" sx={{ color: '#166534' }}>
                   {trade.fills.length} sell order{trade.fills.length !== 1 ? 's' : ''} placed
                 </Typography>
+              )}
+              {fillsExpanded && trade.fills && trade.fills.length > 0 && (
+                <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {trade.fills.map((fill) => (
+                    <Box
+                      key={fill._id}
+                      sx={{
+                        p: 1,
+                        borderRadius: 2,
+                        border: '1px solid rgba(34, 197, 94, 0.3)',
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        justifyContent: 'space-between',
+                        gap: 1,
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ color: '#064e3b', fontWeight: 600 }}>
+                        {fill.contracts} contract{fill.contracts !== 1 ? 's' : ''}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#059669', fontWeight: 600 }}>
+                        @{fill.fillPrice.toFixed(2)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                        {new Date(fill.createdAt).toLocaleString()}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
               )}
             </Box>
           )}
@@ -347,6 +408,7 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
                 onClick={() => {
                   setSettleContracts(Math.min(1, trade.remainingOpenContracts));
                   setSettlePrice('');
+                  setSettleOrderType('limit');
                   setSettleOpen(true);
                 }}
               >
@@ -373,6 +435,30 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
         <DialogTitle>Settle Trade</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={settleOrderType === 'market'}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setSettleOrderType(checked ? 'market' : 'limit');
+                    if (checked) {
+                      setSettlePrice('');
+                    }
+                  }}
+                />
+              }
+              label={
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#2D503D', fontWeight: 600 }}>
+                    Market Sell
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: '#6b7280', display: 'block' }}>
+                    Automatically sells at the latest midpoint or last trade price.
+                  </Typography>
+                </Box>
+              }
+            />
             <TextField
               label="Contracts to Sell"
               type="number"
@@ -385,19 +471,25 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
               helperText={`Remaining: ${trade.remainingOpenContracts} contracts`}
               fullWidth
             />
-            <TextField
-              label="Fill Price (per contract)"
-              type="number"
-              value={settlePrice}
-              onChange={(e) => setSettlePrice(e.target.value)}
-              inputProps={{ step: '0.01', min: '0.01' }}
-              InputProps={{
-                startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
-              }}
-              helperText="Price per contract (must be within ±5% of market price)"
-              fullWidth
-            />
-            {settlePrice && !isNaN(parseFloat(settlePrice)) && (
+            {settleOrderType === 'limit' ? (
+              <TextField
+                label="Fill Price (per contract)"
+                type="number"
+                value={settlePrice}
+                onChange={(e) => setSettlePrice(e.target.value)}
+                inputProps={{ step: '0.01', min: '0.01' }}
+                InputProps={{
+                  startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
+                }}
+                helperText="Price per contract (must be within ±5% of market price)"
+                fullWidth
+              />
+            ) : (
+              <Alert severity="info">
+                Price will be fetched automatically using the latest midpoint or last trade price.
+              </Alert>
+            )}
+            {settleOrderType === 'limit' && settlePrice && !isNaN(parseFloat(settlePrice)) && (
               <Box sx={{ p: 1.5, background: 'rgba(34, 197, 94, 0.1)', borderRadius: 1 }}>
                 <Typography variant="body2" sx={{ color: '#166534' }}>
                   Total Notional: <strong style={{ color: '#064e3b' }}>
@@ -409,11 +501,17 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSettleOpen(false)}>Cancel</Button>
+          <Button onClick={() => { setSettleOpen(false); setSettleOrderType('limit'); }}>
+            Cancel
+          </Button>
           <Button 
             variant="contained" 
             onClick={handleSettle}
-            disabled={loading || !settlePrice || isNaN(parseFloat(settlePrice)) || parseFloat(settlePrice) <= 0}
+            disabled={
+              loading ||
+              (settleOrderType === 'limit' &&
+                (!settlePrice || isNaN(parseFloat(settlePrice)) || parseFloat(settlePrice) <= 0))
+            }
           >
             {loading ? 'Settling...' : 'Settle'}
           </Button>

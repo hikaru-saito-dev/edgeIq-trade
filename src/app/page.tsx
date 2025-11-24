@@ -105,55 +105,55 @@ function HomeContent() {
       />
 
       <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1 }}>
-        <motion.div
-          initial={{ opacity: 0, y: -30, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
-        >
-          <Typography 
-            variant="h1" 
-            component="h1" 
-            sx={{ 
-              textAlign: 'center', 
+      <motion.div
+        initial={{ opacity: 0, y: -30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
+      >
+        <Typography 
+          variant="h1" 
+          component="h1" 
+          sx={{ 
+            textAlign: 'center', 
               mb: 3,
               fontSize: { xs: '3rem', sm: '4rem', md: '5rem' },
               fontWeight: 800,
               color: '#22c55e', // Bright green to match logo
               lineHeight: 1.1,
               textShadow: '0 0 20px rgba(34, 197, 94, 0.5), 0 0 40px rgba(34, 197, 94, 0.3)',
-            }}
-          >
-            EdgeIQ Trades
-          </Typography>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          }}
         >
-          <Typography 
-            variant="h5" 
-            sx={{ 
-              textAlign: 'center',
+          EdgeIQ Trades
+        </Typography>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+      >
+        <Typography 
+          variant="h5" 
+          sx={{ 
+            textAlign: 'center',
               color: '#a7f3d0', // Light green for contrast on dark background
-              mb: 6,
+            mb: 6,
               fontWeight: 400,
               fontSize: { xs: '1.1rem', sm: '1.25rem' },
               maxWidth: '600px',
               mx: 'auto',
               lineHeight: 1.6,
-            }}
-          >
-            Track your options trades, compete on leaderboards, and prove your edge
-          </Typography>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
+          }}
         >
+          Track your options trades, compete on leaderboards, and prove your edge
+        </Typography>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.4 }}
+      >
           <Box 
             sx={{ 
               display: 'flex', 
@@ -163,66 +163,66 @@ function HomeContent() {
               mt: 4,
             }}
           >
-            {!loading && isAuthorized && (
-              <Button 
-                variant="contained" 
-                size="large" 
-                component={Link} 
-                href="/trades"
-                sx={{
+          {!loading && isAuthorized && (
+            <Button 
+              variant="contained" 
+              size="large" 
+              component={Link} 
+              href="/trades"
+              sx={{
                   background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
-                  color: 'white',
+                color: 'white',
                   px: 5,
                   py: 1.75,
-                  fontSize: '1.1rem',
-                  fontWeight: 600,
+                fontSize: '1.1rem',
+                fontWeight: 600,
                   borderRadius: 3,
                   boxShadow: '0 8px 24px rgba(34, 197, 94, 0.3)',
                   textTransform: 'none',
-                  '&:hover': {
+                '&:hover': {
                     background: 'linear-gradient(135deg, #16a34a 0%, #047857 100%)',
                     boxShadow: '0 12px 32px rgba(34, 197, 94, 0.4)',
-                    transform: 'translateY(-2px)',
-                  },
-                  transition: 'all 0.3s ease',
-                }}
-              >
-                View My Trades
-              </Button>
-            )}
-            <Button 
-              variant="outlined" 
-              size="large" 
-              component={Link} 
-              href="/leaderboard"
-              sx={{
+                  transform: 'translateY(-2px)',
+                },
+                transition: 'all 0.3s ease',
+              }}
+            >
+              View My Trades
+            </Button>
+          )}
+          <Button 
+            variant="outlined" 
+            size="large" 
+            component={Link} 
+            href="/leaderboard"
+            sx={{
                 borderColor: '#22c55e',
                 borderWidth: 2,
                 color: '#22c55e',
                 px: 5,
                 py: 1.75,
-                fontSize: '1.1rem',
-                fontWeight: 600,
+              fontSize: '1.1rem',
+              fontWeight: 600,
                 borderRadius: 2,
                 textTransform: 'none',
                 backgroundColor: 'transparent',
                 boxShadow: '0 0 20px rgba(34, 197, 94, 0.2)',
-                '&:hover': {
+              '&:hover': {
                   borderColor: '#34d399',
                   borderWidth: 2,
                   backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                  transform: 'translateY(-2px)',
+                transform: 'translateY(-2px)',
                   color: '#34d399',
                   boxShadow: '0 0 30px rgba(34, 197, 94, 0.4)',
-                },
-                transition: 'all 0.3s ease',
-              }}
-            >
-              View Leaderboard
-            </Button>
-          </Box>
-        </motion.div>
-      </Container>
+              },
+              transition: 'all 0.3s ease',
+            }}
+          >
+            View Leaderboard
+          </Button>
+        </Box>
+      </motion.div>
+    </Container>
     </Box>
   );
 }
