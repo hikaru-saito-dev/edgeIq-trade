@@ -450,7 +450,15 @@ export default function ProfileForm() {
 
       {/* Tabs for owners and companyOwners to switch between Personal and Company profiles */}
       {(role === 'companyOwner') && (
-        <Paper sx={{ mb: 3, background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(20px)', border: '1px solid var(--surface-border)', borderRadius: 2 }}>
+        <Paper
+          sx={{
+            mb: 3,
+            background: 'var(--surface-bg)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid var(--surface-border)',
+            borderRadius: 2,
+          }}
+        >
           <Tabs
             value={activeTab}
             onChange={(_, newValue) => setActiveTab(newValue as 'personal' | 'company')}
@@ -1296,7 +1304,7 @@ export default function ProfileForm() {
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{
-                background: 'rgba(255, 255, 255, 0.95)',
+                background: 'var(--surface-bg)',
                 backdropFilter: 'blur(20px)',
                 border: '1px solid var(--surface-border)',
                 borderRadius: 2
