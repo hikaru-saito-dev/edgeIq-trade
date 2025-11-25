@@ -100,7 +100,6 @@ export default function TradesPage() {
     };
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthorized]);
 
   const fetchUserProfile = async () => {
@@ -156,7 +155,7 @@ export default function TradesPage() {
               filter: 'drop-shadow(0 0 10px rgba(34, 197, 94, 0.5))',
             }} 
           />
-          <Typography variant="h6" sx={{ color: '#2D503D', fontWeight: 500 }}>
+          <Typography variant="h6" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
             Checking access...
           </Typography>
         </Box>
@@ -259,7 +258,7 @@ export default function TradesPage() {
         )}
 
         {/* Status Filter Tabs */}
-        <Paper className="mb-3 bg-[rgba(255,255,255,0.9)] dark:bg-[rgba(26,58,42,0.9)] backdrop-blur-[6px] rounded-lg border border-[rgba(45,80,61,0.2)] dark:border-[rgba(34,197,94,0.2)]" sx={{ mb: 3, bgcolor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(6px)', borderRadius: 2, border: '1px solid rgba(45, 80, 61, 0.2)' }}>
+        <Paper sx={{ mb: 3, bgcolor: 'var(--surface-bg)', backdropFilter: 'blur(6px)', borderRadius: 2, border: '1px solid var(--surface-border)' }}>
           <Tabs
             value={selectedStatus}
             onChange={(_, newValue) => {
@@ -270,17 +269,17 @@ export default function TradesPage() {
             scrollButtons="auto"
             sx={{
               '& .MuiTab-root': {
-                color: '#6b7280',
+                color: 'var(--text-muted)',
                 fontWeight: 500,
                 textTransform: 'none',
                 minHeight: 48,
                 '&.Mui-selected': {
-                  color: '#2D503D',
+                  color: 'var(--app-text)',
                   fontWeight: 600,
                 },
               },
               '& .MuiTabs-indicator': {
-                backgroundColor: '#2D503D',
+                backgroundColor: 'var(--app-text)',
                 height: 3,
                 borderRadius: '3px 3px 0 0',
               },
@@ -295,7 +294,7 @@ export default function TradesPage() {
 
         {/* Search & Pagination controls */}
         <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-          <Paper className="p-1.5 flex items-center gap-1 bg-[rgba(255,255,255,0.9)] dark:bg-[rgba(26,58,42,0.9)] backdrop-blur-[6px] border border-[rgba(45,80,61,0.2)] dark:border-[rgba(34,197,94,0.2)]" sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(6px)', border: '1px solid rgba(45, 80, 61, 0.2)', flex: { xs: '1 1 100%', sm: '0 1 auto' } }}>
+          <Paper sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'var(--surface-bg)', backdropFilter: 'blur(6px)', border: '1px solid var(--surface-border)', flex: { xs: '1 1 100%', sm: '0 1 auto' } }}>
             <TextField
               variant="outlined"
               size="small"
@@ -307,11 +306,11 @@ export default function TradesPage() {
                 minWidth: { xs: '100%', sm: 320 },
                 width: { xs: '100%', sm: 'auto' },
                 '& .MuiOutlinedInput-root': {
-                  color: '#2D503D',
+                  color: 'var(--app-text)',
                   backgroundColor: '#ffffff',
-                  '& fieldset': { borderColor: 'rgba(45, 80, 61, 0.3)' },
+                  '& fieldset': { borderColor: 'var(--surface-border)' },
                   '&:hover fieldset': { borderColor: 'rgba(45, 80, 61, 0.5)' },
-                  '&.Mui-focused fieldset': { borderColor: '#2D503D' },
+                  '&.Mui-focused fieldset': { borderColor: 'var(--app-text)' },
                 },
                 '& .MuiInputBase-input::placeholder': {
                   color: '#9ca3af',
@@ -321,12 +320,12 @@ export default function TradesPage() {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: '#6b7280' }} />
+                    <SearchIcon sx={{ color: 'var(--text-muted)' }} />
                   </InputAdornment>
                 ),
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => { setPage(1); fetchTrades(); }} sx={{ color: '#2D503D' }}>
+                    <IconButton size="small" onClick={() => { setPage(1); fetchTrades(); }} sx={{ color: 'var(--app-text)' }}>
                       <SearchIcon />
                     </IconButton>
                   </InputAdornment>
@@ -335,19 +334,19 @@ export default function TradesPage() {
             />
           </Paper>
 
-          <Paper className="p-1.5 flex gap-1.5 items-center bg-[rgba(255,255,255,0.9)] dark:bg-[rgba(26,58,42,0.9)] backdrop-blur-[6px] border border-[rgba(45,80,61,0.2)] dark:border-[rgba(34,197,94,0.2)]" sx={{ p: 1.5, display: 'flex', gap: 1.5, alignItems: 'center', bgcolor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(6px)', border: '1px solid rgba(45, 80, 61, 0.2)' }}>
-            <Typography variant="body2" sx={{ color: '#2D503D' }}>Page size</Typography>
+          <Paper sx={{ p: 1.5, display: 'flex', gap: 1.5, alignItems: 'center', bgcolor: 'var(--surface-bg)', backdropFilter: 'blur(6px)', border: '1px solid var(--surface-border)' }}>
+            <Typography variant="body2" sx={{ color: 'var(--app-text)' }}>Page size</Typography>
             <FormControl size="small">
               <Select
                 value={pageSize}
                 onChange={(e) => { setPageSize(e.target.value as number); setPage(1); }}
                 sx={{
                   minWidth: 80,
-                  color: '#2D503D',
+                  color: 'var(--app-text)',
                   backgroundColor: '#ffffff',
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(45, 80, 61, 0.3)' },
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--surface-border)' },
                   '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(45, 80, 61, 0.5)' },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#2D503D' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--app-text)' },
                 }}
               >
                 {[10, 20, 50].map((s) => (
@@ -383,7 +382,7 @@ export default function TradesPage() {
             <Typography 
               variant="h6" 
               sx={{ 
-                color: '#2D503D',
+                color: 'var(--app-text)',
                 fontWeight: 500,
               }}
             >
@@ -498,7 +497,7 @@ export default function TradesPage() {
           },
         }}
       >
-        <DialogTitle sx={{ color: '#2D503D', fontWeight: 600 }}>
+        <DialogTitle sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
           Company Access Required
         </DialogTitle>
         <DialogContent>
@@ -520,7 +519,7 @@ export default function TradesPage() {
           <Button
             onClick={() => setWarningOpen(false)}
             sx={{
-              color: '#6b7280',
+              color: 'var(--text-muted)',
               '&:hover': {
                 backgroundColor: 'rgba(45, 80, 61, 0.05)',
               },

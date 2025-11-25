@@ -194,7 +194,7 @@ export default function UsersPage() {
             filter: 'drop-shadow(0 0 10px rgba(34, 197, 94, 0.5))',
           }} 
         />
-        <Typography variant="h6" sx={{ color: '#2D503D', fontWeight: 500 }}>
+        <Typography variant="h6" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
           Loading...
         </Typography>
       </Container>
@@ -204,17 +204,17 @@ export default function UsersPage() {
   if (currentRole !== 'companyOwner' && currentRole !== 'owner') {
     return (
       <Container maxWidth="md" sx={{ py: 6 }}>
-        <Paper
-          sx={{
-            p: 6,
-            textAlign: 'center',
-            borderRadius: 3,
-            background: 'rgba(255, 255, 255, 0.9)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(45, 80, 61, 0.2)',
-            boxShadow: '0 4px 16px rgba(45, 80, 61, 0.1)',
-          }}
-        >
+      <Paper
+        sx={{
+          p: 6,
+          textAlign: 'center',
+          borderRadius: 3,
+          background: 'var(--surface-bg)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid var(--surface-border)',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+        }}
+      >
           <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
             Access Restricted
           </Typography>
@@ -274,7 +274,7 @@ export default function UsersPage() {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon sx={{ color: '#6b7280' }} />
+                  <SearchIcon sx={{ color: 'var(--text-muted)' }} />
                 </InputAdornment>
               ),
             }}
@@ -282,16 +282,16 @@ export default function UsersPage() {
               flex: { xs: '1 1 100%', sm: 1 },
               minWidth: { xs: '100%', sm: 250 },
               '& .MuiOutlinedInput-root': {
-                color: '#2D503D',
+                color: 'var(--app-text)',
                 backgroundColor: '#ffffff',
                 '& fieldset': {
-                  borderColor: 'rgba(45, 80, 61, 0.3)',
+                  borderColor: 'var(--surface-border)',
                 },
                 '&:hover fieldset': {
                   borderColor: 'rgba(45, 80, 61, 0.5)',
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: '#2D503D',
+                  borderColor: 'var(--app-text)',
                 },
               },
               '& .MuiInputBase-input::placeholder': {
@@ -308,16 +308,16 @@ export default function UsersPage() {
                 setPage(1);
               }}
               sx={{
-                color: '#2D503D',
+                color: 'var(--app-text)',
                 backgroundColor: '#ffffff',
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(45, 80, 61, 0.3)',
+                  borderColor: 'var(--surface-border)',
                 },
                 '&:hover .MuiOutlinedInput-notchedOutline': {
                   borderColor: 'rgba(45, 80, 61, 0.5)',
                 },
                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#2D503D',
+                  borderColor: 'var(--app-text)',
                 },
               }}
             >
@@ -329,15 +329,14 @@ export default function UsersPage() {
         </Box>
 
         <Paper
-          className="rounded-xl overflow-hidden bg-[rgba(255,255,255,0.9)] dark:bg-[rgba(26,58,42,0.9)] backdrop-blur-[20px] border border-[rgba(45,80,61,0.2)] dark:border-[rgba(34,197,94,0.2)] relative shadow-[0_4px_16px_rgba(45,80,61,0.1)] dark:shadow-[0_4px_16px_rgba(34,197,94,0.1)] overflow-x-auto"
           sx={{
             borderRadius: 3,
             overflow: 'hidden',
-            background: 'rgba(255, 255, 255, 0.9)',
+            background: 'var(--surface-bg)',
             backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(45, 80, 61, 0.2)',
+            border: '1px solid var(--surface-border)',
             position: 'relative',
-            boxShadow: '0 4px 16px rgba(45, 80, 61, 0.1)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
             overflowX: 'auto',
           }}
         >
@@ -428,16 +427,16 @@ export default function UsersPage() {
                               }
                               disabled={user.role === 'companyOwner' || (user.role === 'owner' && currentRole !== 'companyOwner')}
                               sx={{
-                                color: '#2D503D',
+                                color: 'var(--app-text)',
                                 backgroundColor: '#ffffff',
                                 '& .MuiOutlinedInput-notchedOutline': {
-                                  borderColor: 'rgba(45, 80, 61, 0.3)',
+                                  borderColor: 'var(--surface-border)',
                                 },
                                 '&:hover .MuiOutlinedInput-notchedOutline': {
                                   borderColor: 'rgba(45, 80, 61, 0.5)',
                                 },
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                  borderColor: '#2D503D',
+                                  borderColor: 'var(--app-text)',
                                 },
                               }}
                             >
@@ -486,11 +485,11 @@ export default function UsersPage() {
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
               sx={{
-                color: '#2D503D',
-                borderColor: 'rgba(45, 80, 61, 0.3)',
+                color: 'var(--app-text)',
+                borderColor: 'var(--surface-border)',
                 backgroundColor: '#ffffff',
                 '&:hover': {
-                  borderColor: '#2D503D',
+                  borderColor: 'var(--app-text)',
                   background: 'rgba(45, 80, 61, 0.1)',
                 },
                 '&:disabled': {
@@ -509,11 +508,11 @@ export default function UsersPage() {
               onClick={() => setPage((p) => p + 1)}
               disabled={page >= totalPages}
               sx={{
-                color: '#2D503D',
-                borderColor: 'rgba(45, 80, 61, 0.3)',
+                color: 'var(--app-text)',
+                borderColor: 'var(--surface-border)',
                 backgroundColor: '#ffffff',
                 '&:hover': {
-                  borderColor: '#2D503D',
+                  borderColor: 'var(--app-text)',
                   background: 'rgba(45, 80, 61, 0.1)',
                 },
                 '&:disabled': {

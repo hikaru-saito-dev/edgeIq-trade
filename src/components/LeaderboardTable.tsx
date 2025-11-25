@@ -27,6 +27,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import LaunchIcon from '@mui/icons-material/Launch';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import { useState, useEffect } from 'react';
+import { useToast } from './ToastProvider';
 
 interface MembershipPlan {
   id: string;
@@ -59,6 +60,7 @@ interface LeaderboardEntry {
 }
 
 export default function LeaderboardTable() {
+  const toast = useToast();
   const [range, setRange] = useState<'all' | '30d' | '7d'>('all');
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -135,17 +137,17 @@ export default function LeaderboardTable() {
           sx={{
             width: { xs: '100%', sm: 'auto' },
             '& .MuiTab-root': {
-              color: '#6b7280',
+              color: 'var(--text-muted)',
               fontWeight: 500,
               fontSize: { xs: '0.75rem', sm: '0.875rem' },
               minWidth: { xs: 60, sm: 80 },
               '&.Mui-selected': {
-                color: '#2D503D',
+                color: 'var(--app-text)',
                 fontWeight: 600,
               },
             },
             '& .MuiTabs-indicator': {
-              backgroundColor: '#2D503D',
+              backgroundColor: 'var(--app-text)',
             },
           }}
         >
@@ -172,7 +174,7 @@ export default function LeaderboardTable() {
                   border: '1px solid rgba(45,80,61,0.3)', 
                   borderRadius: 6, 
                   padding: '8px 10px', 
-                  color: '#2D503D', 
+                  color: 'var(--app-text)', 
                   width: '100%',
                   minWidth: 0,
                   fontSize: '0.875rem',
@@ -184,12 +186,12 @@ export default function LeaderboardTable() {
               size="small"
               onClick={() => { setPage(1); fetchLeaderboard(); }}
               sx={{
-                color: '#2D503D',
+                color: 'var(--app-text)',
                 borderColor: 'rgba(45,80,61,0.3)',
                 backgroundColor: '#ffffff',
                 whiteSpace: 'nowrap',
                 '&:hover': {
-                  borderColor: '#2D503D',
+                  borderColor: 'var(--app-text)',
                   backgroundColor: 'rgba(45,80,61,0.1)',
                 },
               }}
@@ -198,14 +200,14 @@ export default function LeaderboardTable() {
             </Button>
           </Box>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
-            <Typography variant="body2" sx={{ color: '#2D503D', fontSize: { xs: '0.75rem', sm: '0.875rem' }, whiteSpace: 'nowrap' }}>Page size</Typography>
+            <Typography variant="body2" sx={{ color: 'var(--app-text)', fontSize: { xs: '0.75rem', sm: '0.875rem' }, whiteSpace: 'nowrap' }}>Page size</Typography>
             <Box sx={{ width: { xs: '100%', sm: 'auto' }, flex: { xs: 1, sm: '0 1 auto' } }}>
               <select
                 value={pageSize}
                 onChange={(e) => { setPageSize(parseInt(e.target.value, 10)); setPage(1); }}
                 style={{ 
                   background: '#ffffff', 
-                  color: '#2D503D', 
+                  color: 'var(--app-text)', 
                   border: '1px solid rgba(45,80,61,0.3)', 
                   borderRadius: 6, 
                   padding: '8px 10px',
@@ -214,7 +216,7 @@ export default function LeaderboardTable() {
                 }}
               >
               {[10, 20, 50].map((s) => (
-                <option key={s} value={s} style={{ color: '#2D503D' }}>{s}</option>
+                <option key={s} value={s} style={{ color: 'var(--app-text)' }}>{s}</option>
               ))}
             </select>
             </Box>
@@ -225,7 +227,7 @@ export default function LeaderboardTable() {
       {loading ? (
         <Box>
           {[...Array(5)].map((_, i) => (
-            <Paper key={i} sx={{ p: 2, mb: 2, background: 'rgba(255, 255, 255, 0.9)', border: '1px solid rgba(45, 80, 61, 0.2)' }}>
+            <Paper key={i} sx={{ p: 2, mb: 2, background: 'var(--surface-bg)', border: '1px solid var(--surface-border)' }}>
               <Box display="flex" alignItems="center" gap={2}>
                 <Skeleton variant="circular" width={32} height={32} sx={{ bgcolor: 'rgba(45, 80, 61, 0.1)' }} />
                 <Box flex={1}>
@@ -243,11 +245,10 @@ export default function LeaderboardTable() {
       ) : (
         <TableContainer
           component={Paper}
-          className="bg-[rgba(255,255,255,0.9)] dark:bg-[rgba(26,58,42,0.9)] border border-[rgba(45,80,61,0.2)] dark:border-[rgba(34,197,94,0.2)] shadow-[0_4px_16px_rgba(45,80,61,0.1)] dark:shadow-[0_4px_16px_rgba(34,197,94,0.1)] overflow-x-auto"
           sx={{
-            background: 'rgba(255, 255, 255, 0.9)',
-            border: '1px solid rgba(45, 80, 61, 0.2)',
-            boxShadow: '0 4px 16px rgba(45, 80, 61, 0.1)',
+            background: 'var(--surface-bg)',
+            border: '1px solid var(--surface-border)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
             overflowX: 'auto',
           }}
         >
@@ -290,11 +291,11 @@ export default function LeaderboardTable() {
                           {(entry.alias || entry.whopDisplayName || '?').charAt(0).toUpperCase()}
                         </Avatar>
                         <Box>
-                          <Typography variant="body2" sx={{ color: '#2D503D', fontWeight: 500 }}>
+                          <Typography variant="body2" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
                             {entry.alias || entry.whopDisplayName}
                           </Typography>
                           {entry.whopUsername && (
-                            <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                            <Typography variant="caption" sx={{ color: 'var(--text-muted)' }}>
                               @{entry.whopUsername}
                             </Typography>
                           )}
@@ -322,7 +323,7 @@ export default function LeaderboardTable() {
                         size="small"
                       />
                     </TableCell>
-                    <TableCell align="right" sx={{ color: '#2D503D' }}>{entry.plays}</TableCell>
+                    <TableCell align="right" sx={{ color: 'var(--app-text)' }}>{entry.plays}</TableCell>
                     <TableCell align="right">
                       <Chip
                         label={entry.winCount || 0}
@@ -345,7 +346,7 @@ export default function LeaderboardTable() {
                           size="small"
                           sx={{
                             backgroundColor: 'rgba(240, 253, 244, 0.9)',
-                            color: '#059669',
+                            color: 'var(--accent-strong)',
                             border: '1px solid rgba(34, 197, 94, 0.2)',
                             fontWeight: 600,
                             '& .MuiChip-icon': {
@@ -360,7 +361,7 @@ export default function LeaderboardTable() {
                           color="error"
                         />
                       ) : (
-                        <Typography variant="body2" sx={{ color: '#6b7280' }}>-</Typography>
+                        <Typography variant="body2" sx={{ color: 'var(--text-muted)' }}>-</Typography>
                       )}
                     </TableCell>
                     <TableCell align="right">
@@ -371,7 +372,7 @@ export default function LeaderboardTable() {
                           size="small"
                           sx={{
                             backgroundColor: 'rgba(240, 253, 244, 0.9)',
-                            color: '#059669',
+                            color: 'var(--accent-strong)',
                             border: '1px solid rgba(34, 197, 94, 0.2)',
                             fontWeight: 600,
                             '& .MuiChip-icon': {
@@ -386,7 +387,7 @@ export default function LeaderboardTable() {
                           color="error"
                         />
                       ) : (
-                        <Typography variant="body2" sx={{ color: '#6b7280' }}>-</Typography>
+                        <Typography variant="body2" sx={{ color: 'var(--text-muted)' }}>-</Typography>
                       )}
                     </TableCell>
                     <TableCell align="center">
@@ -406,7 +407,7 @@ export default function LeaderboardTable() {
                           View Membership
                         </Button>
                       ) : (
-                        <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                        <Typography variant="caption" sx={{ color: 'var(--text-muted)' }}>
                           No membership
                         </Typography>
                       )}
@@ -421,11 +422,11 @@ export default function LeaderboardTable() {
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               sx={{
-                color: '#2D503D',
+                color: 'var(--app-text)',
                 borderColor: 'rgba(45,80,61,0.3)',
                 backgroundColor: '#ffffff',
                 '&:hover': {
-                  borderColor: '#2D503D',
+                  borderColor: 'var(--app-text)',
                   backgroundColor: 'rgba(45,80,61,0.1)',
                 },
                 '&:disabled': {
@@ -436,16 +437,16 @@ export default function LeaderboardTable() {
             >
               Prev
             </Button>
-            <Typography variant="body2" sx={{ color: '#2D503D' }}>Page {page} / {totalPages}</Typography>
+            <Typography variant="body2" sx={{ color: 'var(--app-text)' }}>Page {page} / {totalPages}</Typography>
             <Button
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
               sx={{
-                color: '#2D503D',
+                color: 'var(--app-text)',
                 borderColor: 'rgba(45,80,61,0.3)',
                 backgroundColor: '#ffffff',
                 '&:hover': {
-                  borderColor: '#2D503D',
+                  borderColor: 'var(--app-text)',
                   backgroundColor: 'rgba(45,80,61,0.1)',
                 },
                 '&:disabled': {
@@ -468,15 +469,15 @@ export default function LeaderboardTable() {
         fullWidth
         PaperProps={{
           sx: {
-            background: 'rgba(255, 255, 255, 0.98)',
+            background: 'var(--surface-bg)',
             backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(45, 80, 61, 0.2)',
+            border: '1px solid var(--surface-border)',
             borderRadius: 3,
-            boxShadow: '0 8px 32px rgba(45, 80, 61, 0.2)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
           },
         }}
       >
-        <DialogTitle sx={{ color: '#2D503D', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <DialogTitle sx={{ color: 'var(--app-text)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box display="flex" alignItems="center" gap={2}>
             {selectedCompany?.whopAvatarUrl && (
               <Avatar src={selectedCompany.whopAvatarUrl} sx={{ width: 40, height: 40 }}>
@@ -484,22 +485,22 @@ export default function LeaderboardTable() {
               </Avatar>
             )}
             <Box>
-              <Typography variant="h6" sx={{ color: '#2D503D', fontWeight: 600 }}>
+              <Typography variant="h6" sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
                 {selectedCompany?.whopDisplayName || selectedCompany?.alias}
               </Typography>
               {selectedCompany?.whopUsername && (
-                <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                <Typography variant="caption" sx={{ color: 'var(--text-muted)' }}>
                   @{selectedCompany.whopUsername}
                 </Typography>
               )}
-              <Typography variant="caption" sx={{ color: '#6b7280', display: 'block', mt: 0.5 }}>
+              <Typography variant="caption" sx={{ color: 'var(--text-muted)', display: 'block', mt: 0.5 }}>
                 Membership Plans
               </Typography>
             </Box>
           </Box>
           <IconButton
             onClick={handleCloseModal}
-            sx={{ color: '#6b7280', '&:hover': { color: '#2D503D' } }}
+            sx={{ color: 'var(--text-muted)', '&:hover': { color: 'var(--app-text)' } }}
           >
             <CloseIcon />
           </IconButton>
@@ -514,7 +515,7 @@ export default function LeaderboardTable() {
                   sx={{
                     p: 3,
                     background: 'rgba(240, 253, 244, 0.8)',
-                    border: '1px solid rgba(45, 80, 61, 0.2)',
+                    border: '1px solid var(--surface-border)',
                     borderRadius: 2,
                     transition: 'all 0.3s ease',
                     '&:hover': {
@@ -526,7 +527,7 @@ export default function LeaderboardTable() {
                   <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
                     <Box flex={1}>
                       <Box display="flex" alignItems="center" gap={1} mb={1}>
-                        <Typography variant="h6" sx={{ color: '#2D503D', fontWeight: 600 }}>
+                        <Typography variant="h6" sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
                           {plan.name}
                         </Typography>
                         {plan.isPremium && (
@@ -535,18 +536,18 @@ export default function LeaderboardTable() {
                             size="small"
                             sx={{
                               background: 'rgba(34, 197, 94, 0.2)',
-                              color: '#059669',
+                              color: 'var(--accent-strong)',
                               border: '1px solid rgba(34, 197, 94, 0.3)',
                             }}
                           />
                         )}
                       </Box>
                       {plan.description && (
-                        <Typography variant="body2" sx={{ color: '#6b7280', mb: 1 }}>
+                        <Typography variant="body2" sx={{ color: 'var(--text-muted)', mb: 1 }}>
                           {plan.description}
                         </Typography>
                       )}
-                      <Typography variant="body2" sx={{ color: '#2D503D', fontWeight: 600 }}>
+                      <Typography variant="body2" sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
                         {plan.price}
                       </Typography>
                     </Box>
@@ -582,17 +583,17 @@ export default function LeaderboardTable() {
             </Box>
           ) : (
             <Box textAlign="center" py={4}>
-              <Typography variant="body1" sx={{ color: '#6b7280' }}>
+              <Typography variant="body1" sx={{ color: 'var(--text-muted)' }}>
                 No membership plans available
               </Typography>
             </Box>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 2, borderTop: '1px solid rgba(45, 80, 61, 0.2)' }}>
+        <DialogActions sx={{ p: 2, borderTop: '1px solid var(--surface-border)' }}>
           <Button
             onClick={handleCloseModal}
             sx={{
-              color: '#2D503D',
+              color: 'var(--app-text)',
               '&:hover': {
                 background: 'rgba(45, 80, 61, 0.1)',
               },

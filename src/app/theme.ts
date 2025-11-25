@@ -1,78 +1,105 @@
 'use client';
 
-import { createTheme } from '@mui/material/styles';
+import { PaletteMode, ThemeOptions, createTheme } from '@mui/material/styles';
+import { alpha } from '@mui/material';
 
-const theme = createTheme({
-  palette: {
-    mode: 'dark',
-    primary: {
-      main: '#22c55e', // Green-500
-      light: '#4ade80', // Green-400
-      dark: '#16a34a', // Green-600
-    },
-    secondary: {
-      main: '#10b981', // Emerald-500
-      light: '#34d399', // Emerald-400
-      dark: '#059669', // Emerald-600
-    },
-    background: {
-      default: '#f0fdf4', // Light green background
-      paper: 'rgba(240, 253, 244, 0.9)',
-    },
-    text: {
-      primary: '#064e3b', // Dark green text
-      secondary: '#166534', // Medium green text
-    },
-  },
-  typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontSize: '3rem',
-      fontWeight: 800,
-      background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
-      backgroundClip: 'text',
-      WebkitBackgroundClip: 'text',
-      WebkitTextFillColor: 'transparent',
-    },
-    h2: {
-      fontSize: '2rem',
-      fontWeight: 700,
-    },
-    h3: {
-      fontSize: '1.5rem',
-      fontWeight: 600,
-    },
-  },
-  components: {
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          background: 'rgba(240, 253, 244, 0.9)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(34, 197, 94, 0.2)',
-        },
-      },
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          background: 'rgba(240, 253, 244, 0.9)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(34, 197, 94, 0.2)',
-        },
-      },
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none',
-          fontWeight: 600,
-          borderRadius: 8,
-        },
-      },
-    },
-  },
-});
+const getDesignTokens = (mode: PaletteMode): ThemeOptions => {
+  const isLight = mode === 'light';
 
-export default theme;
+  return {
+    palette: {
+      mode,
+      primary: {
+        main: '#22c55e',
+        light: '#4ade80',
+        dark: '#16a34a',
+      },
+      secondary: {
+        main: '#10b981',
+        light: '#34d399',
+        dark: '#059669',
+      },
+      background: {
+        default: isLight ? '#f5fdf8' : '#02150B',
+        paper: isLight ? 'rgba(255, 255, 255, 0.94)' : 'rgba(4, 32, 24, 0.92)',
+      },
+      text: {
+        primary: isLight ? '#064e3b' : '#E9FFF4',
+        secondary: isLight ? '#166534' : '#9FE3C6',
+      },
+      divider: isLight ? 'rgba(34, 197, 94, 0.2)' : 'rgba(233, 255, 244, 0.15)',
+    },
+    typography: {
+      fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+      h1: {
+        fontSize: '3rem',
+        fontWeight: 800,
+        background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
+        backgroundClip: 'text',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+      },
+      h2: {
+        fontSize: '2rem',
+        fontWeight: 700,
+      },
+      h3: {
+        fontSize: '1.5rem',
+        fontWeight: 600,
+      },
+    },
+    components: {
+      MuiCssBaseline: {
+        styleOverrides: {
+          body: {
+            backgroundColor: isLight ? '#f5fdf8' : '#02150B',
+            color: isLight ? '#064e3b' : '#E9FFF4',
+          },
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            backgroundColor: theme.palette.background.paper,
+            backdropFilter: 'blur(20px)',
+            border: `1px solid ${alpha(
+              theme.palette.primary.main,
+              theme.palette.mode === 'light' ? 0.2 : 0.35
+            )}`,
+            boxShadow: theme.palette.mode === 'light'
+              ? '0 12px 32px rgba(34, 197, 94, 0.08)'
+              : '0 12px 32px rgba(0, 0, 0, 0.45)',
+          }),
+        },
+      },
+      MuiCard: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            backgroundColor: theme.palette.background.paper,
+            backdropFilter: 'blur(20px)',
+            border: `1px solid ${alpha(
+              theme.palette.primary.main,
+              theme.palette.mode === 'light' ? 0.2 : 0.35
+            )}`,
+            boxShadow: theme.palette.mode === 'light'
+              ? '0 12px 32px rgba(34, 197, 94, 0.08)'
+              : '0 12px 32px rgba(0, 0, 0, 0.45)',
+          }),
+        },
+      },
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            textTransform: 'none',
+            fontWeight: 600,
+            borderRadius: 8,
+          },
+        },
+      },
+    },
+  };
+};
+
+export const createAppTheme = (mode: PaletteMode) => createTheme(getDesignTokens(mode));
+
 

@@ -1,31 +1,44 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  AppBar, 
-  Toolbar, 
-  Button, 
-  Box, 
-  IconButton, 
-  Drawer, 
-  List, 
-  ListItem, 
-  ListItemButton, 
+import {
+  AppBar,
+  Toolbar,
+  Button,
+  Box,
+  IconButton,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
   ListItemText,
   useMediaQuery,
   useTheme,
+  Divider,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 import Link from 'next/link';
 import { useAccess } from './AccessProvider';
 import Logo from './Logo';
+import { useThemeMode } from './ThemeProvider';
+import { alpha } from '@mui/material/styles';
 
 export default function Navigation() {
   const { isAuthorized, role, loading } = useAccess();
   const [mobileOpen, setMobileOpen] = useState(false);
   const theme = useTheme();
-  useMediaQuery(theme.breakpoints.down('md')); // Used for responsive styling
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { mode, toggleMode } = useThemeMode();
+  const isDark = mode === 'dark';
+
+  const navGradient = isDark
+    ? 'linear-gradient(180deg, #02150B 0%, #063021 100%)'
+    : 'linear-gradient(180deg, #1e3a2a 0%, #2D503D 100%)';
+  const navTextColor = isDark ? '#E9FFF4' : '#F0FFF4';
+  const navHoverBg = alpha('#FFFFFF', isDark ? 0.12 : 0.18);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -43,15 +56,39 @@ export default function Navigation() {
   ];
 
   const drawer = (
-    <Box className="w-[280px] h-full bg-gradient-to-b from-[#1e3a2a] to-[#2D503D] dark:from-[#0a1f0f] dark:to-[#1a3a2a]" sx={{ width: 280, height: '100%', background: 'linear-gradient(180deg, #1e3a2a 0%, #2D503D 100%)' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+    <Box
+      sx={{
+        width: 280,
+        height: '100%',
+        background: navGradient,
+        color: navTextColor,
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          p: 2,
+          borderBottom: `1px solid ${alpha('#FFFFFF', 0.12)}`,
+        }}
+      >
         <Logo />
-        <IconButton
-          onClick={handleDrawerClose}
-          sx={{ color: '#ffffff' }}
-        >
-          <CloseIcon />
-        </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconButton
+            onClick={toggleMode}
+            sx={{ color: navTextColor }}
+            aria-label="toggle color mode"
+          >
+            {isDark ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
+          <IconButton
+            onClick={handleDrawerClose}
+            sx={{ color: navTextColor }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
       </Box>
       <List sx={{ pt: 2 }}>
         {navItems.map((item) => (
@@ -61,11 +98,11 @@ export default function Navigation() {
               href={item.href}
               onClick={handleDrawerClose}
               sx={{
-                color: '#ffffff',
+                color: navTextColor,
                 py: 1.5,
                 px: 3,
                 '&:hover': {
-                  background: 'rgba(255, 255, 255, 0.12)',
+                  background: navHoverBg,
                 },
               }}
             >
@@ -85,21 +122,20 @@ export default function Navigation() {
 
   return (
     <>
-      <AppBar 
-        position="static" 
+      <AppBar
+        position="static"
         elevation={0}
-        className="bg-gradient-to-b from-[#1e3a2a] to-[#2D503D] dark:from-[#0a1f0f] dark:to-[#1a3a2a] backdrop-blur-[20px] border-b border-white/5 dark:border-white/10 text-white shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
         sx={{
-          background: 'linear-gradient(180deg, #1e3a2a 0%, #2D503D 100%)',
+          background: navGradient,
           backdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-          color: '#ffffff',
+          borderBottom: `1px solid ${alpha('#FFFFFF', 0.08)}`,
+          color: navTextColor,
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
         }}
       >
         <Toolbar sx={{ py: 2, px: { xs: 2, sm: 3 } }}>
           <Box sx={{ flexGrow: 1 }}>
-            <Logo />
+            <Logo  />
           </Box>
           
           {/* Desktop Navigation */}
@@ -109,7 +145,7 @@ export default function Navigation() {
                 component={Link} 
                 href="/trades"
                 sx={{
-                  color: '#ffffff',
+                  color: navTextColor,
                   fontWeight: 500,
                   textTransform: 'none',
                   fontSize: '0.95rem',
@@ -117,8 +153,8 @@ export default function Navigation() {
                   borderRadius: 1,
                   transition: 'all 0.2s ease',
                   '&:hover': {
-                    color: '#ffffff',
-                    background: 'rgba(255, 255, 255, 0.12)',
+                    color: navTextColor,
+                    background: navHoverBg,
                     transform: 'translateY(-1px)',
                   },
                 }}
@@ -130,7 +166,7 @@ export default function Navigation() {
               component={Link} 
               href="/leaderboard"
               sx={{
-                color: '#ffffff',
+                color: navTextColor,
                 fontWeight: 600,
                 textTransform: 'none',
                 fontSize: '0.95rem',
@@ -138,8 +174,8 @@ export default function Navigation() {
                 borderRadius: 1,
                 transition: 'all 0.2s ease',
                 '&:hover': {
-                  color: '#ffffff',
-                  background: 'rgba(255, 255, 255, 0.12)',
+                  color: navTextColor,
+                  background: navHoverBg,
                   transform: 'translateY(-1px)',
                 },
               }}
@@ -151,7 +187,7 @@ export default function Navigation() {
                 component={Link} 
                 href="/profile"
                 sx={{
-                  color: '#ffffff',
+                  color: navTextColor,
                   fontWeight: 500,
                   textTransform: 'none',
                   fontSize: '0.95rem',
@@ -159,8 +195,8 @@ export default function Navigation() {
                   borderRadius: 1,
                   transition: 'all 0.2s ease',
                   '&:hover': {
-                    color: '#ffffff',
-                    background: 'rgba(255, 255, 255, 0.12)',
+                    color: navTextColor,
+                    background: navHoverBg,
                     transform: 'translateY(-1px)',
                   },
                 }}
@@ -173,7 +209,7 @@ export default function Navigation() {
                 component={Link} 
                 href="/users"
                 sx={{
-                  color: '#ffffff',
+                  color: navTextColor,
                   fontWeight: 500,
                   textTransform: 'none',
                   fontSize: '0.95rem',
@@ -181,8 +217,8 @@ export default function Navigation() {
                   borderRadius: 1,
                   transition: 'all 0.2s ease',
                   '&:hover': {
-                    color: '#ffffff',
-                    background: 'rgba(255, 255, 255, 0.12)',
+                    color: navTextColor,
+                    background: navHoverBg,
                     transform: 'translateY(-1px)',
                   },
                 }}
@@ -192,15 +228,23 @@ export default function Navigation() {
             )}
           </Box>
 
+          <IconButton
+            sx={{ color: navTextColor, mr: { xs: 1, md: 0 } }}
+            onClick={toggleMode}
+            aria-label="toggle color mode"
+          >
+            {isDark ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
+
           {/* Mobile Menu Button */}
           <IconButton
             color="inherit"
             aria-label="open drawer"
             edge="end"
             onClick={handleDrawerToggle}
-            sx={{ 
+            sx={{
               display: { xs: 'block', md: 'none' },
-              color: '#ffffff',
+              color: navTextColor,
             }}
           >
             <MenuIcon />

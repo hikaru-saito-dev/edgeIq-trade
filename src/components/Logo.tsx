@@ -1,12 +1,13 @@
 'use client';
 
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import Image from 'next/image';
 import Link from 'next/link';
 
+
 export default function Logo() {
   // Determine text color
-  const logoWidth = 160;
+  const logoWidth =  160;
   
   return (
     <Box

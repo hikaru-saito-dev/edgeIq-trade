@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   Box,
+  Typography,
   Button,
   Dialog,
   DialogTitle,
@@ -147,11 +148,10 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
       maxWidth="sm" 
       fullWidth
       PaperProps={{
-        className: "bg-[rgba(255,255,255,0.98)] dark:bg-[rgba(26,58,42,0.98)] backdrop-blur-[20px] border border-[rgba(45,80,61,0.2)] dark:border-[rgba(34,197,94,0.2)] rounded-lg sm:rounded-xl shadow-[0_8px_32px_rgba(45,80,61,0.2)] dark:shadow-[0_8px_32px_rgba(34,197,94,0.1)] m-1 sm:m-2 max-h-[calc(100vh-16px)] sm:max-h-auto",
         sx: {
           background: 'rgba(255, 255, 255, 0.98)',
           backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(45, 80, 61, 0.2)',
+          border: '1px solid var(--surface-border)',
           borderRadius: { xs: 2, sm: 3 },
           boxShadow: '0 8px 32px rgba(45, 80, 61, 0.2)',
           m: { xs: 1, sm: 2 },
@@ -159,7 +159,7 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
         },
       }}
     >
-      <DialogTitle className="text-[#062815] dark:text-[#E9FFF4] font-semibold" sx={{ color: '#2D503D', fontWeight: 600 }}>Create New Trade</DialogTitle>
+      <DialogTitle sx={{ color: 'var(--app-text)', fontWeight: 600 }}>Create New Trade</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -199,23 +199,23 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               helperText="Enter between 1 and 5 contracts per trade"
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  color: '#2D503D',
+                  color: 'var(--app-text)',
                   backgroundColor: '#ffffff',
                   '& fieldset': {
-                    borderColor: 'rgba(45, 80, 61, 0.3)',
+                    borderColor: 'var(--surface-border)',
                   },
                   '&:hover fieldset': {
                     borderColor: 'rgba(45, 80, 61, 0.5)',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#2D503D',
+                    borderColor: 'var(--app-text)',
                   },
                 },
                 '& .MuiInputLabel-root': {
-                  color: '#6b7280',
+                  color: 'var(--text-muted)',
                 },
                 '& .MuiFormHelperText-root': {
-                  color: '#6b7280',
+                  color: 'var(--text-muted)',
                 },
               }}
             />
@@ -230,23 +230,23 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               inputProps={{ maxLength: 10, pattern: '[A-Z]+' }}
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  color: '#2D503D',
+                  color: 'var(--app-text)',
                   backgroundColor: '#ffffff',
                   '& fieldset': {
-                    borderColor: 'rgba(45, 80, 61, 0.3)',
+                    borderColor: 'var(--surface-border)',
                   },
                   '&:hover fieldset': {
                     borderColor: 'rgba(45, 80, 61, 0.5)',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#2D503D',
+                    borderColor: 'var(--app-text)',
                   },
                 },
                 '& .MuiInputLabel-root': {
-                  color: '#6b7280',
+                  color: 'var(--text-muted)',
                 },
                 '& .MuiFormHelperText-root': {
-                  color: '#6b7280',
+                  color: 'var(--text-muted)',
                 },
               }}
             />
@@ -262,44 +262,44 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               helperText="Strike price of the option"
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  color: '#2D503D',
+                  color: 'var(--app-text)',
                   backgroundColor: '#ffffff',
                   '& fieldset': {
-                    borderColor: 'rgba(45, 80, 61, 0.3)',
+                    borderColor: 'var(--surface-border)',
                   },
                   '&:hover fieldset': {
                     borderColor: 'rgba(45, 80, 61, 0.5)',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#2D503D',
+                    borderColor: 'var(--app-text)',
                   },
                 },
                 '& .MuiInputLabel-root': {
-                  color: '#6b7280',
+                  color: 'var(--text-muted)',
                 },
                 '& .MuiFormHelperText-root': {
-                  color: '#6b7280',
+                  color: 'var(--text-muted)',
                 },
               }}
             />
 
             <FormControl fullWidth required>
-              <InputLabel sx={{ color: '#6b7280' }}>Option Type</InputLabel>
+              <InputLabel sx={{ color: 'var(--text-muted)' }}>Option Type</InputLabel>
               <Select
                 value={optionType}
                 onChange={(e) => setOptionType(e.target.value as 'C' | 'P')}
                 label="Option Type"
                 sx={{
-                  color: '#2D503D',
+                  color: 'var(--app-text)',
                   backgroundColor: '#ffffff',
                   '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'rgba(45, 80, 61, 0.3)',
+                    borderColor: 'var(--surface-border)',
                   },
                   '&:hover .MuiOutlinedInput-notchedOutline': {
                     borderColor: 'rgba(45, 80, 61, 0.5)',
                   },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#2D503D',
+                    borderColor: 'var(--app-text)',
                   },
                 }}
               >
@@ -319,23 +319,23 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               inputProps={{ pattern: '\\d{2}/\\d{2}/\\d{4}' }}
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  color: '#2D503D',
+                  color: 'var(--app-text)',
                   backgroundColor: '#ffffff',
                   '& fieldset': {
-                    borderColor: 'rgba(45, 80, 61, 0.3)',
+                    borderColor: 'var(--surface-border)',
                   },
                   '&:hover fieldset': {
                     borderColor: 'rgba(45, 80, 61, 0.5)',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#2D503D',
+                    borderColor: 'var(--app-text)',
                   },
                 },
                 '& .MuiInputLabel-root': {
-                  color: '#6b7280',
+                  color: 'var(--text-muted)',
                 },
                 '& .MuiFormHelperText-root': {
-                  color: '#6b7280',
+                  color: 'var(--text-muted)',
                 },
               }}
             />
@@ -347,7 +347,7 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
             onClick={handleClose} 
             disabled={loading}
             sx={{
-              color: '#6b7280',
+              color: 'var(--text-muted)',
               '&:hover': {
                 backgroundColor: 'rgba(45, 80, 61, 0.05)',
               },

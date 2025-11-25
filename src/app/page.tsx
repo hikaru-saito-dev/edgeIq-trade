@@ -21,7 +21,6 @@ function HomeContent() {
 
   return (
     <Box
-      className="min-h-[calc(100vh-64px)] flex items-center justify-center relative py-4 md:py-8 px-2 sm:px-4 bg-gradient-to-b from-[#F3FFF7] via-[#E9FFF4] to-[#E0FCE8] dark:from-[#0a1f0f] dark:via-[#1a3a2a] dark:to-[#2d503d] overflow-hidden"
       sx={{
         minHeight: 'calc(100vh - 64px)',
         display: 'flex',
@@ -114,13 +113,12 @@ function HomeContent() {
         <Typography 
           variant="h1" 
           component="h1" 
-          className="text-center mb-3 text-5xl sm:text-6xl md:text-7xl font-extrabold text-[#22c55e] dark:text-[#22c55e] leading-tight"
           sx={{ 
             textAlign: 'center', 
               mb: 3,
               fontSize: { xs: '3rem', sm: '4rem', md: '5rem' },
               fontWeight: 800,
-              color: '#22c55e',
+              color: '#22c55e', // Bright green to match logo
               lineHeight: 1.1,
               textShadow: '0 0 20px rgba(34, 197, 94, 0.5), 0 0 40px rgba(34, 197, 94, 0.3)',
           }}
@@ -136,10 +134,9 @@ function HomeContent() {
       >
         <Typography 
           variant="h5" 
-          className="text-center text-[#166534] dark:text-[#a7f3d0] mb-6 font-normal text-lg sm:text-xl max-w-[600px] mx-auto leading-relaxed"
           sx={{ 
             textAlign: 'center',
-              color: '#a7f3d0',
+              color: '#a7f3d0', // Light green for contrast on dark background
             mb: 6,
               fontWeight: 400,
               fontSize: { xs: '1.1rem', sm: '1.25rem' },

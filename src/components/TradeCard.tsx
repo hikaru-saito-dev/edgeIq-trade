@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Alert,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -27,6 +28,7 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { apiRequest } from '@/lib/apiClient';
 import { useAccess } from './AccessProvider';
 import { useToast } from './ToastProvider';
+import { alpha, useTheme } from '@mui/material/styles';
 
 interface TradeFill {
   _id: string;
@@ -65,6 +67,17 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
   const [settleContracts, setSettleContracts] = useState<number>(1);
   const [fillsExpanded, setFillsExpanded] = useState(false);
   const { userId, companyId } = useAccess();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const statBg = alpha(theme.palette.primary.main, isDark ? 0.25 : 0.12);
+  const statBorder = `1px solid ${alpha(theme.palette.primary.main, isDark ? 0.45 : 0.3)}`;
+  const infoPanelBg = alpha(theme.palette.primary.main, isDark ? 0.2 : 0.1);
+  const fillsBorder = `1px solid ${alpha(theme.palette.primary.main, isDark ? 0.45 : 0.25)}`;
+  const fillsBg = alpha(theme.palette.background.paper, isDark ? 0.3 : 0.85);
+  const timestampColor = alpha(theme.palette.text.secondary, 0.9);
+  const actionGradient = `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`;
+  const actionGradientHover = `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`;
+  const actionGradientDisabled = alpha(theme.palette.primary.main, 0.35);
 
   const getStatusColor = () => {
     switch (trade.status) {
@@ -88,6 +101,7 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
   const formatTradeLabel = () => {
     const expiry = new Date(trade.expiryDate);
     const expiryStr = `${expiry.getMonth() + 1}/${expiry.getDate()}/${expiry.getFullYear()}`;
+    const optionLabel = trade.optionType === 'C' ? 'CALL' : 'PUT';
     return `${trade.contracts}x ${trade.ticker} ${trade.strike}${trade.optionType} ${expiryStr}`;
   };
 
@@ -174,13 +188,6 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
   return (
     <>
       <Card 
-        className={`mb-2 bg-gradient-to-br from-[rgba(240,253,244,0.95)] to-[rgba(220,252,231,0.9)] dark:from-[rgba(26,58,42,0.95)] dark:to-[rgba(45,80,61,0.9)] backdrop-blur-[20px] rounded-3 shadow-[0_8px_32px_rgba(34,197,94,0.15)] dark:shadow-[0_8px_32px_rgba(34,197,94,0.1)] transition-all duration-300 ${
-          trade.status === 'REJECTED' 
-            ? 'border-2 border-[rgba(239,68,68,0.5)] dark:border-[rgba(239,68,68,0.6)]' 
-            : trade.status === 'CLOSED'
-            ? 'border-2 border-[rgba(34,197,94,0.5)] dark:border-[rgba(34,197,94,0.6)]'
-            : 'border border-[rgba(34,197,94,0.3)] dark:border-[rgba(34,197,94,0.4)]'
-        } hover:shadow-[0_12px_40px_rgba(34,197,94,0.25)] dark:hover:shadow-[0_12px_40px_rgba(34,197,94,0.15)] hover:-translate-y-1`}
         sx={{ 
           mb: 2,
           background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.95), rgba(220, 252, 231, 0.9))',
@@ -219,8 +226,8 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
                 component="div" 
                 fontWeight={600} 
                 mb={0.5} 
-                sx={{ 
-                  color: '#064e3b',
+                sx={{
+                  color: 'text.primary',
                   fontSize: { xs: '1rem', sm: '1.25rem' },
                   wordBreak: 'break-word',
                 }}
@@ -234,11 +241,11 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
                 gap={1} 
                 mb={1}
               >
-                <EventIcon fontSize="small" sx={{ color: '#166534' }} />
+                <EventIcon fontSize="small" color="primary" />
                 <Typography 
                   variant="body2" 
                   sx={{ 
-                    color: '#166534',
+                    color: 'text.secondary',
                     fontSize: { xs: '0.75rem', sm: '0.875rem' },
                   }}
                 >
@@ -267,101 +274,110 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
           </Box>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-            <Box 
-              sx={{ 
-                p: 1.5, 
-                background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1))',
+            <Box
+              sx={{
+                p: 1.5,
+                backgroundColor: statBg,
                 borderRadius: 2,
                 textAlign: 'center',
                 width: { xs: 'calc(50% - 8px)', sm: 'calc(25% - 12px)' },
                 minWidth: { xs: 'calc(50% - 8px)', sm: 'calc(25% - 12px)' },
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: statBorder,
               }}
             >
-              <TrendingUpIcon fontSize="small" sx={{ mb: 0.5, color: '#059669' }} />
-              <Typography variant="caption" display="block" sx={{ color: '#166534', fontWeight: 600 }}>
+              <TrendingUpIcon fontSize="small" sx={{ mb: 0.5, color: theme.palette.primary.dark }} />
+              <Typography variant="caption" display="block" sx={{ color: 'text.secondary', fontWeight: 600 }}>
                 Contracts
               </Typography>
-              <Typography variant="h6" fontWeight={700} sx={{ color: '#064e3b' }}>
+              <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary' }}>
                 {trade.contracts}
               </Typography>
             </Box>
-            <Box 
-              sx={{ 
-                p: 1.5, 
-                background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1))',
+            <Box
+              sx={{
+                p: 1.5,
+                backgroundColor: statBg,
                 borderRadius: 2,
                 textAlign: 'center',
                 width: { xs: 'calc(50% - 8px)', sm: 'calc(25% - 12px)' },
                 minWidth: { xs: 'calc(50% - 8px)', sm: 'calc(25% - 12px)' },
-                border: '1px solid rgba(34, 197, 94, 0.3)',
+                border: statBorder,
               }}
             >
-              <AttachMoneyIcon fontSize="small" sx={{ mb: 0.5, color: '#059669' }} />
-              <Typography variant="caption" display="block" sx={{ color: '#166534', fontWeight: 600 }}>
+              <AttachMoneyIcon fontSize="small" sx={{ mb: 0.5, color: theme.palette.primary.dark }} />
+              <Typography variant="caption" display="block" sx={{ color: 'text.secondary', fontWeight: 600 }}>
                 Fill Price
               </Typography>
-              <Typography variant="h6" fontWeight={700} sx={{ color: '#064e3b' }}>
+              <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary' }}>
                 ${trade.fillPrice.toFixed(2)}
               </Typography>
             </Box>
-            <Box 
-              sx={{ 
-                p: 1.5, 
-                background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.08))',
+            <Box
+              sx={{
+                p: 1.5,
+                backgroundColor: statBg,
                 borderRadius: 2,
                 textAlign: 'center',
                 width: { xs: 'calc(50% - 8px)', sm: 'calc(25% - 12px)' },
                 minWidth: { xs: 'calc(50% - 8px)', sm: 'calc(25% - 12px)' },
-                border: '1px solid rgba(34, 197, 94, 0.25)',
+                border: statBorder,
               }}
             >
-              <CalculateIcon fontSize="small" sx={{ mb: 0.5, color: '#059669' }} />
-              <Typography variant="caption" display="block" sx={{ color: '#166534', fontWeight: 600 }}>
+              <CalculateIcon fontSize="small" sx={{ mb: 0.5, color: theme.palette.primary.dark }} />
+              <Typography variant="caption" display="block" sx={{ color: 'text.secondary', fontWeight: 600 }}>
                 Buy Notional
               </Typography>
-              <Typography variant="h6" fontWeight={700} sx={{ color: '#064e3b' }}>
+              <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary' }}>
                 {formatNotional(buyNotional)}
               </Typography>
             </Box>
-            <Box 
-              sx={{ 
-                p: 1.5, 
-                background: currentPnl >= 0 
-                  ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1))'
-                  : 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1))',
+            <Box
+              sx={{
+                p: 1.5,
+                backgroundColor:
+                  currentPnl >= 0
+                    ? alpha(theme.palette.success.main, isDark ? 0.25 : 0.12)
+                    : alpha(theme.palette.error.main, isDark ? 0.25 : 0.12),
                 borderRadius: 2,
                 textAlign: 'center',
                 width: { xs: 'calc(50% - 8px)', sm: 'calc(25% - 12px)' },
                 minWidth: { xs: 'calc(50% - 8px)', sm: 'calc(25% - 12px)' },
-                border: currentPnl >= 0 
-                  ? '1px solid rgba(34, 197, 94, 0.3)'
-                  : '1px solid rgba(239, 68, 68, 0.3)',
+                border: `1px solid ${alpha(
+                  currentPnl >= 0 ? theme.palette.success.main : theme.palette.error.main,
+                  isDark ? 0.5 : 0.3
+                )}`,
               }}
             >
-              <AttachMoneyIcon fontSize="small" sx={{ mb: 0.5, color: currentPnl >= 0 ? '#059669' : '#ef4444' }} />
-              <Typography variant="caption" display="block" sx={{ color: '#166534', fontWeight: 600 }}>
+              <AttachMoneyIcon
+                fontSize="small"
+                sx={{ mb: 0.5, color: currentPnl >= 0 ? theme.palette.success.dark : theme.palette.error.light }}
+              />
+              <Typography variant="caption" display="block" sx={{ color: 'text.secondary', fontWeight: 600 }}>
                 P&L
               </Typography>
-              <Typography variant="h6" fontWeight={700} sx={{ color: currentPnl >= 0 ? '#064e3b' : '#dc2626' }}>
+              <Typography
+                variant="h6"
+                fontWeight={700}
+                sx={{ color: currentPnl >= 0 ? theme.palette.text.primary : theme.palette.error.main }}
+              >
                 {currentPnl >= 0 ? '+' : ''}{formatNotional(currentPnl)}
               </Typography>
             </Box>
           </Box>
 
           {(trade.status === 'OPEN' || (trade.fills && trade.fills.length > 0)) && (
-            <Box sx={{ mb: 2, p: 1.5, background: 'rgba(34, 197, 94, 0.1)', borderRadius: 2 }}>
+            <Box sx={{ mb: 2, p: 1.5, backgroundColor: infoPanelBg, borderRadius: 2 }}>
               <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography variant="body2" sx={{ color: '#166534', mb: 1 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
                   Remaining Contracts:{' '}
-                  <strong style={{ color: '#064e3b' }}>{trade.remainingOpenContracts}</strong>
+                  <Box component="strong" sx={{ color: 'text.primary' }}>{trade.remainingOpenContracts}</Box>
                 </Typography>
                 {trade.fills && trade.fills.length > 0 && (
                   <Button
                     size="small"
                     variant="text"
                     onClick={() => setFillsExpanded((prev) => !prev)}
-                    sx={{ color: '#059669', fontWeight: 600, textTransform: 'none' }}
+                    sx={{ color: 'primary.main', fontWeight: 600, textTransform: 'none' }}
                     endIcon={fillsExpanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
                   >
                     {fillsExpanded ? 'Hide Fills' : 'View Fills'}
@@ -369,7 +385,7 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
                 )}
               </Box>
               {trade.fills && trade.fills.length > 0 && (
-                <Typography variant="caption" sx={{ color: '#166534' }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                   {trade.fills.length} sell order{trade.fills.length !== 1 ? 's' : ''} placed
                 </Typography>
               )}
@@ -381,21 +397,21 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
                       sx={{
                         p: 1,
                         borderRadius: 2,
-                        border: '1px solid rgba(34, 197, 94, 0.3)',
-                        background: 'rgba(255, 255, 255, 0.8)',
+                        border: fillsBorder,
+                        backgroundColor: fillsBg,
                         display: 'flex',
                         flexWrap: 'wrap',
                         justifyContent: 'space-between',
                         gap: 1,
                       }}
                     >
-                      <Typography variant="body2" sx={{ color: '#064e3b', fontWeight: 600 }}>
+                      <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600 }}>
                         {fill.contracts} contract{fill.contracts !== 1 ? 's' : ''}
                       </Typography>
-                      <Typography variant="body2" sx={{ color: '#059669', fontWeight: 600 }}>
+                      <Typography variant="body2" sx={{ color: 'primary.main', fontWeight: 600 }}>
                         @{fill.fillPrice.toFixed(2)}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                      <Typography variant="caption" sx={{ color: timestampColor }}>
                         {new Date(fill.createdAt).toLocaleString()}
                       </Typography>
                     </Box>
@@ -461,14 +477,13 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
         maxWidth="sm" 
         fullWidth
         PaperProps={{
-          className: "bg-[rgba(255,255,255,0.98)] dark:bg-[rgba(26,58,42,0.98)] backdrop-blur-[20px] border border-[rgba(45,80,61,0.2)] dark:border-[rgba(34,197,94,0.2)] rounded-lg sm:rounded-xl shadow-[0_8px_32px_rgba(45,80,61,0.2)] dark:shadow-[0_8px_32px_rgba(34,197,94,0.1)] m-1 sm:m-2 max-h-[calc(100vh-16px)] sm:max-h-auto",
           sx: {
             m: { xs: 1, sm: 2 },
             maxHeight: { xs: 'calc(100vh - 16px)', sm: 'auto' },
           },
         }}
       >
-        <DialogTitle className="text-[#062815] dark:text-[#E9FFF4] font-semibold" sx={{ color: '#2D503D', fontWeight: 600 }}>Settle Trade</DialogTitle>
+        <DialogTitle sx={{ color: 'text.primary', fontWeight: 600 }}>Settle Trade</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
@@ -484,23 +499,23 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
               fullWidth
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  color: '#2D503D',
-                  backgroundColor: '#ffffff',
+                  color: 'text.primary',
+                  backgroundColor: alpha(theme.palette.background.paper, isDark ? 0.85 : 1),
                   '& fieldset': {
-                    borderColor: 'rgba(45, 80, 61, 0.3)',
+                    borderColor: alpha(theme.palette.primary.main, 0.3),
                   },
                   '&:hover fieldset': {
-                    borderColor: 'rgba(45, 80, 61, 0.5)',
+                    borderColor: theme.palette.primary.main,
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#2D503D',
+                    borderColor: theme.palette.primary.main,
                   },
                 },
                 '& .MuiInputLabel-root': {
-                  color: '#6b7280',
+                  color: 'text.secondary',
                 },
                 '& .MuiFormHelperText-root': {
-                  color: '#6b7280',
+                  color: 'text.secondary',
                 },
               }}
             />
@@ -511,9 +526,9 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
             onClick={() => setSettleOpen(false)} 
             disabled={loading}
             sx={{
-              color: '#6b7280',
+              color: 'text.secondary',
               '&:hover': {
-                backgroundColor: 'rgba(45, 80, 61, 0.05)',
+                backgroundColor: alpha(theme.palette.text.primary, 0.05),
               },
             }}
           >
@@ -524,13 +539,13 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
             onClick={handleSettle}
             disabled={loading}
             sx={{
-              background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
-              color: '#ffffff',
+              background: actionGradient,
+              color: theme.palette.getContrastText(theme.palette.primary.main),
               '&:hover': {
-                background: 'linear-gradient(135deg, #16a34a 0%, #047857 100%)',
+                background: actionGradientHover,
               },
               '&:disabled': {
-                background: 'rgba(34, 197, 94, 0.3)',
+                background: actionGradientDisabled,
               },
             }}
           >
