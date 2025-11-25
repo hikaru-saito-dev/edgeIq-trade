@@ -17,6 +17,7 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import { useToast } from './ToastProvider';
 import { apiRequest } from '@/lib/apiClient';
@@ -35,6 +36,49 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
   const [loading, setLoading] = useState(false);
   const [marketOpen, setMarketOpen] = useState(true);
   const [marketMessage, setMarketMessage] = useState('');
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const dialogBg = alpha(theme.palette.background.paper, isDark ? 0.9 : 0.98);
+  const dialogBorder = alpha(theme.palette.primary.main, isDark ? 0.45 : 0.25);
+  const controlStyles = {
+    '& .MuiOutlinedInput-root': {
+      color: 'var(--app-text)',
+      backgroundColor: alpha(theme.palette.background.paper, isDark ? 0.7 : 1),
+      '& fieldset': {
+        borderColor: dialogBorder,
+      },
+      '&:hover fieldset': {
+        borderColor: theme.palette.primary.main,
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: theme.palette.primary.main,
+        boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.15)}`,
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: 'var(--text-muted)',
+      '&.Mui-focused': {
+        color: theme.palette.primary.main,
+      },
+    },
+    '& .MuiFormHelperText-root': {
+      color: 'var(--text-muted)',
+    },
+  };
+
+  const infoAlertSx = {
+    backgroundColor: alpha(theme.palette.info.main, isDark ? 0.25 : 0.12),
+    color: theme.palette.text.primary,
+    border: `1px solid ${alpha(theme.palette.info.main, 0.4)}`,
+    boxShadow: 'none',
+  };
+
+  const warningAlertSx = {
+    backgroundColor: alpha(theme.palette.warning.main, isDark ? 0.25 : 0.15),
+    color: theme.palette.text.primary,
+    border: `1px solid ${alpha(theme.palette.warning.main, 0.4)}`,
+    boxShadow: 'none',
+  };
 
   // Form fields
   const [contracts, setContracts] = useState<string>('1');
@@ -149,11 +193,11 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
       fullWidth
       PaperProps={{
         sx: {
-          background: 'rgba(255, 255, 255, 0.98)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid var(--surface-border)',
+          backgroundColor: dialogBg,
+          backdropFilter: 'blur(24px)',
+          border: `1px solid ${dialogBorder}`,
           borderRadius: { xs: 2, sm: 3 },
-          boxShadow: '0 8px 32px rgba(45, 80, 61, 0.2)',
+          boxShadow: isDark ? '0 20px 50px rgba(0,0,0,0.6)' : '0 12px 32px rgba(34, 197, 94, 0.2)',
           m: { xs: 1, sm: 2 },
           maxHeight: { xs: 'calc(100vh - 16px)', sm: 'auto' },
         },
@@ -162,15 +206,15 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
       <DialogTitle sx={{ color: 'var(--app-text)', fontWeight: 600 }}>Create New Trade</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, color: 'var(--app-text)' }}>
             {/* Market Hours Alert */}
             {!marketOpen && (
-              <Alert severity="warning">
+              <Alert severity="warning" sx={warningAlertSx}>
                 {marketMessage}
               </Alert>
             )}
 
-            <Alert severity="info" sx={{ mb: 1 }}>
+            <Alert severity="info" sx={{ mb: 1, ...infoAlertSx }}>
               Market Hours: {getMarketHoursString()} (Weekdays only)
             </Alert>
 
@@ -197,27 +241,7 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               required
               fullWidth
               helperText="Enter between 1 and 5 contracts per trade"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  color: 'var(--app-text)',
-                  backgroundColor: '#ffffff',
-                  '& fieldset': {
-                    borderColor: 'var(--surface-border)',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: 'rgba(45, 80, 61, 0.5)',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: 'var(--app-text)',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: 'var(--text-muted)',
-                },
-                '& .MuiFormHelperText-root': {
-                  color: 'var(--text-muted)',
-                },
-              }}
+              sx={controlStyles}
             />
 
             <TextField
@@ -228,27 +252,7 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               fullWidth
               helperText="Stock ticker symbol (e.g., AAPL)"
               inputProps={{ maxLength: 10, pattern: '[A-Z]+' }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  color: 'var(--app-text)',
-                  backgroundColor: '#ffffff',
-                  '& fieldset': {
-                    borderColor: 'var(--surface-border)',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: 'rgba(45, 80, 61, 0.5)',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: 'var(--app-text)',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: 'var(--text-muted)',
-                },
-                '& .MuiFormHelperText-root': {
-                  color: 'var(--text-muted)',
-                },
-              }}
+              sx={controlStyles}
             />
 
             <TextField
@@ -260,27 +264,7 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               required
               fullWidth
               helperText="Strike price of the option"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  color: 'var(--app-text)',
-                  backgroundColor: '#ffffff',
-                  '& fieldset': {
-                    borderColor: 'var(--surface-border)',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: 'rgba(45, 80, 61, 0.5)',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: 'var(--app-text)',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: 'var(--text-muted)',
-                },
-                '& .MuiFormHelperText-root': {
-                  color: 'var(--text-muted)',
-                },
-              }}
+              sx={controlStyles}
             />
 
             <FormControl fullWidth required>
@@ -291,15 +275,16 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
                 label="Option Type"
                 sx={{
                   color: 'var(--app-text)',
-                  backgroundColor: '#ffffff',
+                  backgroundColor: alpha(theme.palette.background.paper, isDark ? 0.7 : 1),
                   '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'var(--surface-border)',
+                    borderColor: dialogBorder,
                   },
                   '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'rgba(45, 80, 61, 0.5)',
+                    borderColor: theme.palette.primary.main,
                   },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'var(--app-text)',
+                    borderColor: theme.palette.primary.main,
+                    boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.15)}`,
                   },
                 }}
               >
@@ -317,27 +302,7 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               fullWidth
               helperText="Format: MM/DD/YYYY (e.g., 01/17/2025)"
               inputProps={{ pattern: '\\d{2}/\\d{2}/\\d{4}' }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  color: 'var(--app-text)',
-                  backgroundColor: '#ffffff',
-                  '& fieldset': {
-                    borderColor: 'var(--surface-border)',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: 'rgba(45, 80, 61, 0.5)',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: 'var(--app-text)',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: 'var(--text-muted)',
-                },
-                '& .MuiFormHelperText-root': {
-                  color: 'var(--text-muted)',
-                },
-              }}
+              sx={controlStyles}
             />
 
           </Box>
@@ -349,7 +314,7 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
             sx={{
               color: 'var(--text-muted)',
               '&:hover': {
-                backgroundColor: 'rgba(45, 80, 61, 0.05)',
+                backgroundColor: alpha(theme.palette.text.primary, 0.08),
               },
             }}
           >
