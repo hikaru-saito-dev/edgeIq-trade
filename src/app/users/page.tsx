@@ -227,7 +227,7 @@ export default function UsersPage() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, px: { xs: 1, sm: 2 } }}>
       <motion.div
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -244,19 +244,30 @@ export default function UsersPage() {
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
+              fontSize: { xs: '1.75rem', sm: '2.125rem' },
             }}
           >
             User Management
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+          >
             Manage user roles and permissions
           </Typography>
         </Box>
 
         {/* Search & Pagination controls */}
-        <Box display="flex" gap={2} flexWrap="wrap" mb={3} alignItems="center">
+        <Box 
+          display="flex" 
+          flexDirection={{ xs: 'column', sm: 'row' }}
+          gap={2} 
+          mb={3} 
+          alignItems={{ xs: 'stretch', sm: 'center' }}
+        >
           <TextField
-            placeholder="Search users (alias/username/display name)"
+            placeholder="Search users..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             size="small"
@@ -268,8 +279,8 @@ export default function UsersPage() {
               ),
             }}
             sx={{
-              flex: 1,
-              minWidth: 250,
+              flex: { xs: '1 1 100%', sm: 1 },
+              minWidth: { xs: '100%', sm: 250 },
               '& .MuiOutlinedInput-root': {
                 color: '#2D503D',
                 backgroundColor: '#ffffff',
@@ -318,6 +329,7 @@ export default function UsersPage() {
         </Box>
 
         <Paper
+          className="rounded-xl overflow-hidden bg-[rgba(255,255,255,0.9)] dark:bg-[rgba(26,58,42,0.9)] backdrop-blur-[20px] border border-[rgba(45,80,61,0.2)] dark:border-[rgba(34,197,94,0.2)] relative shadow-[0_4px_16px_rgba(45,80,61,0.1)] dark:shadow-[0_4px_16px_rgba(34,197,94,0.1)] overflow-x-auto"
           sx={{
             borderRadius: 3,
             overflow: 'hidden',
@@ -326,6 +338,7 @@ export default function UsersPage() {
             border: '1px solid rgba(45, 80, 61, 0.2)',
             position: 'relative',
             boxShadow: '0 4px 16px rgba(45, 80, 61, 0.1)',
+            overflowX: 'auto',
           }}
         >
           {loading && users.length > 0 && (
@@ -348,7 +361,7 @@ export default function UsersPage() {
             </Box>
           )}
           <TableContainer>
-            <Table>
+            <Table sx={{ minWidth: 600 }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>User</TableCell>

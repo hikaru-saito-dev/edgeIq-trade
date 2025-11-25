@@ -100,6 +100,7 @@ export default function TradesPage() {
     };
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthorized]);
 
   const fetchUserProfile = async () => {
@@ -179,14 +180,21 @@ export default function TradesPage() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, px: { xs: 1, sm: 2 } }}>
       <motion.div
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap" gap={2}>
-          <Box>
+        <Box 
+          display="flex" 
+          flexDirection={{ xs: 'column', sm: 'row' }}
+          justifyContent="space-between" 
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          mb={2} 
+          gap={2}
+        >
+          <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
             <Typography 
               variant="h4" 
               component="h1" 
@@ -197,11 +205,16 @@ export default function TradesPage() {
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
+                fontSize: { xs: '1.75rem', sm: '2.125rem' },
               }}
             >
               My Trades
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography 
+              variant="body2" 
+              color="text.secondary"
+              sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+            >
               Track and manage your options trades
             </Typography>
           </Box>
@@ -217,8 +230,9 @@ export default function TradesPage() {
               }
             }}
             disabled={!marketOpen}
-            sx={{ 
-              px: 3, 
+            sx={{
+              width: { xs: '100%', sm: 'auto' }, 
+              px: { xs: 2, sm: 3 }, 
               py: 1.5,
               background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
               boxShadow: '0 8px 32px rgba(34, 197, 94, 0.3)',
@@ -245,7 +259,7 @@ export default function TradesPage() {
         )}
 
         {/* Status Filter Tabs */}
-        <Paper sx={{ mb: 3, bgcolor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(6px)', borderRadius: 2, border: '1px solid rgba(45, 80, 61, 0.2)' }}>
+        <Paper className="mb-3 bg-[rgba(255,255,255,0.9)] dark:bg-[rgba(26,58,42,0.9)] backdrop-blur-[6px] rounded-lg border border-[rgba(45,80,61,0.2)] dark:border-[rgba(34,197,94,0.2)]" sx={{ mb: 3, bgcolor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(6px)', borderRadius: 2, border: '1px solid rgba(45, 80, 61, 0.2)' }}>
           <Tabs
             value={selectedStatus}
             onChange={(_, newValue) => {
@@ -281,7 +295,7 @@ export default function TradesPage() {
 
         {/* Search & Pagination controls */}
         <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-          <Paper sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(6px)', border: '1px solid rgba(45, 80, 61, 0.2)' }}>
+          <Paper className="p-1.5 flex items-center gap-1 bg-[rgba(255,255,255,0.9)] dark:bg-[rgba(26,58,42,0.9)] backdrop-blur-[6px] border border-[rgba(45,80,61,0.2)] dark:border-[rgba(34,197,94,0.2)]" sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(6px)', border: '1px solid rgba(45, 80, 61, 0.2)', flex: { xs: '1 1 100%', sm: '0 1 auto' } }}>
             <TextField
               variant="outlined"
               size="small"
@@ -290,7 +304,8 @@ export default function TradesPage() {
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchTrades(); } }}
               sx={{
-                minWidth: 320,
+                minWidth: { xs: '100%', sm: 320 },
+                width: { xs: '100%', sm: 'auto' },
                 '& .MuiOutlinedInput-root': {
                   color: '#2D503D',
                   backgroundColor: '#ffffff',
@@ -320,7 +335,7 @@ export default function TradesPage() {
             />
           </Paper>
 
-          <Paper sx={{ p: 1.5, display: 'flex', gap: 1.5, alignItems: 'center', bgcolor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(6px)', border: '1px solid rgba(45, 80, 61, 0.2)' }}>
+          <Paper className="p-1.5 flex gap-1.5 items-center bg-[rgba(255,255,255,0.9)] dark:bg-[rgba(26,58,42,0.9)] backdrop-blur-[6px] border border-[rgba(45,80,61,0.2)] dark:border-[rgba(34,197,94,0.2)]" sx={{ p: 1.5, display: 'flex', gap: 1.5, alignItems: 'center', bgcolor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(6px)', border: '1px solid rgba(45, 80, 61, 0.2)' }}>
             <Typography variant="body2" sx={{ color: '#2D503D' }}>Page size</Typography>
             <FormControl size="small">
               <Select

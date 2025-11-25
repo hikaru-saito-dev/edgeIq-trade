@@ -5,6 +5,7 @@ import { Box } from '@mui/material';
 import Navigation from '@/components/Navigation';
 import { AccessProvider } from '@/components/AccessProvider';
 import ThemeProvider from '@/components/ThemeProvider';
+import DarkModeSync from '@/components/DarkModeSync';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,16 +20,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="light">
       <body className={inter.className}>
+        <DarkModeSync />
         <ThemeProvider>
           <AccessProvider>
             <Box
+            className="bg-[#F3FFF7] dark:bg-[#02150B] min-h-screen relative overflow-hidden"
             sx={{
-              minHeight: '100vh',
-              background: '#f5fdf8',
-              position: 'relative',
-              overflow: 'hidden',
               '&::before': {
                 content: '""',
                 position: 'absolute',

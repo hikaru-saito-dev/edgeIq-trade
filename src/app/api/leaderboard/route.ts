@@ -58,8 +58,7 @@ export async function GET(request: NextRequest) {
         // Calculate trade stats (only CLOSED trades with priceVerified = true)
         const stats = calculateTradeStats(allCompanyTrades as unknown as ITrade[]);
 
-        // Get membership plans with affiliate links (use company owner's username)
-        const userUsername = displayOwner.whopUsername || displayOwner.whopDisplayName || displayOwner.alias || 'user';
+        // Get membership plans with affiliate links
         const membershipPlans = (displayOwner.membershipPlans || []).map((plan) => {
           let affiliateLink: string | null = null;
           if (plan.url) {

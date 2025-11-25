@@ -13,7 +13,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Alert,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -89,7 +88,6 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
   const formatTradeLabel = () => {
     const expiry = new Date(trade.expiryDate);
     const expiryStr = `${expiry.getMonth() + 1}/${expiry.getDate()}/${expiry.getFullYear()}`;
-    const optionLabel = trade.optionType === 'C' ? 'CALL' : 'PUT';
     return `${trade.contracts}x ${trade.ticker} ${trade.strike}${trade.optionType} ${expiryStr}`;
   };
 
@@ -176,6 +174,13 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
   return (
     <>
       <Card 
+        className={`mb-2 bg-gradient-to-br from-[rgba(240,253,244,0.95)] to-[rgba(220,252,231,0.9)] dark:from-[rgba(26,58,42,0.95)] dark:to-[rgba(45,80,61,0.9)] backdrop-blur-[20px] rounded-3 shadow-[0_8px_32px_rgba(34,197,94,0.15)] dark:shadow-[0_8px_32px_rgba(34,197,94,0.1)] transition-all duration-300 ${
+          trade.status === 'REJECTED' 
+            ? 'border-2 border-[rgba(239,68,68,0.5)] dark:border-[rgba(239,68,68,0.6)]' 
+            : trade.status === 'CLOSED'
+            ? 'border-2 border-[rgba(34,197,94,0.5)] dark:border-[rgba(34,197,94,0.6)]'
+            : 'border border-[rgba(34,197,94,0.3)] dark:border-[rgba(34,197,94,0.4)]'
+        } hover:shadow-[0_12px_40px_rgba(34,197,94,0.25)] dark:hover:shadow-[0_12px_40px_rgba(34,197,94,0.15)] hover:-translate-y-1`}
         sx={{ 
           mb: 2,
           background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.95), rgba(220, 252, 231, 0.9))',
@@ -200,14 +205,43 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
         }}
       >
         <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="start" mb={2}>
-            <Box flex={1}>
-              <Typography variant="h6" component="div" fontWeight={600} mb={0.5} sx={{ color: '#064e3b' }}>
+          <Box 
+            display="flex" 
+            flexDirection={{ xs: 'column', sm: 'row' }}
+            justifyContent="space-between" 
+            alignItems={{ xs: 'flex-start', sm: 'start' }}
+            gap={{ xs: 1, sm: 0 }}
+            mb={2}
+          >
+            <Box flex={1} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+              <Typography 
+                variant="h6" 
+                component="div" 
+                fontWeight={600} 
+                mb={0.5} 
+                sx={{ 
+                  color: '#064e3b',
+                  fontSize: { xs: '1rem', sm: '1.25rem' },
+                  wordBreak: 'break-word',
+                }}
+              >
                 {formatTradeLabel()}
               </Typography>
-              <Box display="flex" alignItems="center" gap={1} mb={1}>
+              <Box 
+                display="flex" 
+                flexWrap="wrap"
+                alignItems="center" 
+                gap={1} 
+                mb={1}
+              >
                 <EventIcon fontSize="small" sx={{ color: '#166534' }} />
-                <Typography variant="body2" sx={{ color: '#166534' }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: '#166534',
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  }}
+                >
                   {new Date(trade.createdAt).toLocaleString()}
                 </Typography>
                 {!trade.priceVerified && (
@@ -215,7 +249,7 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
                     label="Unverified" 
                     size="small" 
                     color="warning"
-                    sx={{ ml: 1 }}
+                    sx={{ ml: { xs: 0, sm: 1 } }}
                   />
                 )}
               </Box>
@@ -225,7 +259,10 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
               color={getStatusColor()}
               size="medium"
               icon={getStatusIcon()}
-              sx={{ fontWeight: 600 }}
+              sx={{ 
+                fontWeight: 600,
+                alignSelf: { xs: 'flex-start', sm: 'auto' },
+              }}
             />
           </Box>
 
@@ -378,7 +415,13 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
             </Box>
           )}
 
-          <Box display="flex" gap={1} justifyContent="flex-end">
+          <Box 
+            display="flex" 
+            gap={1} 
+            justifyContent="flex-end"
+            flexDirection={{ xs: 'column', sm: 'row' }}
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
+          >
             {trade.status === 'OPEN' && (
               <Button
                 variant="contained"
@@ -390,6 +433,7 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
                   setSettleContracts(Math.min(1, trade.remainingOpenContracts));
                   setSettleOpen(true);
                 }}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Settle
               </Button>
@@ -401,6 +445,7 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
                 size="small"
                 disabled={loading}
                 onClick={handleDelete}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Delete
               </Button>
@@ -410,8 +455,20 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
       </Card>
 
       {/* Settle Dialog */}
-      <Dialog open={settleOpen} onClose={() => setSettleOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ color: '#2D503D', fontWeight: 600 }}>Settle Trade</DialogTitle>
+      <Dialog 
+        open={settleOpen} 
+        onClose={() => setSettleOpen(false)} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          className: "bg-[rgba(255,255,255,0.98)] dark:bg-[rgba(26,58,42,0.98)] backdrop-blur-[20px] border border-[rgba(45,80,61,0.2)] dark:border-[rgba(34,197,94,0.2)] rounded-lg sm:rounded-xl shadow-[0_8px_32px_rgba(45,80,61,0.2)] dark:shadow-[0_8px_32px_rgba(34,197,94,0.1)] m-1 sm:m-2 max-h-[calc(100vh-16px)] sm:max-h-auto",
+          sx: {
+            m: { xs: 1, sm: 2 },
+            maxHeight: { xs: 'calc(100vh - 16px)', sm: 'auto' },
+          },
+        }}
+      >
+        <DialogTitle className="text-[#062815] dark:text-[#E9FFF4] font-semibold" sx={{ color: '#2D503D', fontWeight: 600 }}>Settle Trade</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField

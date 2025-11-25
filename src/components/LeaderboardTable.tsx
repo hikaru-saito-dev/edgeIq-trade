@@ -27,7 +27,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import LaunchIcon from '@mui/icons-material/Launch';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import { useState, useEffect } from 'react';
-import { useToast } from './ToastProvider';
 
 interface MembershipPlan {
   id: string;
@@ -60,7 +59,6 @@ interface LeaderboardEntry {
 }
 
 export default function LeaderboardTable() {
-  const toast = useToast();
   const [range, setRange] = useState<'all' | '30d' | '7d'>('all');
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,14 +119,26 @@ export default function LeaderboardTable() {
 
   return (
     <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} gap={2} flexWrap="wrap">
+      <Box 
+        display="flex" 
+        flexDirection={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between" 
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        mb={2} 
+        gap={2}
+      >
         <Tabs
           value={range}
           onChange={(_, v) => { setRange(v); setPage(1); }}
+          variant="scrollable"
+          scrollButtons="auto"
           sx={{
+            width: { xs: '100%', sm: 'auto' },
             '& .MuiTab-root': {
               color: '#6b7280',
               fontWeight: 500,
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              minWidth: { xs: 60, sm: 80 },
               '&.Mui-selected': {
                 color: '#2D503D',
                 fontWeight: 600,
@@ -143,40 +153,72 @@ export default function LeaderboardTable() {
           <Tab label="30d" value="30d" />
           <Tab label="7d" value="7d" />
         </Tabs>
-        <Box display="flex" gap={1} alignItems="center">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchLeaderboard(); } }}
-            placeholder="Search users (alias/display/username)"
-            style={{ background: '#ffffff', border: '1px solid rgba(45,80,61,0.3)', borderRadius: 6, padding: '8px 10px', color: '#2D503D', width: 260 }}
-          />
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => { setPage(1); fetchLeaderboard(); }}
-            sx={{
-              color: '#2D503D',
-              borderColor: 'rgba(45,80,61,0.3)',
-              backgroundColor: '#ffffff',
-              '&:hover': {
-                borderColor: '#2D503D',
-                backgroundColor: 'rgba(45,80,61,0.1)',
-              },
-            }}
-          >
-            Search
-          </Button>
-          <Typography variant="body2" sx={{ ml: 2, color: '#2D503D' }}>Page size</Typography>
-          <select
-            value={pageSize}
-            onChange={(e) => { setPageSize(parseInt(e.target.value, 10)); setPage(1); }}
-            style={{ background: '#ffffff', color: '#2D503D', border: '1px solid rgba(45,80,61,0.3)', borderRadius: 6, padding: '8px 10px' }}
-          >
-            {[10, 20, 50].map((s) => (
-              <option key={s} value={s} style={{ color: '#2D503D' }}>{s}</option>
-            ))}
-          </select>
+        <Box 
+          display="flex" 
+          flexDirection={{ xs: 'column', sm: 'row' }}
+          gap={1} 
+          alignItems={{ xs: 'stretch', sm: 'center' }}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+        >
+          <Box sx={{ display: 'flex', gap: 1, width: { xs: '100%', sm: 'auto' } }}>
+            <Box sx={{ width: { xs: '100%', sm: 260 }, flex: { xs: '1 1 100%', sm: '0 1 auto' } }}>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchLeaderboard(); } }}
+                placeholder="Search users..."
+                style={{ 
+                  background: '#ffffff', 
+                  border: '1px solid rgba(45,80,61,0.3)', 
+                  borderRadius: 6, 
+                  padding: '8px 10px', 
+                  color: '#2D503D', 
+                  width: '100%',
+                  minWidth: 0,
+                  fontSize: '0.875rem',
+                }}
+              />
+            </Box>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => { setPage(1); fetchLeaderboard(); }}
+              sx={{
+                color: '#2D503D',
+                borderColor: 'rgba(45,80,61,0.3)',
+                backgroundColor: '#ffffff',
+                whiteSpace: 'nowrap',
+                '&:hover': {
+                  borderColor: '#2D503D',
+                  backgroundColor: 'rgba(45,80,61,0.1)',
+                },
+              }}
+            >
+              Search
+            </Button>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
+            <Typography variant="body2" sx={{ color: '#2D503D', fontSize: { xs: '0.75rem', sm: '0.875rem' }, whiteSpace: 'nowrap' }}>Page size</Typography>
+            <Box sx={{ width: { xs: '100%', sm: 'auto' }, flex: { xs: 1, sm: '0 1 auto' } }}>
+              <select
+                value={pageSize}
+                onChange={(e) => { setPageSize(parseInt(e.target.value, 10)); setPage(1); }}
+                style={{ 
+                  background: '#ffffff', 
+                  color: '#2D503D', 
+                  border: '1px solid rgba(45,80,61,0.3)', 
+                  borderRadius: 6, 
+                  padding: '8px 10px',
+                  fontSize: '0.875rem',
+                  width: '100%',
+                }}
+              >
+              {[10, 20, 50].map((s) => (
+                <option key={s} value={s} style={{ color: '#2D503D' }}>{s}</option>
+              ))}
+            </select>
+            </Box>
+          </Box>
         </Box>
       </Box>
 
@@ -201,13 +243,15 @@ export default function LeaderboardTable() {
       ) : (
         <TableContainer
           component={Paper}
+          className="bg-[rgba(255,255,255,0.9)] dark:bg-[rgba(26,58,42,0.9)] border border-[rgba(45,80,61,0.2)] dark:border-[rgba(34,197,94,0.2)] shadow-[0_4px_16px_rgba(45,80,61,0.1)] dark:shadow-[0_4px_16px_rgba(34,197,94,0.1)] overflow-x-auto"
           sx={{
             background: 'rgba(255, 255, 255, 0.9)',
             border: '1px solid rgba(45, 80, 61, 0.2)',
             boxShadow: '0 4px 16px rgba(45, 80, 61, 0.1)',
+            overflowX: 'auto',
           }}
         >
-          <Table>
+          <Table sx={{ minWidth: 800 }}>
             <TableHead>
               <TableRow>
                 <TableCell><strong>Rank</strong></TableCell>

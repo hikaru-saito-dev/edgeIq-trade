@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import {
   Box,
-  Typography,
   Button,
   Dialog,
   DialogTitle,
@@ -148,16 +147,19 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
       maxWidth="sm" 
       fullWidth
       PaperProps={{
+        className: "bg-[rgba(255,255,255,0.98)] dark:bg-[rgba(26,58,42,0.98)] backdrop-blur-[20px] border border-[rgba(45,80,61,0.2)] dark:border-[rgba(34,197,94,0.2)] rounded-lg sm:rounded-xl shadow-[0_8px_32px_rgba(45,80,61,0.2)] dark:shadow-[0_8px_32px_rgba(34,197,94,0.1)] m-1 sm:m-2 max-h-[calc(100vh-16px)] sm:max-h-auto",
         sx: {
           background: 'rgba(255, 255, 255, 0.98)',
           backdropFilter: 'blur(20px)',
           border: '1px solid rgba(45, 80, 61, 0.2)',
-          borderRadius: 3,
+          borderRadius: { xs: 2, sm: 3 },
           boxShadow: '0 8px 32px rgba(45, 80, 61, 0.2)',
+          m: { xs: 1, sm: 2 },
+          maxHeight: { xs: 'calc(100vh - 16px)', sm: 'auto' },
         },
       }}
     >
-      <DialogTitle sx={{ color: '#2D503D', fontWeight: 600 }}>Create New Trade</DialogTitle>
+      <DialogTitle className="text-[#062815] dark:text-[#E9FFF4] font-semibold" sx={{ color: '#2D503D', fontWeight: 600 }}>Create New Trade</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

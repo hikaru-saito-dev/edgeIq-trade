@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import { Trade, ITrade } from '@/models/Trade';
+import { Trade } from '@/models/Trade';
 import { TradeFill } from '@/models/TradeFill';
 import { User } from '@/models/User';
 import { Log } from '@/models/Log';

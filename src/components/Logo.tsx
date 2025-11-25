@@ -1,17 +1,12 @@
 'use client';
 
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import Image from 'next/image';
 import Link from 'next/link';
 
-interface LogoProps {
-  variant?: 'default' | 'small';
-  textColor?: 'white' | 'green' | 'auto';
-}
-
-export default function Logo({ variant = 'default', textColor = 'auto' }: LogoProps) {
+export default function Logo() {
   // Determine text color
-  const logoWidth = variant === 'small' ? 80 : 160;
+  const logoWidth = 160;
   
   return (
     <Box
