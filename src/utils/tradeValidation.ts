@@ -55,17 +55,17 @@ export type SettleTradeInput = z.infer<typeof settleTradeSchema>;
  */
 export function parseExpiryDate(dateString: string): Date {
   const [month, day, year] = dateString.split('/').map(Number);
-  // Month is 0-indexed in Date constructor
-  return new Date(year, month - 1, day);
+  // Store normalized to UTC midnight to avoid timezone shifts
+  return new Date(Date.UTC(year, month - 1, day));
 }
 
 /**
- * Format Date to MM/DD/YYYY string
+ * Format Date to MM/DD/YYYY string (uses UTC components)
  */
 export function formatExpiryDate(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const year = date.getFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const year = date.getUTCFullYear();
   return `${month}/${day}/${year}`;
 }
 

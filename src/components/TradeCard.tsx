@@ -29,6 +29,7 @@ import { apiRequest } from '@/lib/apiClient';
 import { useAccess } from './AccessProvider';
 import { useToast } from './ToastProvider';
 import { alpha, useTheme } from '@mui/material/styles';
+import { formatExpiryDate } from '@/utils/tradeValidation';
 
 interface TradeFill {
   _id: string;
@@ -100,8 +101,7 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
 
   const formatTradeLabel = () => {
     const expiry = new Date(trade.expiryDate);
-    const expiryStr = `${expiry.getMonth() + 1}/${expiry.getDate()}/${expiry.getFullYear()}`;
-    const optionLabel = trade.optionType === 'C' ? 'CALL' : 'PUT';
+    const expiryStr = formatExpiryDate(expiry);
     return `${trade.contracts}x ${trade.ticker} ${trade.strike}${trade.optionType} ${expiryStr}`;
   };
 
@@ -190,24 +190,28 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
       <Card 
         sx={{ 
           mb: 2,
-          background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.95), rgba(220, 252, 231, 0.9))',
-          backdropFilter: 'blur(20px)',
+          backgroundColor: theme.palette.background.paper,
+          color: theme.palette.text.primary,
           border: trade.status === 'REJECTED' 
-            ? '2px solid rgba(239, 68, 68, 0.5)' 
+            ? `2px solid ${alpha(theme.palette.error.main, 0.6)}`
             : trade.status === 'CLOSED'
-            ? '2px solid rgba(34, 197, 94, 0.5)'
-            : '1px solid rgba(34, 197, 94, 0.3)',
+            ? `2px solid ${alpha(theme.palette.success.main, 0.5)}`
+            : `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
           borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(34, 197, 94, 0.15), inset 0 1px 0 rgba(34, 197, 94, 0.1)',
+          boxShadow: isDark
+            ? '0 20px 40px rgba(0, 0, 0, 0.45)'
+            : '0 8px 32px rgba(34, 197, 94, 0.15)',
           transition: 'all 0.3s ease',
           '&:hover': {
-            boxShadow: '0 12px 40px rgba(34, 197, 94, 0.25), inset 0 1px 0 rgba(34, 197, 94, 0.15)',
+            boxShadow: isDark
+              ? '0 24px 48px rgba(0, 0, 0, 0.5)'
+              : '0 12px 40px rgba(34, 197, 94, 0.25)',
             transform: 'translateY(-4px)',
             borderColor: trade.status === 'REJECTED' 
-              ? 'rgba(239, 68, 68, 0.7)' 
+              ? alpha(theme.palette.error.main, 0.8)
               : trade.status === 'CLOSED'
-              ? 'rgba(34, 197, 94, 0.7)'
-              : 'rgba(34, 197, 94, 0.5)',
+              ? alpha(theme.palette.success.main, 0.7)
+              : alpha(theme.palette.primary.main, 0.5),
           }
         }}
       >
