@@ -80,6 +80,18 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
     boxShadow: 'none',
   };
 
+  const mmddToISO = (value: string) => {
+    if (!value) return '';
+    const [month, day, year] = value.split('/');
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  };
+
+  const isoToMMDD = (value: string) => {
+    if (!value) return '';
+    const [year, month, day] = value.split('-');
+    return `${month.padStart(2, '0')}/${day.padStart(2, '0')}/${year}`;
+  };
+
   // Form fields
   const [contracts, setContracts] = useState<string>('1');
   const [ticker, setTicker] = useState<string>('');
@@ -295,13 +307,13 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
 
             <TextField
               label="Expiration Date"
-              value={expiryDate}
-              onChange={(e) => setExpiryDate(e.target.value)}
-              placeholder="MM/DD/YYYY"
+              type="date"
+              value={expiryDate ? mmddToISO(expiryDate) : ''}
+              onChange={(e) => setExpiryDate(e.target.value ? isoToMMDD(e.target.value) : '')}
               required
               fullWidth
-              helperText="Format: MM/DD/YYYY (e.g., 01/17/2025)"
-              inputProps={{ pattern: '\\d{2}/\\d{2}/\\d{4}' }}
+              helperText="Select expiration date"
+              InputLabelProps={{ shrink: true }}
               sx={controlStyles}
             />
 
