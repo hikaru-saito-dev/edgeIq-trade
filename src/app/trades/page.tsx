@@ -22,6 +22,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import TradeCard from '@/components/TradeCard';
 import CreateTradeForm from '@/components/CreateTradeForm';
@@ -73,6 +74,26 @@ export default function TradesPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const controlBg = alpha(theme.palette.background.paper, isDark ? 0.6 : 0.98);
+  const controlBorder = alpha(theme.palette.primary.main, isDark ? 0.45 : 0.25);
+  const controlStyles = {
+    '& .MuiOutlinedInput-root': {
+      color: 'var(--app-text)',
+      backgroundColor: controlBg,
+      '& fieldset': { borderColor: controlBorder },
+      '&:hover fieldset': { borderColor: theme.palette.primary.main },
+      '&.Mui-focused fieldset': {
+        borderColor: theme.palette.primary.main,
+        boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.15)}`,
+      },
+    },
+    '& .MuiInputBase-input::placeholder': {
+      color: 'var(--text-muted)',
+      opacity: 1,
+    },
+  };
 
   useEffect(() => {
     if (!isAuthorized) return;
@@ -305,17 +326,7 @@ export default function TradesPage() {
               sx={{
                 minWidth: { xs: '100%', sm: 320 },
                 width: { xs: '100%', sm: 'auto' },
-                '& .MuiOutlinedInput-root': {
-                  color: 'var(--app-text)',
-                  backgroundColor: '#ffffff',
-                  '& fieldset': { borderColor: 'var(--surface-border)' },
-                  '&:hover fieldset': { borderColor: 'rgba(45, 80, 61, 0.5)' },
-                  '&.Mui-focused fieldset': { borderColor: 'var(--app-text)' },
-                },
-                '& .MuiInputBase-input::placeholder': {
-                  color: '#9ca3af',
-                  opacity: 1,
-                },
+                ...controlStyles,
               }}
               InputProps={{
                 startAdornment: (
@@ -343,10 +354,10 @@ export default function TradesPage() {
                 sx={{
                   minWidth: 80,
                   color: 'var(--app-text)',
-                  backgroundColor: '#ffffff',
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--surface-border)' },
-                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(45, 80, 61, 0.5)' },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--app-text)' },
+                  backgroundColor: controlBg,
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: controlBorder },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.primary.main },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.primary.main },
                 }}
               >
                 {[10, 20, 50].map((s) => (

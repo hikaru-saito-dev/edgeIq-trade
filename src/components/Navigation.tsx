@@ -18,12 +18,9 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
 import Link from 'next/link';
 import { useAccess } from './AccessProvider';
 import Logo from './Logo';
-import { useThemeMode } from './ThemeProvider';
 import { alpha } from '@mui/material/styles';
 
 export default function Navigation() {
@@ -31,8 +28,7 @@ export default function Navigation() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { mode, toggleMode } = useThemeMode();
-  const isDark = mode === 'dark';
+  const isDark = theme.palette.mode === 'dark';
 
   const navGradient = isDark
     ? 'linear-gradient(180deg, #02150B 0%, #063021 100%)'
@@ -74,21 +70,12 @@ export default function Navigation() {
         }}
       >
         <Logo />
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <IconButton
-            onClick={toggleMode}
-            sx={{ color: navTextColor }}
-            aria-label="toggle color mode"
-          >
-            {isDark ? <LightModeIcon /> : <DarkModeIcon />}
-          </IconButton>
-          <IconButton
-            onClick={handleDrawerClose}
-            sx={{ color: navTextColor }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </Box>
+        <IconButton
+          onClick={handleDrawerClose}
+          sx={{ color: navTextColor }}
+        >
+          <CloseIcon />
+        </IconButton>
       </Box>
       <List sx={{ pt: 2 }}>
         {navItems.map((item) => (
@@ -227,14 +214,6 @@ export default function Navigation() {
               </Button>
             )}
           </Box>
-
-          <IconButton
-            sx={{ color: navTextColor, mr: { xs: 1, md: 0 } }}
-            onClick={toggleMode}
-            aria-label="toggle color mode"
-          >
-            {isDark ? <LightModeIcon /> : <DarkModeIcon />}
-          </IconButton>
 
           {/* Mobile Menu Button */}
           <IconButton

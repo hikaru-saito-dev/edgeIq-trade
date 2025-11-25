@@ -22,12 +22,17 @@ import {
   DialogActions,
   IconButton,
   Divider,
+  TextField,
+  InputAdornment,
+  MenuItem,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import LaunchIcon from '@mui/icons-material/Launch';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
+import SearchIcon from '@mui/icons-material/Search';
 import { useState, useEffect } from 'react';
 import { useToast } from './ToastProvider';
+import { alpha, useTheme } from '@mui/material/styles';
 
 interface MembershipPlan {
   id: string;
@@ -72,6 +77,16 @@ export default function LeaderboardTable() {
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const controlBg = alpha(theme.palette.background.paper, isDark ? 0.55 : 0.95);
+  const controlBorder = alpha(theme.palette.primary.main, isDark ? 0.45 : 0.25);
+  const controlHoverBg = alpha(theme.palette.primary.main, 0.2);
+  const streakBg = alpha(theme.palette.primary.main, isDark ? 0.25 : 0.12);
+  const streakBorder = `1px solid ${alpha(theme.palette.primary.main, isDark ? 0.55 : 0.3)}`;
+  const paginationDisabledColor = alpha(theme.palette.text.primary, 0.4);
+  const membershipCardBg = alpha(theme.palette.background.paper, isDark ? 0.8 : 0.96);
+  const membershipBorder = `1px solid ${alpha(theme.palette.primary.main, isDark ? 0.45 : 0.2)}`;
 
   const handleViewMembership = (entry: LeaderboardEntry) => {
     setSelectedCompany(entry);
@@ -162,65 +177,81 @@ export default function LeaderboardTable() {
           alignItems={{ xs: 'stretch', sm: 'center' }}
           sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
-          <Box sx={{ display: 'flex', gap: 1, width: { xs: '100%', sm: 'auto' } }}>
-            <Box sx={{ width: { xs: '100%', sm: 260 }, flex: { xs: '1 1 100%', sm: '0 1 auto' } }}>
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchLeaderboard(); } }}
-                placeholder="Search users..."
-                style={{ 
-                  background: '#ffffff', 
-                  border: '1px solid rgba(45,80,61,0.3)', 
-                  borderRadius: 6, 
-                  padding: '8px 10px', 
-                  color: 'var(--app-text)', 
-                  width: '100%',
-                  minWidth: 0,
-                  fontSize: '0.875rem',
-                }}
-              />
-            </Box>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => { setPage(1); fetchLeaderboard(); }}
-              sx={{
+          <TextField
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search users..."
+            size="small"
+            fullWidth
+            onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchLeaderboard(); } }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: 'var(--text-muted)' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              minWidth: { xs: '100%', sm: 260 },
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: controlBg,
                 color: 'var(--app-text)',
-                borderColor: 'rgba(45,80,61,0.3)',
-                backgroundColor: '#ffffff',
-                whiteSpace: 'nowrap',
-                '&:hover': {
-                  borderColor: 'var(--app-text)',
-                  backgroundColor: 'rgba(45,80,61,0.1)',
-                },
-              }}
-            >
-              Search
-            </Button>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
-            <Typography variant="body2" sx={{ color: 'var(--app-text)', fontSize: { xs: '0.75rem', sm: '0.875rem' }, whiteSpace: 'nowrap' }}>Page size</Typography>
-            <Box sx={{ width: { xs: '100%', sm: 'auto' }, flex: { xs: 1, sm: '0 1 auto' } }}>
-              <select
-                value={pageSize}
-                onChange={(e) => { setPageSize(parseInt(e.target.value, 10)); setPage(1); }}
-                style={{ 
-                  background: '#ffffff', 
-                  color: 'var(--app-text)', 
-                  border: '1px solid rgba(45,80,61,0.3)', 
-                  borderRadius: 6, 
-                  padding: '8px 10px',
-                  fontSize: '0.875rem',
-                  width: '100%',
-                }}
-              >
-              {[10, 20, 50].map((s) => (
-                <option key={s} value={s} style={{ color: 'var(--app-text)' }}>{s}</option>
-              ))}
-            </select>
-            </Box>
-          </Box>
+                '& fieldset': { borderColor: controlBorder },
+                '&:hover fieldset': { borderColor: theme.palette.primary.main },
+                '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
+              },
+              '& .MuiInputBase-input::placeholder': {
+                color: 'var(--text-muted)',
+                opacity: 1,
+              },
+            }}
+          />
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => { setPage(1); fetchLeaderboard(); }}
+            sx={{
+              color: 'var(--app-text)',
+              borderColor: controlBorder,
+              backgroundColor: controlBg,
+              whiteSpace: 'nowrap',
+              '&:hover': {
+                borderColor: theme.palette.primary.main,
+                backgroundColor: controlHoverBg,
+              },
+            }}
+          >
+            Search
+          </Button>
+          <TextField
+            select
+            size="small"
+            label="Page size"
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setPage(1);
+            }}
+            sx={{
+              minWidth: { xs: '100%', sm: 140 },
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: controlBg,
+                color: 'var(--app-text)',
+                '& fieldset': { borderColor: controlBorder },
+                '&:hover fieldset': { borderColor: theme.palette.primary.main },
+                '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
+              },
+              '& .MuiInputLabel-root': {
+                color: 'var(--text-muted)',
+              },
+            }}
+          >
+            {[10, 20, 50].map((s) => (
+              <MenuItem key={s} value={s}>
+                {s} per page
+              </MenuItem>
+            ))}
+          </TextField>
         </Box>
       </Box>
 
@@ -345,9 +376,9 @@ export default function LeaderboardTable() {
                           label={entry.currentStreak}
                           size="small"
                           sx={{
-                            backgroundColor: 'rgba(240, 253, 244, 0.9)',
+                            backgroundColor: streakBg,
                             color: 'var(--accent-strong)',
-                            border: '1px solid rgba(34, 197, 94, 0.2)',
+                            border: streakBorder,
                             fontWeight: 600,
                             '& .MuiChip-icon': {
                               color: '#f59e0b',
@@ -371,9 +402,9 @@ export default function LeaderboardTable() {
                           label={entry.longestStreak}
                           size="small"
                           sx={{
-                            backgroundColor: 'rgba(240, 253, 244, 0.9)',
+                            backgroundColor: streakBg,
                             color: 'var(--accent-strong)',
-                            border: '1px solid rgba(34, 197, 94, 0.2)',
+                            border: streakBorder,
                             fontWeight: 600,
                             '& .MuiChip-icon': {
                               color: '#f59e0b',
@@ -423,15 +454,16 @@ export default function LeaderboardTable() {
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               sx={{
                 color: 'var(--app-text)',
-                borderColor: 'rgba(45,80,61,0.3)',
-                backgroundColor: '#ffffff',
+                borderColor: controlBorder,
+                backgroundColor: controlBg,
                 '&:hover': {
-                  borderColor: 'var(--app-text)',
-                  backgroundColor: 'rgba(45,80,61,0.1)',
+                  borderColor: theme.palette.primary.main,
+                  backgroundColor: controlHoverBg,
                 },
                 '&:disabled': {
-                  borderColor: 'rgba(45,80,61,0.2)',
-                  color: 'rgba(45,80,61,0.4)',
+                  borderColor: alpha(controlBorder, 0.6),
+                  color: paginationDisabledColor,
+                  backgroundColor: alpha(controlBg, 0.5),
                 },
               }}
             >
@@ -443,15 +475,16 @@ export default function LeaderboardTable() {
               onClick={() => setPage((p) => p + 1)}
               sx={{
                 color: 'var(--app-text)',
-                borderColor: 'rgba(45,80,61,0.3)',
-                backgroundColor: '#ffffff',
+                borderColor: controlBorder,
+                backgroundColor: controlBg,
                 '&:hover': {
-                  borderColor: 'var(--app-text)',
-                  backgroundColor: 'rgba(45,80,61,0.1)',
+                  borderColor: theme.palette.primary.main,
+                  backgroundColor: controlHoverBg,
                 },
                 '&:disabled': {
-                  borderColor: 'rgba(45,80,61,0.2)',
-                  color: 'rgba(45,80,61,0.4)',
+                  borderColor: alpha(controlBorder, 0.6),
+                  color: paginationDisabledColor,
+                  backgroundColor: alpha(controlBg, 0.5),
                 },
               }}
             >
@@ -505,7 +538,7 @@ export default function LeaderboardTable() {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <Divider sx={{ borderColor: 'rgba(45, 80, 61, 0.2)' }} />
+        <Divider sx={{ borderColor: 'var(--surface-border)' }} />
         <DialogContent sx={{ mt: 2 }}>
           {selectedCompany?.membershipPlans && selectedCompany.membershipPlans.length > 0 ? (
             <Box display="flex" flexDirection="column" gap={3}>
@@ -514,13 +547,13 @@ export default function LeaderboardTable() {
                   key={plan.id}
                   sx={{
                     p: 3,
-                    background: 'rgba(240, 253, 244, 0.8)',
-                    border: '1px solid var(--surface-border)',
+                    backgroundColor: membershipCardBg,
+                    border: membershipBorder,
                     borderRadius: 2,
                     transition: 'all 0.3s ease',
                     '&:hover': {
-                      borderColor: 'rgba(45, 80, 61, 0.4)',
-                      boxShadow: '0 4px 20px rgba(45, 80, 61, 0.15)',
+                      borderColor: theme.palette.primary.main,
+                      boxShadow: `0 8px 30px ${alpha(theme.palette.primary.main, 0.2)}`,
                     },
                   }}
                 >
@@ -535,9 +568,9 @@ export default function LeaderboardTable() {
                             label="Premium"
                             size="small"
                             sx={{
-                              background: 'rgba(34, 197, 94, 0.2)',
+                              background: alpha(theme.palette.primary.main, 0.15),
                               color: 'var(--accent-strong)',
-                              border: '1px solid rgba(34, 197, 94, 0.3)',
+                              border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
                             }}
                           />
                         )}

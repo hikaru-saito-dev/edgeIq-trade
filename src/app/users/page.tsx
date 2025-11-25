@@ -22,7 +22,7 @@ import {
   Alert,
   TextField,
   InputAdornment,
-} from '@mui/material';
+} from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search';
 import { motion } from 'framer-motion';
 import { useAccess } from '@/components/AccessProvider';
@@ -31,6 +31,7 @@ import { apiRequest } from '@/lib/apiClient';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import PersonIcon from '@mui/icons-material/Person';
 import SaveIcon from '@mui/icons-material/Save';
+import { alpha, useTheme } from '@mui/material/styles';
 
 interface User {
   whopUserId: string;
@@ -55,6 +56,33 @@ export default function UsersPage() {
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const controlBg = alpha(theme.palette.background.paper, isDark ? 0.6 : 0.98);
+  const controlBorder = alpha(theme.palette.primary.main, isDark ? 0.45 : 0.25);
+  const controlHover = alpha(theme.palette.primary.main, 0.2);
+  const controlStyles = {
+    '& .MuiOutlinedInput-root': {
+      color: 'var(--app-text)',
+      backgroundColor: controlBg,
+      '& fieldset': {
+        borderColor: controlBorder,
+      },
+      '&:hover fieldset': {
+        borderColor: theme.palette.primary.main,
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: theme.palette.primary.main,
+        boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.15)}`,
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: 'var(--text-muted)',
+      '&.Mui-focused': {
+        color: theme.palette.primary.main,
+      },
+    },
+  };
 
   useEffect(() => {
     if (!accessLoading && (currentRole === 'companyOwner' || currentRole === 'owner')) {
@@ -281,23 +309,11 @@ export default function UsersPage() {
             sx={{
               flex: { xs: '1 1 100%', sm: 1 },
               minWidth: { xs: '100%', sm: 250 },
-              '& .MuiOutlinedInput-root': {
-                color: 'var(--app-text)',
-                backgroundColor: '#ffffff',
-                '& fieldset': {
-                  borderColor: 'var(--surface-border)',
-                },
-                '&:hover fieldset': {
-                  borderColor: 'rgba(45, 80, 61, 0.5)',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: 'var(--app-text)',
-                },
-              },
               '& .MuiInputBase-input::placeholder': {
-                color: '#9ca3af',
+                color: 'var(--text-muted)',
                 opacity: 1,
               },
+              ...controlStyles,
             }}
           />
           <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -309,15 +325,16 @@ export default function UsersPage() {
               }}
               sx={{
                 color: 'var(--app-text)',
-                backgroundColor: '#ffffff',
+                backgroundColor: controlBg,
+                borderRadius: 2,
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'var(--surface-border)',
+                  borderColor: controlBorder,
                 },
                 '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(45, 80, 61, 0.5)',
+                  borderColor: theme.palette.primary.main,
                 },
                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'var(--app-text)',
+                  borderColor: theme.palette.primary.main,
                 },
               }}
             >
@@ -428,15 +445,15 @@ export default function UsersPage() {
                               disabled={user.role === 'companyOwner' || (user.role === 'owner' && currentRole !== 'companyOwner')}
                               sx={{
                                 color: 'var(--app-text)',
-                                backgroundColor: '#ffffff',
+                                backgroundColor: controlBg,
                                 '& .MuiOutlinedInput-notchedOutline': {
-                                  borderColor: 'var(--surface-border)',
+                                  borderColor: controlBorder,
                                 },
                                 '&:hover .MuiOutlinedInput-notchedOutline': {
-                                  borderColor: 'rgba(45, 80, 61, 0.5)',
+                                  borderColor: theme.palette.primary.main,
                                 },
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                  borderColor: 'var(--app-text)',
+                                  borderColor: theme.palette.primary.main,
                                 },
                               }}
                             >
@@ -486,15 +503,16 @@ export default function UsersPage() {
               disabled={page <= 1}
               sx={{
                 color: 'var(--app-text)',
-                borderColor: 'var(--surface-border)',
-                backgroundColor: '#ffffff',
+                borderColor: controlBorder,
+                backgroundColor: controlBg,
                 '&:hover': {
-                  borderColor: 'var(--app-text)',
-                  background: 'rgba(45, 80, 61, 0.1)',
+                  borderColor: theme.palette.primary.main,
+                  background: controlHover,
                 },
                 '&:disabled': {
-                  borderColor: 'rgba(45, 80, 61, 0.2)',
-                  color: 'rgba(45, 80, 61, 0.4)',
+                  borderColor: alpha(controlBorder, 0.6),
+                  color: alpha(theme.palette.text.primary, 0.4),
+                  backgroundColor: alpha(controlBg, 0.5),
                 },
               }}
             >
@@ -509,15 +527,16 @@ export default function UsersPage() {
               disabled={page >= totalPages}
               sx={{
                 color: 'var(--app-text)',
-                borderColor: 'var(--surface-border)',
-                backgroundColor: '#ffffff',
+                borderColor: controlBorder,
+                backgroundColor: controlBg,
                 '&:hover': {
-                  borderColor: 'var(--app-text)',
-                  background: 'rgba(45, 80, 61, 0.1)',
+                  borderColor: theme.palette.primary.main,
+                  background: controlHover,
                 },
                 '&:disabled': {
-                  borderColor: 'rgba(45, 80, 61, 0.2)',
-                  color: 'rgba(45, 80, 61, 0.4)',
+                  borderColor: alpha(controlBorder, 0.6),
+                  color: alpha(theme.palette.text.primary, 0.4),
+                  backgroundColor: alpha(controlBg, 0.5),
                 },
               }}
             >

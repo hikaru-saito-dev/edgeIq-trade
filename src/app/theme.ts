@@ -96,6 +96,57 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => {
           },
         },
       },
+      MuiOutlinedInput: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            backgroundColor: alpha(
+              theme.palette.mode === 'light'
+                ? theme.palette.common.white
+                : theme.palette.background.paper,
+              theme.palette.mode === 'light' ? 0.98 : 0.75
+            ),
+            borderRadius: 12,
+            transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+            '& fieldset': {
+              borderColor: alpha(
+                theme.palette.primary.main,
+                theme.palette.mode === 'light' ? 0.25 : 0.45
+              ),
+            },
+            '&:hover fieldset': {
+              borderColor: theme.palette.primary.main,
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: theme.palette.primary.main,
+              boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.15)}`,
+            },
+          }),
+          input: ({ theme }) => ({
+            color: theme.palette.text.primary,
+            '&::placeholder': {
+              color: alpha(theme.palette.text.secondary, 0.9),
+              opacity: 1,
+            },
+          }),
+        },
+      },
+      MuiInputLabel: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            color: alpha(theme.palette.text.secondary, 0.85),
+            '&.Mui-focused': {
+              color: theme.palette.primary.main,
+            },
+          }),
+        },
+      },
+      MuiFormHelperText: {
+        styleOverrides: {
+          root: ({ theme }) => ({
+            color: alpha(theme.palette.text.secondary, 0.9),
+          }),
+        },
+      },
     },
   };
 };

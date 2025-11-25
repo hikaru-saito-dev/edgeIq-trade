@@ -21,7 +21,7 @@ function HomeContent() {
 
   return (
     <Box
-      sx={{
+      sx={(theme) => ({
         minHeight: 'calc(100vh - 64px)',
         display: 'flex',
         alignItems: 'center',
@@ -29,8 +29,12 @@ function HomeContent() {
         position: 'relative',
         py: { xs: 4, md: 8 },
         px: { xs: 2, sm: 4 },
-        background: 'linear-gradient(180deg, #0a1f0f 0%, #1a3a2a 50%, #2d503d 100%)',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(180deg, #02150B 0%, #0a1f0f 50%, #1a3a2a 100%)'
+            : 'linear-gradient(180deg, #f5fdf8 0%, #d9fbe9 50%, #a7f3d0 100%)',
         overflow: 'hidden',
+        transition: 'background 0.3s ease',
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -43,8 +47,8 @@ function HomeContent() {
               90deg,
               transparent,
               transparent 20px,
-              rgba(34, 197, 94, 0.08) 20px,
-              rgba(34, 197, 94, 0.08) 22px
+              rgba(34, 197, 94, ${theme.palette.mode === 'dark' ? 0.08 : 0.12}) 20px,
+              rgba(34, 197, 94, ${theme.palette.mode === 'dark' ? 0.08 : 0.12}) 22px
             )
           `,
           zIndex: 0,
@@ -57,14 +61,15 @@ function HomeContent() {
           right: 0,
           height: '200px',
           background: `
-            radial-gradient(ellipse at 20% 50%, rgba(34, 197, 94, 0.3) 0%, transparent 50%),
-            radial-gradient(ellipse at 50% 30%, rgba(34, 197, 94, 0.25) 0%, transparent 50%),
-            radial-gradient(ellipse at 80% 60%, rgba(34, 197, 94, 0.2) 0%, transparent 50%)
+            radial-gradient(ellipse at 20% 50%, rgba(34, 197, 94, 0.25) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 30%, rgba(34, 197, 94, 0.2) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 60%, rgba(34, 197, 94, 0.15) 0%, transparent 50%)
           `,
           zIndex: 0,
           animation: 'pulse 4s ease-in-out infinite',
+          opacity: theme.palette.mode === 'dark' ? 1 : 0.8,
         },
-      }}
+      })}
     >
       {/* Animated glowing wavy lines at bottom */}
       <Box
@@ -136,13 +141,14 @@ function HomeContent() {
           variant="h5" 
           sx={{ 
             textAlign: 'center',
-              color: '#a7f3d0', // Light green for contrast on dark background
+            color: (theme) =>
+              theme.palette.mode === 'dark' ? '#a7f3d0' : theme.palette.text.secondary,
             mb: 6,
-              fontWeight: 400,
-              fontSize: { xs: '1.1rem', sm: '1.25rem' },
-              maxWidth: '600px',
-              mx: 'auto',
-              lineHeight: 1.6,
+            fontWeight: 400,
+            fontSize: { xs: '1.1rem', sm: '1.25rem' },
+            maxWidth: '600px',
+            mx: 'auto',
+            lineHeight: 1.6,
           }}
         >
           Track your options trades, compete on leaderboards, and prove your edge
@@ -196,24 +202,28 @@ function HomeContent() {
             component={Link} 
             href="/leaderboard"
             sx={{
-                borderColor: '#22c55e',
+                borderColor: 'var(--accent-strong)',
                 borderWidth: 2,
-                color: '#22c55e',
+                color: 'var(--accent-strong)',
                 px: 5,
                 py: 1.75,
               fontSize: '1.1rem',
               fontWeight: 600,
                 borderRadius: 2,
                 textTransform: 'none',
-                backgroundColor: 'transparent',
-                boxShadow: '0 0 20px rgba(34, 197, 94, 0.2)',
+                backgroundColor: (theme) =>
+                  theme.palette.mode === 'dark' ? 'transparent' : 'rgba(34, 197, 94, 0.08)',
+                boxShadow: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '0 0 20px rgba(34, 197, 94, 0.2)'
+                    : '0 0 20px rgba(34, 197, 94, 0.12)',
               '&:hover': {
                   borderColor: '#34d399',
                   borderWidth: 2,
                   backgroundColor: 'rgba(34, 197, 94, 0.1)',
                 transform: 'translateY(-2px)',
                   color: '#34d399',
-                  boxShadow: '0 0 30px rgba(34, 197, 94, 0.4)',
+                  boxShadow: '0 0 30px rgba(34, 197, 94, 0.3)',
               },
               transition: 'all 0.3s ease',
             }}

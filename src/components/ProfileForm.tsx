@@ -20,6 +20,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
@@ -122,6 +123,35 @@ export default function ProfileForm() {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'personal' | 'company'>('personal');
   const { isAuthorized, loading: accessLoading, userId, companyId } = useAccess();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const controlBg = alpha(theme.palette.background.paper, isDark ? 0.75 : 0.98);
+  const controlBorder = alpha(theme.palette.primary.main, isDark ? 0.45 : 0.25);
+  const fieldStyles = {
+    '& .MuiOutlinedInput-root': {
+      color: 'var(--app-text)',
+      backgroundColor: controlBg,
+      '& fieldset': {
+        borderColor: controlBorder,
+      },
+      '&:hover fieldset': {
+        borderColor: theme.palette.primary.main,
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: theme.palette.primary.main,
+        boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.15)}`,
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: 'var(--text-muted)',
+      '&.Mui-focused': {
+        color: theme.palette.primary.main,
+      },
+    },
+    '& .MuiFormHelperText-root': {
+      color: 'var(--text-muted)',
+    },
+  };
 
   useEffect(() => {
     if (!isAuthorized) {
@@ -458,24 +488,7 @@ export default function ProfileForm() {
             value={alias}
             onChange={(e) => setAlias(e.target.value)}
             margin="normal"
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              color: 'var(--app-text)',
-              backgroundColor: '#ffffff',
-              '& fieldset': {
-                borderColor: 'var(--surface-border)',
-              },
-              '&:hover fieldset': {
-                borderColor: 'rgba(45, 80, 61, 0.5)',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: 'var(--app-text)',
-              },
-            },
-            '& .MuiInputLabel-root': {
-              color: 'var(--text-muted)',
-            },
-          }}
+            sx={fieldStyles}
         />
         
         {/* Notification Webhooks - For owners and admins */}
@@ -494,24 +507,7 @@ export default function ProfileForm() {
           onChange={(e) => setDiscordWebhookUrl(e.target.value)}
           placeholder="https://discord.com/api/webhooks/..."
           margin="normal"
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              color: 'var(--app-text)',
-              backgroundColor: '#ffffff',
-              '& fieldset': {
-                borderColor: 'var(--surface-border)',
-              },
-              '&:hover fieldset': {
-                borderColor: 'rgba(45, 80, 61, 0.5)',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: 'var(--app-text)',
-              },
-            },
-            '& .MuiInputLabel-root': {
-              color: 'var(--text-muted)',
-            },
-          }}
+          sx={fieldStyles}
         />
         <TextField
           fullWidth
@@ -520,24 +516,7 @@ export default function ProfileForm() {
           onChange={(e) => setWhopWebhookUrl(e.target.value)}
           placeholder="https://data.whop.com/api/v5/feed/webhooks/..."
           margin="normal"
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              color: 'var(--app-text)',
-              backgroundColor: '#ffffff',
-              '& fieldset': {
-                borderColor: 'var(--surface-border)',
-              },
-              '&:hover fieldset': {
-                borderColor: 'rgba(45, 80, 61, 0.5)',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: 'var(--app-text)',
-              },
-            },
-            '& .MuiInputLabel-root': {
-              color: 'var(--text-muted)',
-            },
-          }}
+          sx={fieldStyles}
         />
         <FormControlLabel
           control={
@@ -654,14 +633,14 @@ export default function ProfileForm() {
             sx={{
               p: 3,
               mb: 3,
-              background: 'linear-gradient(135deg, rgba(240, 253, 244, 0.8), rgba(220, 252, 231, 0.6))',
-              border: '1px solid var(--surface-border)',
+              backgroundColor: alpha(theme.palette.background.paper, isDark ? 0.7 : 0.98),
+              border: `1px solid ${controlBorder}`,
               borderRadius: 3,
-              boxShadow: '0 4px 20px rgba(34, 197, 94, 0.1)',
+              boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.45)' : '0 4px 20px rgba(34, 197, 94, 0.1)',
               transition: 'all 0.3s ease',
               '&:hover': {
-                borderColor: 'rgba(45, 80, 61, 0.5)',
-                boxShadow: '0 6px 30px rgba(34, 197, 94, 0.2)',
+                borderColor: theme.palette.primary.main,
+                boxShadow: `0 12px 32px ${alpha(theme.palette.primary.main, 0.25)}`,
               },
             }}
           >
@@ -711,23 +690,7 @@ export default function ProfileForm() {
               margin="normal"
               size="small"
               required
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  color: 'var(--app-text)',
-                  '& fieldset': {
-                    borderColor: 'var(--surface-border)',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: 'rgba(45, 80, 61, 0.5)',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: 'var(--app-text)',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: 'var(--text-muted)',
-                },
-              }}
+              sx={fieldStyles}
             />
 
             <TextField
@@ -740,23 +703,7 @@ export default function ProfileForm() {
               size="small"
               multiline
               rows={2}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  color: 'var(--app-text)',
-                  '& fieldset': {
-                    borderColor: 'var(--surface-border)',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: 'rgba(45, 80, 61, 0.5)',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: 'var(--app-text)',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: 'var(--text-muted)',
-                },
-              }}
+              sx={fieldStyles}
             />
 
             <Box display="flex" gap={2}>
@@ -769,23 +716,7 @@ export default function ProfileForm() {
                 margin="normal"
                 size="small"
                 required
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    color: 'var(--app-text)',
-                    '& fieldset': {
-                      borderColor: 'var(--surface-border)',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'rgba(45, 80, 61, 0.5)',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'var(--app-text)',
-                    },
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: 'var(--text-muted)',
-                  },
-                }}
+                sx={fieldStyles}
               />
               <FormControlLabel
                 control={
@@ -817,26 +748,7 @@ export default function ProfileForm() {
               size="small"
               required
               helperText="Enter the base product page URL (not a checkout link)"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  color: 'var(--app-text)',
-                  '& fieldset': {
-                    borderColor: 'var(--surface-border)',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: 'rgba(45, 80, 61, 0.5)',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: 'var(--app-text)',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: 'var(--text-muted)',
-                },
-                '& .MuiFormHelperText-root': {
-                  color: 'var(--text-muted)',
-                },
-              }}
+              sx={fieldStyles}
             />
           </Paper>
         ))}
