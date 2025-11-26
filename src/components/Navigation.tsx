@@ -47,7 +47,7 @@ export default function Navigation() {
   const navItems = [
     ...(isAuthorized && !loading ? [{ label: 'Trades', href: '/trades' }] : []),
     // Hide leaderboard from members if company owner has enabled the setting
-    ...(!loading && !(role === 'member' && hideLeaderboardFromMembers)
+    ...(!loading && isAuthorized && !(role === 'member' && hideLeaderboardFromMembers)
       ? [{ label: 'Leaderboard', href: '/leaderboard' }]
       : []),
     ...(isAuthorized && !loading ? [{ label: 'Profile', href: '/profile' }] : []),
