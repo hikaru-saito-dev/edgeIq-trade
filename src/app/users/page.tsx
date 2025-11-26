@@ -400,7 +400,18 @@ export default function UsersPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  users.map((user) => {
+                  [...users].sort((a, b) => {
+                    // Define role priority order: Company Owner > Owner > Admin > Member
+                    const rolePriority: Record<string, number> = {
+                      companyOwner: 0,
+                      owner: 1,
+                      admin: 2,
+                      member: 3,
+                    };
+                    const priorityA = rolePriority[a.role] ?? 999;
+                    const priorityB = rolePriority[b.role] ?? 999;
+                    return priorityA - priorityB;
+                  }).map((user) => {
                     const effectiveRole = roleChanges[user.whopUserId] || user.role;
                     const hasChanges = roleChanges[user.whopUserId] && roleChanges[user.whopUserId] !== user.role;
 

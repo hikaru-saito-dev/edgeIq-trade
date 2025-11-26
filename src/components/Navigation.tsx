@@ -152,7 +152,7 @@ export default function Navigation() {
                 Trades
               </Button>
             )}
-            {!loading && !(role === 'member' && hideLeaderboardFromMembers) && (
+            {!loading && isAuthorized && !(role === 'member' && hideLeaderboardFromMembers) && (
               <Button
                 component={Link}
                 href="/leaderboard"
