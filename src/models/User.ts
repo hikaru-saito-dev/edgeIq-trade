@@ -28,6 +28,7 @@ export interface IUser extends Document {
   membershipPlans?: MembershipPlan[]; // Array of membership plans for this Whop (only for owners)
   membershipUrl?: string; // Legacy: Primary membership URL (deprecated, use membershipPlans)
   optIn: boolean; // Only owners can opt-in to leaderboard
+  hideLeaderboardFromMembers?: boolean; // Company owner setting to hide leaderboard from members
   stats: {
     winRate: number;
     roi: number;
@@ -65,6 +66,7 @@ const UserSchema = new Schema<IUser>({
   membershipPlans: { type: [MembershipPlanSchema], default: [] }, //only for owners
   membershipUrl: { type: String }, // Legacy field for backward compatibility
   optIn: { type: Boolean, default: false }, // Default false, only owners can opt-in
+  hideLeaderboardFromMembers: { type: Boolean, default: false }, // Company owner setting to hide leaderboard from members
   stats: {
     winRate: { type: Number, default: 0 },
     roi: { type: Number, default: 0 },

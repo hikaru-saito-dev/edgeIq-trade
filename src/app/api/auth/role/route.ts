@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyWhopUser, getWhopUser, getWhopCompany } from '@/lib/whop';
 import connectDB from '@/lib/db';
-import { User } from '@/models/User';
+import { User, IUser } from '@/models/User';
 
 export const runtime = 'nodejs';
 
@@ -128,14 +128,27 @@ export async function GET(request: NextRequest) {
     await connectDB();
     const user = await User.findOne({ whopUserId: userId, companyId: companyId });
     
-    // Users are authorized if they're companyOwner/owner/admin
-    const isAuthorized = role === 'companyOwner' || role === 'owner' || role === 'admin';
+    // Users are authorized if they're companyOwner/owner/admin/member (members can create trades and view profile)
+    const isAuthorized = role === 'companyOwner' || role === 'owner' || role === 'admin' || role === 'member';
+
+    // Get hideLeaderboardFromMembers setting from company owner
+    let hideLeaderboardFromMembers = false;
+    if (user?.companyId && role === 'member') {
+      const companyOwner = await User.findOne({ 
+        companyId: user.companyId, 
+        role: 'companyOwner' 
+      }).lean();
+      if (companyOwner) {
+        hideLeaderboardFromMembers = (companyOwner as unknown as IUser).hideLeaderboardFromMembers ?? false;
+      }
+    }
 
     return NextResponse.json({ 
       role, 
       userId,
       companyId: user?.companyId || companyId || null,
-      isAuthorized 
+      isAuthorized,
+      hideLeaderboardFromMembers: role === 'member' ? hideLeaderboardFromMembers : undefined
     });
   } catch {
     return NextResponse.json({ role: 'none', isAuthorized: false }, { status: 500 });

@@ -278,9 +278,9 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
           </Box>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-            <Box
-              sx={{
-                p: 1.5,
+            <Box 
+              sx={{ 
+                p: 1.5, 
                 backgroundColor: statBg,
                 borderRadius: 2,
                 textAlign: 'center',
@@ -297,9 +297,9 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
                 {trade.contracts}
               </Typography>
             </Box>
-            <Box
-              sx={{
-                p: 1.5,
+            <Box 
+              sx={{ 
+                p: 1.5, 
                 backgroundColor: statBg,
                 borderRadius: 2,
                 textAlign: 'center',
@@ -316,9 +316,9 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
                 ${trade.fillPrice.toFixed(2)}
               </Typography>
             </Box>
-            <Box
-              sx={{
-                p: 1.5,
+            <Box 
+              sx={{ 
+                p: 1.5, 
                 backgroundColor: statBg,
                 borderRadius: 2,
                 textAlign: 'center',
@@ -335,9 +335,9 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
                 {formatNotional(buyNotional)}
               </Typography>
             </Box>
-            <Box
-              sx={{
-                p: 1.5,
+            <Box 
+              sx={{ 
+                p: 1.5, 
                 backgroundColor:
                   currentPnl >= 0
                     ? alpha(theme.palette.success.main, isDark ? 0.25 : 0.12)
@@ -375,8 +375,8 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
                 <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
                   Remaining Contracts:{' '}
                   <Box component="strong" sx={{ color: 'text.primary' }}>{trade.remainingOpenContracts}</Box>
-                </Typography>
-                {trade.fills && trade.fills.length > 0 && (
+              </Typography>
+              {trade.fills && trade.fills.length > 0 && (
                   <Button
                     size="small"
                     variant="text"

@@ -35,6 +35,7 @@ const updateUserSchema = z.object({
   companyName: z.string().max(100).optional(), // Only companyOwners can set
   companyDescription: z.string().max(500).optional(), // Only companyOwners can set
   optIn: z.boolean().optional(), // Only owners and companyOwners can opt-in
+  hideLeaderboardFromMembers: z.boolean().optional(), // Only companyOwners can set
   whopWebhookUrl: z.union([z.string().url(), z.literal('')]).optional(),
   discordWebhookUrl: z.union([z.string().url(), z.literal('')]).optional(),
   notifyOnSettlement: z.boolean().optional(),
@@ -108,8 +109,12 @@ export async function GET() {
     // For owners and companyOwners: also get company stats (aggregated from all company trades)
     let companyStats = null;
     if ((user.role === 'owner' || user.role === 'companyOwner') && user.companyId) {
-      // Get all users in the same company
-      const companyUsers = await User.find({ companyId: user.companyId }).select('_id');
+      // Get all users in the same company with roles that contribute to company stats
+      // Exclude members - only include owner/admin/companyOwner roles
+      const companyUsers = await User.find({ 
+        companyId: user.companyId,
+        role: { $in: ['companyOwner', 'owner', 'admin'] }
+      }).select('_id');
       const companyUserIds = companyUsers.map(u => u._id);
       
       // Get all trades from all users in the company
@@ -148,6 +153,7 @@ export async function GET() {
         discordWebhookUrl: user.discordWebhookUrl,
         notifyOnSettlement: user.notifyOnSettlement ?? false,
         membershipPlans: user.membershipPlans || [],
+        hideLeaderboardFromMembers: user.hideLeaderboardFromMembers ?? false,
       },
       personalStats,
       companyStats, // Only for owners with companyId
@@ -215,6 +221,11 @@ export async function PATCH(request: NextRequest) {
       // Only owners can manage membership plans
       if (validated.membershipPlans !== undefined) {
         user.membershipPlans = validated.membershipPlans as MembershipPlan[];
+      }
+      
+      // Only companyOwners can set hideLeaderboardFromMembers
+      if (validated.hideLeaderboardFromMembers !== undefined) {
+        user.hideLeaderboardFromMembers = validated.hideLeaderboardFromMembers;
       }
     } else {
       // Admins cannot opt-in or manage membership plans

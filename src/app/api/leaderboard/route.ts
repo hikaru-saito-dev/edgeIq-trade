@@ -43,8 +43,12 @@ export async function GET(request: NextRequest) {
         // Use company owner's company info, or fall back to current owner's info
         const displayOwner = (companyOwner as unknown as IUser) || owner;
 
-        // Get all users in the same company (owner + admins)
-        const companyUsers = await User.find({ companyId: owner.companyId }).select('_id');
+        // Get all users in the same company with roles that contribute to company stats
+        // Exclude members - only include owner/admin/companyOwner roles
+        const companyUsers = await User.find({ 
+          companyId: owner.companyId,
+          role: { $in: ['companyOwner', 'owner', 'admin'] }
+        }).select('_id');
         const companyUserIds = companyUsers.map(u => u._id);
         
         // Get ALL trades from all users in the company (only BUY trades, aggregated stats)

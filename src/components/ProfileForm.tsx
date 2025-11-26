@@ -78,6 +78,7 @@ interface UserData {
   alias: string;
   role: 'companyOwner' | 'owner' | 'admin' | 'member';
   optIn: boolean;
+  hideLeaderboardFromMembers?: boolean;
   whopUserId: string;
   companyId?: string;
   companyName?: string;
@@ -104,6 +105,7 @@ export default function ProfileForm() {
   const [alias, setAlias] = useState('');
   const [role, setRole] = useState<'companyOwner' | 'owner' | 'admin' | 'member'>('member');
   const [optIn, setOptIn] = useState(false);
+  const [hideLeaderboardFromMembers, setHideLeaderboardFromMembers] = useState(false);
   const [whopWebhookUrl, setWhopWebhookUrl] = useState('');
   const [discordWebhookUrl, setDiscordWebhookUrl] = useState('');
   const [notifyOnSettlement, setNotifyOnSettlement] = useState(false);
@@ -186,6 +188,7 @@ export default function ProfileForm() {
       setRole(profileData.user.role || 'member');
       // Company ID, name, and description are auto-set from Whop, no need to set state
       setOptIn(profileData.user.optIn || false);
+      setHideLeaderboardFromMembers(profileData.user.hideLeaderboardFromMembers ?? false);
       setWhopWebhookUrl(profileData.user.whopWebhookUrl || '');
       setDiscordWebhookUrl(profileData.user.discordWebhookUrl || '');
       setNotifyOnSettlement(profileData.user.notifyOnSettlement ?? false);
@@ -241,6 +244,7 @@ export default function ProfileForm() {
       const updateData: {
         alias: string;
         optIn?: boolean;
+        hideLeaderboardFromMembers?: boolean;
         whopWebhookUrl?: string;
         discordWebhookUrl?: string;
         notifyOnSettlement?: boolean;
@@ -253,9 +257,11 @@ export default function ProfileForm() {
       };
 
       // Only owners and companyOwners can set opt-in and membership plans
+      // Only companyOwners can set hideLeaderboardFromMembers
       // Company ID, name, and description are auto-set from Whop
       if (role === 'companyOwner') {
         updateData.optIn = optIn;
+        updateData.hideLeaderboardFromMembers = hideLeaderboardFromMembers;
         updateData.membershipPlans = validPlans;
       }
 
@@ -623,6 +629,37 @@ export default function ProfileForm() {
             }
             sx={{ mt: 2 }}
           />
+
+          {/* Hide Leaderboard from Members */}
+          {role === 'companyOwner' && (
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={hideLeaderboardFromMembers}
+                  onChange={(e) => setHideLeaderboardFromMembers(e.target.checked)}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: '#22c55e',
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: '#22c55e',
+                    },
+                  }}
+                />
+              }
+              label={
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
+                    Hide Leaderboard from Members
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'var(--text-muted)', display: 'block' }}>
+                    When enabled, users with the member role will not be able to see the leaderboard tab. They will only see their Profile and Trades tabs.
+                  </Typography>
+                </Box>
+              }
+              sx={{ mt: 2 }}
+            />
+          )}
 
           {/* Membership Plans Section */}
           <Divider sx={{ my: 4, borderColor: 'var(--surface-border)' }} />

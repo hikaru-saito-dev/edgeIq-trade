@@ -24,7 +24,7 @@ import Logo from './Logo';
 import { alpha } from '@mui/material/styles';
 
 export default function Navigation() {
-  const { isAuthorized, role, loading } = useAccess();
+  const { isAuthorized, role, loading, hideLeaderboardFromMembers } = useAccess();
   const [mobileOpen, setMobileOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -46,7 +46,8 @@ export default function Navigation() {
 
   const navItems = [
     ...(isAuthorized && !loading ? [{ label: 'Trades', href: '/trades' }] : []),
-    { label: 'Leaderboard', href: '/leaderboard' },
+    // Hide leaderboard from members if company owner has enabled the setting
+    ...(!(role === 'member' && hideLeaderboardFromMembers) ? [{ label: 'Leaderboard', href: '/leaderboard' }] : []),
     ...(isAuthorized && !loading ? [{ label: 'Profile', href: '/profile' }] : []),
     ...((role === 'companyOwner' || role === 'owner') && !loading ? [{ label: 'Users', href: '/users' }] : []),
   ];
@@ -149,26 +150,28 @@ export default function Navigation() {
                 Trades
               </Button>
             )}
-            <Button 
-              component={Link} 
-              href="/leaderboard"
-              sx={{
-                color: navTextColor,
-                fontWeight: 600,
-                textTransform: 'none',
-                fontSize: '0.95rem',
-                px: 2,
-                borderRadius: 1,
-                transition: 'all 0.2s ease',
-                '&:hover': {
+            {!(role === 'member' && hideLeaderboardFromMembers) && (
+              <Button 
+                component={Link} 
+                href="/leaderboard"
+                sx={{
                   color: navTextColor,
-                  background: navHoverBg,
-                  transform: 'translateY(-1px)',
-                },
-              }}
-            >
-              Leaderboard
-            </Button>
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  fontSize: '0.95rem',
+                  px: 2,
+                  borderRadius: 1,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    color: navTextColor,
+                    background: navHoverBg,
+                    transform: 'translateY(-1px)',
+                  },
+                }}
+              >
+                Leaderboard
+              </Button>
+            )}
             {!loading && isAuthorized && (
               <Button 
                 component={Link} 

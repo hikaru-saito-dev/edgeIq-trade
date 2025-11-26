@@ -35,10 +35,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Check if user is owner or admin
-    if (user.role !== 'companyOwner' && user.role !== 'owner' && user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden. Only owners and admins can view trades.' }, { status: 403 });
-    }
+    // Allow all roles (companyOwner, owner, admin, member) to view their trades
+    // Members can only see their own trades, while owners/admins can see all company trades
 
     // Parse query params
     const { searchParams } = new URL(request.url);
@@ -48,10 +46,11 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')?.trim();
 
     // Build query - only get BUY trades (the main trade entries)
-    const query: Record<string, unknown> = { 
-      userId: user._id,
-      side: 'BUY', // Only show BUY trades (SELL fills are separate)
-    };
+    // Members can only see their own trades, while owners/admins see all company trades
+    const query: Record<string, unknown> = 
+      user.role === 'member' 
+        ? { userId: user._id, side: 'BUY' }
+        : { companyId: companyId, side: 'BUY' };
 
     // Filter by status if provided
     if (status && ['OPEN', 'CLOSED', 'REJECTED'].includes(status)) {
@@ -64,8 +63,18 @@ export async function GET(request: NextRequest) {
       query.ticker = regex;
     }
 
-    const total = await Trade.countDocuments({ ...query, companyId: companyId });
-    const trades = await Trade.find({ ...query, companyId: companyId })
+    // Add companyId to query for all roles
+    if (user.role === 'member') {
+      // Members: query by userId and companyId
+      query.userId = user._id;
+      query.companyId = companyId;
+    } else {
+      // Owners/admins: query by companyId only
+      query.companyId = companyId;
+    }
+
+    const total = await Trade.countDocuments(query);
+    const trades = await Trade.find(query)
       .sort({ createdAt: -1 })
       .skip((page - 1) * pageSize)
       .limit(pageSize)
@@ -132,10 +141,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found. Please set up your profile first.' }, { status: 404 });
     }
 
-    // Check if user is owner or admin
-    if (user.role !== 'companyOwner' && user.role !== 'owner' && user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden. Only owners and admins can create trades.' }, { status: 403 });
-    }
+    // Allow all roles (companyOwner, owner, admin, member) to create trades
 
     // Use companyId from headers or fall back to user's companyId
     const finalCompanyId = companyId || user.companyId;
@@ -287,10 +293,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Check if user is owner or admin
-    if (user.role !== 'companyOwner' && user.role !== 'owner' && user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden. Only owners and admins can delete trades.' }, { status: 403 });
-    }
+    // Allow all roles (companyOwner, owner, admin, member) to delete their own trades
 
     const body = await request.json();
     const { tradeId } = body;
