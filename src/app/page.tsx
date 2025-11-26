@@ -1,6 +1,6 @@
 'use client';
 
-import { Container, Typography, Box, Button } from '@mui/material';
+import { Container, Typography, Box, Button, CircularProgress } from '@mui/material';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useAccess, setExperienceId } from '@/components/AccessProvider';
@@ -10,7 +10,7 @@ import { Suspense, useEffect } from 'react';
 function HomeContent() {
   const searchParams = useSearchParams();
   const experienceId = searchParams?.get('experience') || null;
-  const { isAuthorized, loading } = useAccess();
+  const { isAuthorized, loading, role, hideLeaderboardFromMembers } = useAccess();
 
   // Set experienceId in AccessProvider when it's available from page.tsx
   useEffect(() => {
@@ -18,6 +18,27 @@ function HomeContent() {
       setExperienceId(experienceId);
     }
   }, [experienceId]);
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          minHeight: 'calc(100vh - 64px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          py: { xs: 4, md: 8 },
+        }}
+      >
+        <Box textAlign="center">
+          <CircularProgress size={56} sx={{ mb: 2, color: 'primary.main' }} />
+          <Typography variant="h6" color="text.primary">
+            Verifying your access…
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -196,7 +217,8 @@ function HomeContent() {
               View My Trades
             </Button>
           )}
-          <Button 
+          { !loading && isAuthorized && !(role === 'member' && hideLeaderboardFromMembers) && (
+            <Button 
             variant="outlined" 
             size="large" 
             component={Link} 
@@ -229,7 +251,8 @@ function HomeContent() {
             }}
           >
             View Leaderboard
-          </Button>
+            </Button>
+          )}
         </Box>
       </motion.div>
     </Container>

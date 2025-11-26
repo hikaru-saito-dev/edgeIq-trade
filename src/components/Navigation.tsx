@@ -47,7 +47,9 @@ export default function Navigation() {
   const navItems = [
     ...(isAuthorized && !loading ? [{ label: 'Trades', href: '/trades' }] : []),
     // Hide leaderboard from members if company owner has enabled the setting
-    ...(!(role === 'member' && hideLeaderboardFromMembers) ? [{ label: 'Leaderboard', href: '/leaderboard' }] : []),
+    ...(!loading && !(role === 'member' && hideLeaderboardFromMembers)
+      ? [{ label: 'Leaderboard', href: '/leaderboard' }]
+      : []),
     ...(isAuthorized && !loading ? [{ label: 'Profile', href: '/profile' }] : []),
     ...((role === 'companyOwner' || role === 'owner') && !loading ? [{ label: 'Users', href: '/users' }] : []),
   ];
@@ -94,7 +96,7 @@ export default function Navigation() {
                 },
               }}
             >
-              <ListItemText 
+              <ListItemText
                 primary={item.label}
                 primaryTypographyProps={{
                   fontWeight: item.label === 'Leaderboard' ? 600 : 500,
@@ -123,14 +125,14 @@ export default function Navigation() {
       >
         <Toolbar sx={{ py: 2, px: { xs: 2, sm: 3 } }}>
           <Box sx={{ flexGrow: 1 }}>
-            <Logo  />
+            <Logo />
           </Box>
-          
+
           {/* Desktop Navigation */}
           <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
             {!loading && isAuthorized && (
-              <Button 
-                component={Link} 
+              <Button
+                component={Link}
                 href="/trades"
                 sx={{
                   color: navTextColor,
@@ -150,9 +152,9 @@ export default function Navigation() {
                 Trades
               </Button>
             )}
-            {!(role === 'member' && hideLeaderboardFromMembers) && (
-              <Button 
-                component={Link} 
+            {!loading && !(role === 'member' && hideLeaderboardFromMembers) && (
+              <Button
+                component={Link}
                 href="/leaderboard"
                 sx={{
                   color: navTextColor,
@@ -173,8 +175,8 @@ export default function Navigation() {
               </Button>
             )}
             {!loading && isAuthorized && (
-              <Button 
-                component={Link} 
+              <Button
+                component={Link}
                 href="/profile"
                 sx={{
                   color: navTextColor,
@@ -195,8 +197,8 @@ export default function Navigation() {
               </Button>
             )}
             {!loading && (role === 'companyOwner' || role === 'owner') && (
-              <Button 
-                component={Link} 
+              <Button
+                component={Link}
                 href="/users"
                 sx={{
                   color: navTextColor,
