@@ -25,6 +25,7 @@ import {
   TextField,
   InputAdornment,
   MenuItem,
+  LinearProgress,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import LaunchIcon from '@mui/icons-material/Launch';
@@ -32,7 +33,7 @@ import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import SearchIcon from '@mui/icons-material/Search';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from './ToastProvider';
 import { alpha, useTheme } from '@mui/material/styles';
 
@@ -71,6 +72,7 @@ export default function LeaderboardTable() {
   const [range, setRange] = useState<'all' | '30d' | '7d'>('all');
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<LeaderboardEntry | null>(null);
   const [membershipModalOpen, setMembershipModalOpen] = useState(false);
 
@@ -106,8 +108,14 @@ export default function LeaderboardTable() {
 
   // Removed unused copyAffiliateLink function
 
-  const fetchLeaderboard = async () => {
-    setLoading(true);
+  const hasLoadedOnceRef = useRef(false);
+
+  const fetchLeaderboard = async (preserveData = hasLoadedOnceRef.current) => {
+    if (preserveData) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     try {
       const params = new URLSearchParams({ range, page: String(page), pageSize: String(pageSize) });
       if (search.trim()) params.set('search', search.trim());
@@ -123,7 +131,12 @@ export default function LeaderboardTable() {
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
     } finally {
-      setLoading(false);
+      if (preserveData) {
+        setRefreshing(false);
+      } else {
+        setLoading(false);
+      }
+      hasLoadedOnceRef.current = true;
     }
   };
   
@@ -319,16 +332,32 @@ export default function LeaderboardTable() {
           ))}
         </Box>
       ) : (
-        <TableContainer
-          component={Paper}
-          sx={{
-            background: 'var(--surface-bg)',
-            border: '1px solid var(--surface-border)',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
-            overflowX: 'auto',
-          }}
-        >
-          <Table sx={{ minWidth: 800 }}>
+        <Box sx={{ position: 'relative' }}>
+          {refreshing && (
+            <LinearProgress
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 2,
+                borderTopLeftRadius: 8,
+                borderTopRightRadius: 8,
+              }}
+            />
+          )}
+          <TableContainer
+            component={Paper}
+            sx={{
+              background: 'var(--surface-bg)',
+              border: '1px solid var(--surface-border)',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+              overflowX: 'auto',
+              opacity: refreshing ? 0.85 : 1,
+              transition: 'opacity 0.2s ease',
+            }}
+          >
+            <Table sx={{ minWidth: 800 }}>
             <TableHead>
               <TableRow>
                 <SortableHeader column="rank" label="Rank" />
@@ -479,7 +508,8 @@ export default function LeaderboardTable() {
               )}
             </TableBody>
           </Table>
-          <Box display="flex" justifyContent="center" py={2} gap={2} alignItems="center">
+        </TableContainer>
+        <Box display="flex" justifyContent="center" py={2} gap={2} alignItems="center">
             <Button
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -522,7 +552,7 @@ export default function LeaderboardTable() {
               Next
             </Button>
           </Box>
-        </TableContainer>
+        </Box>
       )}
 
       {/* Membership Plans Modal */}
