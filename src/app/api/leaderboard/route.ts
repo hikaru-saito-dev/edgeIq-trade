@@ -15,6 +15,8 @@ export async function GET(request: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') || '10', 10)));
     const search = (searchParams.get('search') || '').trim();
+    const sortColumn = searchParams.get('sortColumn') || 'roi';
+    const sortDirection = (searchParams.get('sortDirection') || 'desc') as 'asc' | 'desc';
 
     // Only show owners and companyOwners who opted in and have companyId set
     const baseQuery: Record<string, unknown> = { 
@@ -111,17 +113,85 @@ export async function GET(request: NextRequest) {
     // Filter out null entries
     const validEntries = allLeaderboardEntries.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 
-    // Sort ALL entries by ROI then Win% to get global ranking
+    // First, assign initial ranks based on ROI then Win% (default ranking)
     validEntries.sort((a, b) => {
       if (b.roi !== a.roi) return b.roi - a.roi;
       return b.winRate - a.winRate;
     });
-
-    // Assign global ranks to all entries
-    const globallyRanked = validEntries.map((entry, index) => ({
+    const initiallyRanked = validEntries.map((entry, index) => ({
       ...entry,
       rank: index + 1,
     }));
+
+    // Now sort by the requested column
+    if (sortColumn) {
+      initiallyRanked.sort((a, b) => {
+        let aVal: number | string;
+        let bVal: number | string;
+        
+        switch (sortColumn) {
+          case 'rank':
+            // Sort by existing rank
+            aVal = a.rank;
+            bVal = b.rank;
+            break;
+          case 'capper':
+            aVal = (a.alias || '').toLowerCase();
+            bVal = (b.alias || '').toLowerCase();
+            break;
+          case 'winRate':
+            aVal = a.winRate;
+            bVal = b.winRate;
+            break;
+          case 'roi':
+            aVal = a.roi;
+            bVal = b.roi;
+            // Secondary sort by winRate for ROI
+            if (aVal === bVal) {
+              return sortDirection === 'asc' 
+                ? a.winRate - b.winRate
+                : b.winRate - a.winRate;
+            }
+            break;
+          case 'netPnl':
+            aVal = a.netPnl;
+            bVal = b.netPnl;
+            break;
+          case 'winsLosses':
+            // W-L sorted by total plays (wins + losses)
+            aVal = a.plays;
+            bVal = b.plays;
+            break;
+          case 'currentStreak':
+            aVal = a.currentStreak || 0;
+            bVal = b.currentStreak || 0;
+            break;
+          case 'longestStreak':
+            aVal = a.longestStreak || 0;
+            bVal = b.longestStreak || 0;
+            break;
+          default:
+            return 0;
+        }
+        
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          const comparison = aVal.localeCompare(bVal);
+          return sortDirection === 'asc' ? comparison : -comparison;
+        }
+        
+        const comparison = (aVal as number) - (bVal as number);
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+
+      // Recalculate ranks after sorting (unless sorting by rank itself)
+      if (sortColumn !== 'rank') {
+        initiallyRanked.forEach((entry, index) => {
+          entry.rank = index + 1;
+        });
+      }
+    }
+
+    const globallyRanked = initiallyRanked;
 
     // Filter by search if provided
     let filteredLeaderboard = globallyRanked;

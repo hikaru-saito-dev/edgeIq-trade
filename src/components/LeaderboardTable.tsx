@@ -30,6 +30,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import LaunchIcon from '@mui/icons-material/Launch';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import SearchIcon from '@mui/icons-material/Search';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import { useState, useEffect } from 'react';
 import { useToast } from './ToastProvider';
 import { alpha, useTheme } from '@mui/material/styles';
@@ -77,6 +79,10 @@ export default function LeaderboardTable() {
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
+  
+  // sorting
+  const [sortColumn, setSortColumn] = useState<string | null>('roi');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const controlBg = alpha(theme.palette.background.paper, isDark ? 0.55 : 0.95);
@@ -105,6 +111,10 @@ export default function LeaderboardTable() {
     try {
       const params = new URLSearchParams({ range, page: String(page), pageSize: String(pageSize) });
       if (search.trim()) params.set('search', search.trim());
+      if (sortColumn) {
+        params.set('sortColumn', sortColumn);
+        params.set('sortDirection', sortDirection);
+      }
       const response = await fetch(`/api/leaderboard?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch leaderboard');
       const data = await response.json();
@@ -116,11 +126,46 @@ export default function LeaderboardTable() {
       setLoading(false);
     }
   };
+  
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      // Toggle direction if same column
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column, default to desc
+      setSortColumn(column);
+      setSortDirection('desc');
+    }
+    setPage(1); // Reset to first page when sorting changes
+  };
+  
+  const SortableHeader = ({ column, label }: { column: string; label: string }) => {
+    const isActive = sortColumn === column;
+    return (
+      <TableCell 
+        align="center"
+        sx={{ 
+          cursor: 'pointer',
+          userSelect: 'none',
+          '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.05) },
+          fontWeight: 600,
+        }}
+        onClick={() => handleSort(column)}
+      >
+        <Box display="flex" alignItems="center" justifyContent="center" gap={0.5}>
+          <strong>{label}</strong>
+          {isActive && (
+            sortDirection === 'asc' ? <ArrowUpwardIcon sx={{ fontSize: 16 }} /> : <ArrowDownwardIcon sx={{ fontSize: 16 }} />
+          )}
+        </Box>
+      </TableCell>
+    );
+  };
 
   useEffect(() => {
     fetchLeaderboard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [range, page, pageSize]);
+  }, [range, page, pageSize, sortColumn, sortDirection]);
 
   // Debounced search-as-you-type
   useEffect(() => {
@@ -180,7 +225,7 @@ export default function LeaderboardTable() {
           <TextField
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search users..."
+            placeholder="Search cappers..."
             size="small"
             fullWidth
             onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchLeaderboard(); } }}
@@ -286,30 +331,28 @@ export default function LeaderboardTable() {
           <Table sx={{ minWidth: 800 }}>
             <TableHead>
               <TableRow>
-                <TableCell><strong>Rank</strong></TableCell>
-                <TableCell><strong>User</strong></TableCell>
-                <TableCell align="right"><strong>Win %</strong></TableCell>
-                <TableCell align="right"><strong>ROI %</strong></TableCell>
-                <TableCell align="right"><strong>Net P&L</strong></TableCell>
-                <TableCell align="right"><strong>Trades</strong></TableCell>
-                <TableCell align="right"><strong>Wins</strong></TableCell>
-                <TableCell align="right"><strong>Losses</strong></TableCell>
-                <TableCell align="right"><strong>Current Streak</strong></TableCell>
-                <TableCell align="right"><strong>Longest Streak</strong></TableCell>
-                <TableCell align="center"><strong>Action</strong></TableCell>
+                <SortableHeader column="rank" label="Rank" />
+                <SortableHeader column="capper" label="Capper" />
+                <SortableHeader column="winRate" label="Win %" />
+                <SortableHeader column="roi" label="ROI %" />
+                <SortableHeader column="netPnl" label="P/L" />
+                <SortableHeader column="winsLosses" label="W-L" />
+                <SortableHeader column="currentStreak" label="Current Streak" />
+                <SortableHeader column="longestStreak" label="Longest Streak" />
+                <TableCell align="center" sx={{ fontWeight: 600 }}><strong>Action</strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {leaderboard.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} align="center">
+                  <TableCell colSpan={9} align="center">
                     No entries found
                   </TableCell>
                 </TableRow>
               ) : (
                 leaderboard.map((entry) => (
                   <TableRow key={entry.userId} hover>
-                    <TableCell>
+                    <TableCell align="center">
                       <Chip
                         label={`#${entry.rank}`}
                         color="primary"
@@ -333,43 +376,31 @@ export default function LeaderboardTable() {
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell align="center">
                       <Chip
                         label={`${entry.winRate.toFixed(1)}%`}
                         color={entry.winRate >= 50 ? 'success' : 'default'}
                         size="small"
                       />
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell align="center">
                       <Chip
                         label={`${entry.roi >= 0 ? '+' : ''}${entry.roi.toFixed(2)}%`}
                         color={getRoiColor(entry.roi)}
                         size="small"
                       />
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell align="center">
                       <Chip
                         label={`${entry.netPnl >= 0 ? '+' : ''}$${entry.netPnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                         color={entry.netPnl >= 0 ? 'success' : 'error'}
                         size="small"
                       />
                     </TableCell>
-                    <TableCell align="right" sx={{ color: 'var(--app-text)' }}>{entry.plays}</TableCell>
-                    <TableCell align="right">
-                      <Chip
-                        label={entry.winCount || 0}
-                        color="success"
-                        size="small"
-                      />
+                    <TableCell align="center" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
+                      {entry.winCount || 0}-{entry.lossCount || 0}
                     </TableCell>
-                    <TableCell align="right">
-                      <Chip
-                        label={entry.lossCount || 0}
-                        color="error"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="right">
+                    <TableCell align="center">
                       {(entry.currentStreak || 0) > 0 ? (
                         <Chip
                           icon={<LocalFireDepartmentIcon sx={{ fontSize: 16, color: '#f59e0b' }} />}
@@ -395,7 +426,7 @@ export default function LeaderboardTable() {
                         <Typography variant="body2" sx={{ color: 'var(--text-muted)' }}>-</Typography>
                       )}
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell align="center">
                       {(entry.longestStreak || 0) > 0 ? (
                         <Chip
                           icon={<LocalFireDepartmentIcon sx={{ fontSize: 16, color: '#f59e0b' }} />}
