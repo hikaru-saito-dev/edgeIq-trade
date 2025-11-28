@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import { User } from '@/models/User';
 import { z } from 'zod';
+import { PipelineStage } from 'mongoose';
 
 export const runtime = 'nodejs';
 
@@ -43,61 +44,91 @@ export async function GET(request: NextRequest) {
     const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') || '10', 10)));
     const search = (searchParams.get('search') || '').trim();
 
-    // Build query based on role:
-    // - companyOwner: can see users in their company
-    // - owner: can see users in their company (but not companyOwner or other owners)
-    const query: Record<string, unknown> = {};
-    
-    if (currentUser.role === 'companyOwner') {
-      // CompanyOwner can see all users in their company
-      query.companyId = companyId;
-    } else if (currentUser.role === 'owner') {
-      // Owner can see users in their company, but exclude companyOwner and other owners
-      query.companyId = companyId;
+    const skip = (page - 1) * pageSize;
+    const baseMatch: Record<string, unknown> = {
+      companyId,
+    };
+
+    if (currentUser.role === 'owner') {
+      baseMatch.role = { $in: ['admin', 'member'] };
     }
+
+    const pipeline: PipelineStage[] = [
+      { $match: baseMatch },
+    ];
 
     if (search) {
       const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-      const searchConditions = [
-        { alias: regex },
-        { whopUsername: regex },
-        { whopDisplayName: regex },
-      ];
-      
-      // Combine search with existing $or if it exists
-      if (query.$or) {
-        // If we already have $or (from owner role filter), combine with AND logic
-        query.$and = [
-          { $or: query.$or },
-          { $or: searchConditions },
-        ];
-        delete query.$or;
-      } else {
-        query.$or = searchConditions;
-      }
+      pipeline.push({
+        $match: {
+          $or: [
+            { alias: regex },
+            { whopUsername: regex },
+            { whopDisplayName: regex },
+          ],
+        },
+      });
     }
 
-    // Get total count for pagination
-    const totalCount = await User.countDocuments(query);
+    pipeline.push(
+      {
+        $addFields: {
+          rolePriority: {
+            $switch: {
+              branches: [
+                { case: { $eq: ['$role', 'companyOwner'] }, then: 0 },
+                { case: { $eq: ['$role', 'owner'] }, then: 1 },
+                { case: { $eq: ['$role', 'admin'] }, then: 2 },
+                { case: { $eq: ['$role', 'member'] }, then: 3 },
+              ],
+              default: 99,
+            },
+          },
+        },
+      },
+      { $sort: { rolePriority: 1, createdAt: -1, _id: 1 } },
+      {
+        $facet: {
+          data: [
+            { $skip: skip },
+            { $limit: pageSize },
+            {
+              $project: {
+                whopUserId: 1,
+                alias: 1,
+                role: 1,
+                whopUsername: 1,
+                whopDisplayName: 1,
+                whopAvatarUrl: 1,
+                createdAt: 1,
+              },
+            },
+          ],
+          totalCount: [{ $count: 'count' }],
+        },
+      },
+      {
+        $project: {
+          users: '$data',
+          totalCount: { $ifNull: [{ $arrayElemAt: ['$totalCount.count', 0] }, 0] },
+        },
+      },
+    );
 
-    // Fetch users with pagination
-    const users = await User.find(query)
-      .select('whopUserId alias role whopUsername whopDisplayName whopAvatarUrl createdAt')
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * pageSize)
-      .limit(pageSize)
-      .lean();
+    const aggregated = await User.aggregate(pipeline).allowDiskUse(true);
+    const result = aggregated[0] || { users: [], totalCount: 0 };
 
-    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+    const totalPages = Math.max(1, Math.ceil((result.totalCount || 0) / pageSize));
 
     return NextResponse.json({ 
-      users,
+      users: result.users,
       totalPages,
-      totalCount,
+      totalCount: result.totalCount,
       page,
       pageSize,
     });
-  } catch {
+  } catch (error) {
+    console.error('Error fetching users:', error);
     return NextResponse.json(
       { error: 'Failed to fetch users' },
       { status: 500 }
