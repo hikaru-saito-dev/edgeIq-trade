@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import { User, MembershipPlan } from '@/models/User';
+import { User, MembershipPlan, Webhook } from '@/models/User';
 import { Trade } from '@/models/Trade';
 import { z } from 'zod';
 import { PipelineStage } from 'mongoose';
@@ -191,6 +191,13 @@ const whopProductUrlSchema = z.string().url().refine(
   { message: 'Must be a valid Whop product page URL (not a checkout link)' }
 );
 
+const webhookSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1).max(100),
+  url: z.string().url(),
+  type: z.enum(['whop', 'discord']),
+});
+
 const updateUserSchema = z.object({
   alias: z.string().min(1).max(50).optional(),
   // companyId is auto-set from Whop headers, cannot be manually updated
@@ -198,9 +205,9 @@ const updateUserSchema = z.object({
   companyDescription: z.string().max(500).optional(), // Only companyOwners can set
   optIn: z.boolean().optional(), // Only owners and companyOwners can opt-in
   hideLeaderboardFromMembers: z.boolean().optional(), // Only companyOwners can set
-  whopWebhookUrl: z.union([z.string().url(), z.literal('')]).optional(),
-  discordWebhookUrl: z.union([z.string().url(), z.literal('')]).optional(),
+  webhooks: z.array(webhookSchema).optional(), // Array of webhooks with names
   notifyOnSettlement: z.boolean().optional(),
+  onlyNotifyWinningSettlements: z.boolean().optional(), // Only send settlement webhooks for winning trades
   membershipPlans: z.array(z.object({
     id: z.string(),
     name: z.string().min(1).max(100),
@@ -304,9 +311,9 @@ export async function GET() {
         whopUsername: user.whopUsername,
         whopDisplayName: user.whopDisplayName,
         whopAvatarUrl: user.whopAvatarUrl,
-        whopWebhookUrl: user.whopWebhookUrl,
-        discordWebhookUrl: user.discordWebhookUrl,
+        webhooks: user.webhooks || [],
         notifyOnSettlement: user.notifyOnSettlement ?? false,
+        onlyNotifyWinningSettlements: user.onlyNotifyWinningSettlements ?? false,
         membershipPlans: user.membershipPlans || [],
         hideLeaderboardFromMembers: user.hideLeaderboardFromMembers ?? false,
       },
@@ -400,15 +407,17 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    // Update webhook URLs (all roles can update)
-    if (validated.whopWebhookUrl !== undefined) {
-      user.whopWebhookUrl = validated.whopWebhookUrl || undefined;
+    // Update webhooks array (all roles can update)
+    if (validated.webhooks !== undefined) {
+      user.webhooks = validated.webhooks as Webhook[];
     }
-    if (validated.discordWebhookUrl !== undefined) {
-      user.discordWebhookUrl = validated.discordWebhookUrl || undefined;
-    }
+    
     if (validated.notifyOnSettlement !== undefined) {
       user.notifyOnSettlement = validated.notifyOnSettlement;
+    }
+    
+    if (validated.onlyNotifyWinningSettlements !== undefined) {
+      user.onlyNotifyWinningSettlements = validated.onlyNotifyWinningSettlements;
     }
 
     await user.save();

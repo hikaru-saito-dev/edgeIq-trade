@@ -19,6 +19,10 @@ import {
   Divider,
   Tabs,
   Tab,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -87,9 +91,9 @@ interface UserData {
   whopUsername?: string;
   whopDisplayName?: string;
   whopAvatarUrl?: string;
-  whopWebhookUrl?: string;
-  discordWebhookUrl?: string;
+  webhooks?: Array<{ id: string; name: string; url: string; type: 'whop' | 'discord' }>;
   notifyOnSettlement?: boolean;
+  onlyNotifyWinningSettlements?: boolean;
   membershipPlans?: Array<{
     id: string;
     name: string;
@@ -106,9 +110,9 @@ export default function ProfileForm() {
   const [role, setRole] = useState<'companyOwner' | 'owner' | 'admin' | 'member'>('member');
   const [optIn, setOptIn] = useState(false);
   const [hideLeaderboardFromMembers, setHideLeaderboardFromMembers] = useState(false);
-  const [whopWebhookUrl, setWhopWebhookUrl] = useState('');
-  const [discordWebhookUrl, setDiscordWebhookUrl] = useState('');
+  const [webhooks, setWebhooks] = useState<Array<{ id: string; name: string; url: string; type: 'whop' | 'discord' }>>([]);
   const [notifyOnSettlement, setNotifyOnSettlement] = useState(false);
+  const [onlyNotifyWinningSettlements, setOnlyNotifyWinningSettlements] = useState(false);
   const [membershipPlans, setMembershipPlans] = useState<Array<{
     id: string;
     name: string;
@@ -189,9 +193,9 @@ export default function ProfileForm() {
       // Company ID, name, and description are auto-set from Whop, no need to set state
       setOptIn(profileData.user.optIn || false);
       setHideLeaderboardFromMembers(profileData.user.hideLeaderboardFromMembers ?? false);
-      setWhopWebhookUrl(profileData.user.whopWebhookUrl || '');
-      setDiscordWebhookUrl(profileData.user.discordWebhookUrl || '');
+      setWebhooks(profileData.user.webhooks || []);
       setNotifyOnSettlement(profileData.user.notifyOnSettlement ?? false);
+      setOnlyNotifyWinningSettlements(profileData.user.onlyNotifyWinningSettlements ?? false);
       setMembershipPlans(profileData.user.membershipPlans || []);
       setPersonalStats(profileData.personalStats || null);
       setCompanyStats(profileData.companyStats || null);
@@ -232,6 +236,28 @@ export default function ProfileForm() {
     ));
   };
 
+  const handleAddWebhook = () => {
+    setWebhooks([
+      ...webhooks,
+      {
+        id: `webhook_${Date.now()}`,
+        name: '',
+        url: '',
+        type: 'discord',
+      },
+    ]);
+  };
+
+  const handleRemoveWebhook = (id: string) => {
+    setWebhooks(webhooks.filter(webhook => webhook.id !== id));
+  };
+
+  const handleWebhookChange = (id: string, field: string, value: string) => {
+    setWebhooks(webhooks.map(webhook =>
+      webhook.id === id ? { ...webhook, [field]: value } : webhook
+    ));
+  };
+
   const handleSave = async () => {
     if (!isAuthorized) return;
     setSaving(true);
@@ -245,15 +271,15 @@ export default function ProfileForm() {
         alias: string;
         optIn?: boolean;
         hideLeaderboardFromMembers?: boolean;
-        whopWebhookUrl?: string;
-        discordWebhookUrl?: string;
+        webhooks?: typeof webhooks;
         notifyOnSettlement?: boolean;
+        onlyNotifyWinningSettlements?: boolean;
         membershipPlans?: typeof membershipPlans;
       } = {
         alias,
-        whopWebhookUrl: whopWebhookUrl || undefined,
-        discordWebhookUrl: discordWebhookUrl || undefined,
+        webhooks: webhooks.filter(w => w.name.trim() && w.url.trim()),
         notifyOnSettlement,
+        onlyNotifyWinningSettlements,
       };
 
       // Only owners and companyOwners can set opt-in and membership plans
@@ -514,24 +540,108 @@ export default function ProfileForm() {
             <Typography variant="body2" sx={{ color: 'var(--text-muted)', mb: 2 }}>
               Configure webhook URLs to receive trade notifications.
             </Typography>
-        <TextField
-          fullWidth
-          label="Discord Webhook URL"
-          value={discordWebhookUrl}
-          onChange={(e) => setDiscordWebhookUrl(e.target.value)}
-          placeholder="https://discord.com/api/webhooks/..."
-          margin="normal"
-          sx={fieldStyles}
-        />
-        <TextField
-          fullWidth
-          label="Whop Webhook URL"
-          value={whopWebhookUrl}
-          onChange={(e) => setWhopWebhookUrl(e.target.value)}
-          placeholder="https://data.whop.com/api/v5/feed/webhooks/..."
-          margin="normal"
-          sx={fieldStyles}
-        />
+        {/* Multiple Webhooks Section */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={handleAddWebhook}
+            sx={{
+              borderColor: controlBorder,
+              color: theme.palette.primary.main,
+              '&:hover': {
+                borderColor: theme.palette.primary.main,
+                backgroundColor: alpha(theme.palette.primary.main, 0.1),
+              },
+            }}
+          >
+            Add Webhook
+          </Button>
+        </Box>
+        
+        {webhooks.map((webhook, index) => (
+          <Paper
+            key={webhook.id}
+            sx={{
+              p: 2,
+              mb: 2,
+              bgcolor: alpha(theme.palette.primary.main, isDark ? 0.15 : 0.08),
+              border: `1px solid ${alpha(theme.palette.primary.main, isDark ? 0.3 : 0.2)}`,
+              borderRadius: 2,
+            }}
+          >
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Chip
+                label={`Webhook ${index + 1}`}
+                size="small"
+                sx={{
+                background: alpha(theme.palette.primary.main, isDark ? 0.25 : 0.2),
+                color: theme.palette.primary.main,
+                }}
+              />
+              <IconButton
+                onClick={() => handleRemoveWebhook(webhook.id)}
+                size="small"
+                sx={{
+                  color: theme.palette.error.main,
+                  '&:hover': {
+                    background: alpha(theme.palette.error.main, 0.1),
+                  },
+                }}
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Box>
+            <TextField
+              fullWidth
+              label="Webhook Name"
+              value={webhook.name}
+              onChange={(e) => handleWebhookChange(webhook.id, 'name', e.target.value)}
+              placeholder="e.g., Parlays Channel, ML Bets"
+              margin="normal"
+              size="small"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  color: 'var(--app-text)',
+                  '& fieldset': { borderColor: controlBorder },
+                },
+                '& .MuiInputLabel-root': { color: 'var(--text-muted)' },
+              }}
+            />
+            <FormControl fullWidth margin="normal" size="small">
+              <InputLabel sx={{ color: 'var(--text-muted)' }}>Type</InputLabel>
+              <Select
+                value={webhook.type}
+                onChange={(e) => handleWebhookChange(webhook.id, 'type', e.target.value)}
+                label="Type"
+                sx={{
+                  color: 'var(--app-text)',
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: controlBorder },
+                }}
+              >
+                <MenuItem value="discord">Discord</MenuItem>
+                <MenuItem value="whop">Whop</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              label="Webhook URL"
+              value={webhook.url}
+              onChange={(e) => handleWebhookChange(webhook.id, 'url', e.target.value)}
+              placeholder={webhook.type === 'discord' ? 'https://discord.com/api/webhooks/...' : 'https://data.whop.com/api/v5/feed/webhooks/...'}
+              margin="normal"
+              size="small"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  color: 'var(--app-text)',
+                  '& fieldset': { borderColor: controlBorder },
+                },
+                '& .MuiInputLabel-root': { color: 'var(--text-muted)' },
+              }}
+            />
+          </Paper>
+        ))}
+        
         <FormControlLabel
           control={
             <Switch
@@ -539,10 +649,10 @@ export default function ProfileForm() {
               onChange={(e) => setNotifyOnSettlement(e.target.checked)}
               sx={{
                 '& .MuiSwitch-switchBase.Mui-checked': {
-                  color: '#22c55e',
+                  color: theme.palette.primary.main,
                 },
                 '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                  backgroundColor: '#22c55e',
+                  backgroundColor: theme.palette.primary.main,
                 },
               }}
             />
@@ -559,6 +669,36 @@ export default function ProfileForm() {
           }
           sx={{ mt: 2, color: 'var(--app-text)' }}
         />
+        
+        {notifyOnSettlement && (
+          <FormControlLabel
+            control={
+              <Switch
+                checked={onlyNotifyWinningSettlements}
+                onChange={(e) => setOnlyNotifyWinningSettlements(e.target.checked)}
+                sx={{
+                  '& .MuiSwitch-switchBase.Mui-checked': {
+                    color: theme.palette.primary.main,
+                  },
+                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                    backgroundColor: theme.palette.primary.main,
+                  },
+                }}
+              />
+            }
+            label={
+              <Box>
+                <Typography variant="body2" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
+                  Only Notify on Winning Trades
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'var(--text-muted)', display: 'block' }}>
+                  Only send settlement notifications for winning trades. Losses and breakevens will be silent.
+                </Typography>
+              </Box>
+            }
+            sx={{ mt: 1, ml: 4, color: 'var(--app-text)' }}
+          />
+        )}
           </>
         )}
 

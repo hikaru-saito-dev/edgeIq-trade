@@ -79,14 +79,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Add companyId to query for all roles
-    if (user.role === 'member') {
-      // Members: query by userId and companyId
       query.userId = user._id;
       query.companyId = companyId;
-    } else {
-      // Owners/admins: query by companyId only
-      query.companyId = companyId;
-    }
+    
 
     const skip = (page - 1) * pageSize;
     const tradeFillCollection = TradeFill.collection.name;
@@ -275,6 +270,23 @@ export async function POST(request: NextRequest) {
     // Calculate notional
     const notional = validated.contracts * finalFillPrice * 100;
 
+    // Normalize selectedWebhookIds if provided
+    // If selectedWebhookIds is provided (even if empty array), validate and use it
+    // If undefined, don't set it on the trade (for backward compatibility)
+    let normalizedSelectedWebhookIds: string[] | undefined = undefined;
+    if (validated.selectedWebhookIds !== undefined) {
+      if (validated.selectedWebhookIds.length > 0) {
+        // Validate that webhook IDs exist in user's webhooks
+        const userWebhooks = user.webhooks || [];
+        normalizedSelectedWebhookIds = validated.selectedWebhookIds.filter((id: string) => {
+          return userWebhooks.some((webhook: { id: string; name: string; url: string; type: 'whop' | 'discord' }) => webhook.id === id);
+        });
+      } else {
+        // Empty array means explicitly no webhooks selected
+        normalizedSelectedWebhookIds = [];
+      }
+    }
+
     // Create trade
     const trade = await Trade.create({
       userId: user._id,
@@ -294,6 +306,7 @@ export async function POST(request: NextRequest) {
       totalBuyNotional: notional,
       companyId: finalCompanyId,
       isMarketOrder: true, // Always market orders
+      ...(normalizedSelectedWebhookIds !== undefined && { selectedWebhookIds: normalizedSelectedWebhookIds }),
     });
 
     // Log the action
@@ -311,7 +324,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Send notification
-    await notifyTradeCreated(trade, user, finalCompanyId);
+    await notifyTradeCreated(trade, user, finalCompanyId, normalizedSelectedWebhookIds);
 
     invalidateLeaderboardCache();
     if (finalCompanyId) {
@@ -418,6 +431,7 @@ export async function DELETE(request: NextRequest) {
 
     // Save trade data before deletion for notification
     const tradeData = trade.toObject();
+    const selectedWebhookIds = trade.selectedWebhookIds;
     
     // Delete trade
     await trade.deleteOne();
@@ -432,7 +446,7 @@ export async function DELETE(request: NextRequest) {
     });
 
     // Send notification
-    await notifyTradeDeleted(tradeData as unknown as ITrade, user);
+    await notifyTradeDeleted(tradeData as unknown as ITrade, user, selectedWebhookIds);
 
     invalidateLeaderboardCache();
     if (companyId) {

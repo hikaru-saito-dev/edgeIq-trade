@@ -224,27 +224,58 @@ async function sendWebhookMessage(message: string, webhookUrl: string, imageUrl?
 
 /**
  * Send message to a specific user's webhooks
+ * 
+ * @param message - The formatted message to send
+ * @param user - The user to send the message to (must be owner or admin)
+ * @param imageUrl - Optional image URL to include in the embed
+ * @param selectedWebhookIds - Optional array of webhook IDs to send to. If undefined or empty, sends to all webhooks
  */
-async function sendMessageToUser(message: string, user: IUser | null | undefined, imageUrl?: string): Promise<void> {
+async function sendMessageToUser(
+  message: string, 
+  user: IUser | null | undefined, 
+  imageUrl?: string,
+  selectedWebhookIds?: string[]
+): Promise<void> {
   if (!user || (user.role !== 'companyOwner' && user.role !== 'owner' && user.role !== 'admin')) {
     return;
   }
 
   try {
     const webhookPromises: Promise<void>[] = [];
-
-    if (user.discordWebhookUrl) {
-      webhookPromises.push(sendWebhookMessage(message, user.discordWebhookUrl, imageUrl));
+    const availableWebhooks = user.webhooks || [];
+    
+    // If no webhooks configured, don't send
+    if (availableWebhooks.length === 0) {
+      return;
     }
-    if (user.whopWebhookUrl) {
-      webhookPromises.push(sendWebhookMessage(message, user.whopWebhookUrl, imageUrl));
+
+    // If selectedWebhookIds is explicitly provided (even if empty array), use it
+    // If undefined, send to all webhooks (for backward compatibility)
+    let webhooksToUse: typeof availableWebhooks;
+    if (selectedWebhookIds !== undefined) {
+      // Explicit selection (could be empty array - don't send)
+      if (selectedWebhookIds.length === 0) {
+        return;
+      }
+      // Filter to only selected webhooks
+      webhooksToUse = availableWebhooks.filter((webhook) => selectedWebhookIds.includes(webhook.id));
+    } else {
+      // Undefined means backward compatibility - send to all webhooks
+      webhooksToUse = availableWebhooks;
     }
 
+    // Send to selected webhooks
+    webhooksToUse.forEach((webhook) => {
+      webhookPromises.push(sendWebhookMessage(message, webhook.url, imageUrl));
+    });
+
+    // Send to all configured webhooks in parallel
+    // Use Promise.allSettled so if one fails, the others still work
     if (webhookPromises.length > 0) {
       await Promise.allSettled(webhookPromises);
     }
   } catch {
-    // Silently fail
+    // Silently fail to prevent breaking trade operations
   }
 }
 
@@ -280,7 +311,7 @@ function formatNotional(notional: number): string {
   return `$${notional.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export async function notifyTradeCreated(trade: ITrade, user?: IUser | null, _companyId?: string): Promise<void> {
+export async function notifyTradeCreated(trade: ITrade, user?: IUser | null, _companyId?: string, selectedWebhookIds?: string[]): Promise<void> {
   if (!user || (user.role !== 'companyOwner' && user.role !== 'owner' && user.role !== 'admin')) {
     return;
   }
@@ -299,10 +330,12 @@ export async function notifyTradeCreated(trade: ITrade, user?: IUser | null, _co
     messageLines.push(`Status: REJECTED (Price verification failed)`);
   }
 
-  await sendMessageToUser(messageLines.join('\n'), user);
+  // For trade creation: if selectedWebhookIds is undefined, send to all webhooks (backward compatibility)
+  // If it's an empty array, don't send (explicitly no webhooks selected)
+  await sendMessageToUser(messageLines.join('\n'), user, undefined, selectedWebhookIds);
 }
 
-export async function notifyTradeDeleted(trade: ITrade, user?: IUser | null): Promise<void> {
+export async function notifyTradeDeleted(trade: ITrade, user?: IUser | null, selectedWebhookIds?: string[]): Promise<void> {
   if (!user || (user.role !== 'companyOwner' && user.role !== 'owner' && user.role !== 'admin')) {
     return;
   }
@@ -315,7 +348,7 @@ export async function notifyTradeDeleted(trade: ITrade, user?: IUser | null): Pr
     `Fill Price: $${trade.fillPrice.toFixed(2)}`,
   ].join('\n');
 
-  await sendMessageToUser(message, user);
+  await sendMessageToUser(message, user, undefined, selectedWebhookIds);
 }
 
 export async function notifyTradeSettled(trade: ITrade, fillContracts: number, fillPrice: number, user?: IUser | null): Promise<void> {
@@ -333,6 +366,23 @@ export async function notifyTradeSettled(trade: ITrade, fillContracts: number, f
     return;
   }
   if (!userForNotification.notifyOnSettlement) {
+    return;
+  }
+
+  // If onlyNotifyWinningSettlements is enabled, only send for winning trades
+  if (userForNotification.onlyNotifyWinningSettlements && trade.outcome !== 'WIN') {
+    return;
+  }
+
+  // Determine which webhook IDs to use for settlement notification
+  // Priority: Use webhook IDs from trade creation (trade.selectedWebhookIds)
+  // This ensures settlement notifications go to the same webhooks used at trade creation
+  const webhookIdsToUse = trade.selectedWebhookIds && trade.selectedWebhookIds.length > 0
+    ? trade.selectedWebhookIds
+    : undefined; // If no webhooks were selected at creation, don't send settlement notification
+
+  // Must have webhook IDs from trade creation to send settlement notification
+  if (!webhookIdsToUse || webhookIdsToUse.length === 0) {
     return;
   }
 
@@ -362,6 +412,7 @@ export async function notifyTradeSettled(trade: ITrade, fillContracts: number, f
     messageLines.push(`Remaining Contracts: ${trade.remainingOpenContracts}`);
   }
 
-  await sendMessageToUser(messageLines.join('\n'), userForNotification);
+  // Send to the same webhooks that were used when the trade was created
+  await sendMessageToUser(messageLines.join('\n'), userForNotification, undefined, webhookIdsToUse);
 }
 

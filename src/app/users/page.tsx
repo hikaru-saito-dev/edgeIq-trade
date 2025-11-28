@@ -22,6 +22,11 @@ import {
   Alert,
   TextField,
   InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search';
 import { motion } from 'framer-motion';
@@ -31,6 +36,7 @@ import { apiRequest } from '@/lib/apiClient';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import PersonIcon from '@mui/icons-material/Person';
 import SaveIcon from '@mui/icons-material/Save';
+import TransferOwnershipIcon from '@mui/icons-material/AccountBalanceWallet';
 import { alpha, useTheme } from '@mui/material/styles';
 
 interface User {
@@ -50,6 +56,11 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [roleChanges, setRoleChanges] = useState<Record<string, 'companyOwner' | 'owner' | 'admin' | 'member'>>({});
+  
+  // Transfer ownership state
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [transferringUserId, setTransferringUserId] = useState<string | null>(null);
+  const [transferring, setTransferring] = useState(false);
   
   // Pagination & search
   const [page, setPage] = useState(1);
@@ -208,6 +219,41 @@ export default function UsersPage() {
         return <AdminPanelSettingsIcon sx={{ fontSize: 16 }} />;
       default:
         return <PersonIcon sx={{ fontSize: 16 }} />;
+    }
+  };
+
+  const handleTransferOwnership = async () => {
+    if (!transferringUserId) return;
+    
+    try {
+      setTransferring(true);
+      const response = await apiRequest('/api/users/transfer-ownership', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          newOwnerUserId: transferringUserId,
+        }),
+        userId,
+        companyId,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        toast.showError(error.error || 'Failed to transfer ownership');
+        return;
+      }
+
+      toast.showSuccess('Company ownership transferred successfully');
+      setTransferModalOpen(false);
+      setTransferringUserId(null);
+      // Refresh the page to update the user's role
+      window.location.reload();
+    } catch {
+      toast.showError('Failed to transfer ownership');
+    } finally {
+      setTransferring(false);
     }
   };
 
@@ -384,18 +430,21 @@ export default function UsersPage() {
                   <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>Current Role</TableCell>
                   <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>Change Role</TableCell>
                   <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>Action</TableCell>
+                  {currentRole === 'companyOwner' && (
+                    <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>Transfer Ownership</TableCell>
+                  )}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {loading && users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={currentRole === 'companyOwner' ? 5 : 4} align="center" sx={{ py: 4 }}>
                       <CircularProgress size={40} sx={{ color: '#22c55e' }} />
                     </TableCell>
                   </TableRow>
                 ) : users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={currentRole === 'companyOwner' ? 5 : 4} align="center" sx={{ py: 4 }}>
                       <Typography color="text.secondary">No users found</Typography>
                     </TableCell>
                   </TableRow>
@@ -498,6 +547,37 @@ export default function UsersPage() {
                             </Typography>
                           )}
                         </TableCell>
+                        {currentRole === 'companyOwner' && (
+                          <TableCell>
+                            {user.role !== 'companyOwner' && (
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<TransferOwnershipIcon />}
+                                onClick={() => {
+                                  setTransferringUserId(user.whopUserId);
+                                  setTransferModalOpen(true);
+                                }}
+                                disabled={user.whopUserId === userId}
+                                sx={{
+                                  color: theme.palette.error.main,
+                                  borderColor: alpha(theme.palette.error.main, 0.5),
+                                  backgroundColor: controlBg,
+                                  '&:hover': {
+                                    borderColor: theme.palette.error.main,
+                                    background: alpha(theme.palette.error.main, 0.1),
+                                  },
+                                  '&:disabled': {
+                                    borderColor: controlBorder,
+                                    color: alpha(theme.palette.text.primary, 0.4),
+                                  },
+                                }}
+                              >
+                                Transfer
+                              </Button>
+                            )}
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })
@@ -569,6 +649,113 @@ export default function UsersPage() {
             • <strong>Member:</strong> Can only view leaderboard
           </Typography>
         </Alert>
+
+        {/* Transfer Ownership Confirmation Modal */}
+        <Dialog
+          open={transferModalOpen}
+          onClose={() => {
+            if (!transferring) {
+              setTransferModalOpen(false);
+              setTransferringUserId(null);
+            }
+          }}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              background: theme.palette.background.paper,
+              backdropFilter: 'blur(20px)',
+              border: `1px solid ${alpha(theme.palette.error.main, 0.3)}`,
+              borderRadius: 3,
+              boxShadow: theme.palette.mode === 'light'
+                ? '0 12px 32px rgba(34, 197, 94, 0.08)'
+                : '0 12px 32px rgba(0, 0, 0, 0.45)',
+            },
+          }}
+        >
+          <DialogTitle sx={{ color: 'var(--app-text)', fontWeight: 600, textAlign: 'center', pt: 4 }}>
+            Transfer Company Ownership
+          </DialogTitle>
+          <DialogContent>
+            {transferringUserId && (() => {
+              const targetUser = users.find(u => u.whopUserId === transferringUserId);
+              if (!targetUser) return null;
+              
+              return (
+                <Box sx={{ textAlign: 'center', py: 2 }}>
+                  <Avatar
+                    src={targetUser.whopAvatarUrl}
+                    alt={targetUser.alias}
+                    sx={{ 
+                      width: 80, 
+                      height: 80, 
+                      mx: 'auto', 
+                      mb: 2,
+                      border: `2px solid ${alpha(theme.palette.primary.main, 0.5)}`,
+                    }}
+                  >
+                    {targetUser.alias.charAt(0).toUpperCase()}
+                  </Avatar>
+                  <Typography variant="h6" sx={{ color: 'var(--app-text)', fontWeight: 600, mb: 1 }}>
+                    {targetUser.alias}
+                  </Typography>
+                  {targetUser.whopUsername && (
+                    <Typography variant="body2" sx={{ color: 'var(--text-muted)', mb: 3 }}>
+                      @{targetUser.whopUsername}
+                    </Typography>
+                  )}
+                  <DialogContentText sx={{ color: 'var(--app-text)', mb: 2 }}>
+                    Are you sure you want to transfer company ownership to{' '}
+                    <strong>{targetUser.alias}</strong>?
+                  </DialogContentText>
+                  <DialogContentText sx={{ color: theme.palette.error.main, fontSize: '0.875rem' }}>
+                    ⚠️ You will lose your company owner role and become an owner.
+                    This action cannot be undone.
+                  </DialogContentText>
+                </Box>
+              );
+            })()}
+          </DialogContent>
+          <DialogActions sx={{ p: 3, gap: 1 }}>
+            <Button
+              onClick={() => {
+                setTransferModalOpen(false);
+                setTransferringUserId(null);
+              }}
+              disabled={transferring}
+              sx={{
+                color: 'var(--text-muted)',
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.text.primary, 0.05),
+                },
+                '&:disabled': {
+                  color: alpha(theme.palette.text.primary, 0.3),
+                },
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleTransferOwnership}
+              disabled={transferring || !transferringUserId}
+              startIcon={transferring ? <CircularProgress size={16} /> : <TransferOwnershipIcon />}
+              sx={{
+                background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`,
+                color: theme.palette.getContrastText(theme.palette.error.main),
+                '&:hover': {
+                  background: `linear-gradient(135deg, ${theme.palette.error.dark} 0%, ${theme.palette.error.main} 100%)`,
+                },
+                '&:disabled': {
+                  background: 'rgba(239, 68, 68, 0.3)',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                },
+              }}
+            >
+              {transferring ? 'Transferring...' : 'Confirm Transfer'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </motion.div>
     </Container>
   );

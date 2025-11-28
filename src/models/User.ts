@@ -9,6 +9,13 @@ export interface MembershipPlan {
   isPremium?: boolean; // Whether this is a premium/paid plan
 }
 
+export interface Webhook {
+  id: string;
+  name: string; // User-friendly name for the webhook (e.g., "Parlays Channel", "ML Bets")
+  url: string; // Webhook URL
+  type: 'whop' | 'discord'; // Webhook type
+}
+
 export type UserRole = 'companyOwner' | 'owner' | 'admin' | 'member';
 
 export interface IUser extends Document {
@@ -22,9 +29,9 @@ export interface IUser extends Document {
   whopUsername?: string; // Username from Whop profile
   whopDisplayName?: string; // Display name from Whop profile
   whopAvatarUrl?: string; // Avatar URL from Whop profile
-  whopWebhookUrl?: string; // Whop webhook URL for notifications
-  discordWebhookUrl?: string; // Discord webhook URL for notifications
+  webhooks?: Webhook[]; // Array of webhooks with names
   notifyOnSettlement?: boolean; // Whether to send notifications when trades are settled
+  onlyNotifyWinningSettlements?: boolean; // If true, only send settlement webhooks for winning trades
   membershipPlans?: MembershipPlan[]; // Array of membership plans for this Whop (only for owners)
   membershipUrl?: string; // Legacy: Primary membership URL (deprecated, use membershipPlans)
   optIn: boolean; // Only owners can opt-in to leaderboard
@@ -49,6 +56,13 @@ const MembershipPlanSchema = new Schema<MembershipPlan>({
   isPremium: { type: Boolean, default: false },
 }, { _id: false });
 
+const WebhookSchema = new Schema<Webhook>({
+  id: { type: String, required: true },
+  name: { type: String, required: true },
+  url: { type: String, required: true },
+  type: { type: String, enum: ['whop', 'discord'], required: true },
+}, { _id: false });
+
 const UserSchema = new Schema<IUser>({
   alias: { type: String, required: true, trim: true },
   whopUserId: { type: String, required: true, index: true },
@@ -60,9 +74,9 @@ const UserSchema = new Schema<IUser>({
   whopUsername: { type: String, trim: true },
   whopDisplayName: { type: String, trim: true },
   whopAvatarUrl: { type: String, trim: true },
-  whopWebhookUrl: { type: String, trim: true },
-  discordWebhookUrl: { type: String, trim: true },
+  webhooks: { type: [WebhookSchema], default: [] }, // Array of webhooks with names
   notifyOnSettlement: { type: Boolean, default: false },
+  onlyNotifyWinningSettlements: { type: Boolean, default: false }, // Only send settlement webhooks for winning trades
   membershipPlans: { type: [MembershipPlanSchema], default: [] }, //only for owners
   membershipUrl: { type: String }, // Legacy field for backward compatibility
   optIn: { type: Boolean, default: false }, // Default false, only owners can opt-in

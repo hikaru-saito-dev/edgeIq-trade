@@ -26,6 +26,7 @@ export interface ITrade extends Document {
   totalSellNotional?: number; // Total sell notional (sum of all SELL fills)
   companyId?: string; // Whop company ID
   isMarketOrder?: boolean; // Whether this was a market order (always true now)
+  selectedWebhookIds?: string[]; // IDs of all selected webhooks for notifications
   createdAt: Date;
   updatedAt: Date;
 }
@@ -56,6 +57,7 @@ const TradeSchema = new Schema<ITrade>({
   totalSellNotional: { type: Number },
   companyId: { type: String, index: true },
   isMarketOrder: { type: Boolean, default: true }, // Always true - market orders only
+  selectedWebhookIds: { type: [String], default: [] }, // IDs of all selected webhooks for notifications
 }, {
   timestamps: true,
 });

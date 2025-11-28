@@ -16,6 +16,9 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -99,6 +102,10 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
   const [optionType, setOptionType] = useState<'C' | 'P'>('C');
   const [expiryDate, setExpiryDate] = useState<string>('');
 
+  // Webhook selection - always use array format (can contain 0, 1, or multiple IDs)
+  const [userWebhooks, setUserWebhooks] = useState<Array<{ id: string; name: string; url: string; type: 'whop' | 'discord' }>>([]);
+  const [selectedWebhookIds, setSelectedWebhookIds] = useState<string[]>([]);
+
   // Check market hours
   useEffect(() => {
     const checkMarket = () => {
@@ -110,6 +117,43 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
     const interval = setInterval(checkMarket, 60000); // Check every minute
     return () => clearInterval(interval);
   }, []);
+
+  // Fetch user webhooks when form opens
+  useEffect(() => {
+    if (open && userId && companyId) {
+      const fetchWebhooks = async () => {
+        try {
+          const response = await apiRequest('/api/user', { userId, companyId });
+          if (response.ok) {
+            const data = await response.json();
+            setUserWebhooks(data.user?.webhooks || []);
+          }
+        } catch (error) {
+          console.error('Error fetching webhooks:', error);
+        }
+      };
+      fetchWebhooks();
+    }
+  }, [open, userId, companyId]);
+
+  useEffect(() => {
+    if (!userWebhooks || userWebhooks.length === 0) {
+      setSelectedWebhookIds([]);
+      return;
+    }
+
+    setSelectedWebhookIds((prev) =>
+      prev.filter((id) => userWebhooks.some((webhook) => webhook.id === id))
+    );
+  }, [userWebhooks]);
+
+  const handleWebhookSelection = (webhookId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedWebhookIds((prev) => [...prev, webhookId]);
+    } else {
+      setSelectedWebhookIds((prev) => prev.filter((id) => id !== webhookId));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,6 +198,7 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
         optionType,
         expiryDate,
         marketOrder: true, // Always use market orders
+        selectedWebhookIds, // Always include, even if empty array (empty = no webhooks selected)
       };
 
       const res = await apiRequest('/api/trades', {
@@ -172,6 +217,7 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
         setStrike('');
         setOptionType('C');
         setExpiryDate('');
+        setSelectedWebhookIds([]);
         if (onSuccess) onSuccess();
         onClose();
       } else {
@@ -316,6 +362,47 @@ export default function CreateTradeForm({ open, onClose, onSuccess }: CreateTrad
               InputLabelProps={{ shrink: true }}
               sx={controlStyles}
             />
+
+            {/* Webhook Selection - Only show if user has webhooks configured */}
+            {userWebhooks && userWebhooks.length > 0 && (
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 2,
+                  borderRadius: 2,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                  border: `1px solid ${alpha(theme.palette.primary.main, isDark ? 0.3 : 0.2)}`,
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ color: 'var(--app-text)', mb: 1, fontWeight: 600 }}>
+                  Select Webhooks (Optional)
+                </Typography>
+                <FormGroup>
+                  {userWebhooks.map((webhook) => (
+                    <FormControlLabel
+                      key={webhook.id}
+                      control={
+                        <Checkbox
+                          checked={selectedWebhookIds.includes(webhook.id)}
+                          onChange={(_, checked) => handleWebhookSelection(webhook.id, checked)}
+                          sx={{
+                            color: theme.palette.primary.main,
+                            '&.Mui-checked': {
+                              color: theme.palette.primary.main,
+                            },
+                          }}
+                        />
+                      }
+                      label={`${webhook.name} (${webhook.type})`}
+                      sx={{ color: 'var(--app-text)' }}
+                    />
+                  ))}
+                </FormGroup>
+                <Typography variant="caption" sx={{ color: 'var(--text-muted)', mt: 1, display: 'block' }}>
+                  Settlement notifications will be sent to every selected webhook.
+                </Typography>
+              </Box>
+            )}
 
           </Box>
         </DialogContent>
