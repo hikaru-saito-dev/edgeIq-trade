@@ -65,6 +65,8 @@ TradeSchema.index({ userId: 1, createdAt: -1 });
 TradeSchema.index({ userId: 1, status: 1 });
 TradeSchema.index({ ticker: 1, strike: 1, optionType: 1, expiryDate: 1 });
 TradeSchema.index({ status: 1, priceVerified: 1 }); // For leaderboard filtering
+TradeSchema.index({ companyId: 1, side: 1, status: 1, createdAt: -1 });
+TradeSchema.index({ companyId: 1, userId: 1, createdAt: -1 });
 
 export const Trade = (mongoose.models && mongoose.models.Trade) || mongoose.model<ITrade>('Trade', TradeSchema);
 

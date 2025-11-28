@@ -1,10 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import { User, IUser } from '@/models/User';
-import { Trade, ITrade } from '@/models/Trade';
-import { filterTradesByDateRange, calculateTradeStats } from '@/lib/tradeStats';
+import { Trade } from '@/models/Trade';
+import { aggregationStreakFunction } from '@/lib/aggregation/streaks';
+import { PipelineStage } from 'mongoose';
+import { getLeaderboardCache, setLeaderboardCache } from '@/lib/cache/statsCache';
+import { recordApiMetric, recordCacheMetric } from '@/lib/metrics';
+import { performance } from 'node:perf_hooks';
 
 export const runtime = 'nodejs';
+
+const rangeToCutoff = (range: 'all' | '30d' | '7d'): Date | null => {
+  if (range === 'all') return null;
+  const cutoff = new Date();
+  cutoff.setHours(0, 0, 0, 0);
+  if (range === '30d') {
+    cutoff.setDate(cutoff.getDate() - 30);
+  } else if (range === '7d') {
+    cutoff.setDate(cutoff.getDate() - 7);
+  }
+  return cutoff;
+};
+
+const buildSortSpec = (sortColumn: string | null, sortDirection: 'asc' | 'desc') => {
+  const direction: 1 | -1 = sortDirection === 'asc' ? 1 : -1;
+  const inverseDirection: 1 | -1 = direction === 1 ? -1 : 1;
+  const spec: Record<string, 1 | -1> = {};
+  switch (sortColumn) {
+    case 'capper':
+      spec.aliasLower = direction;
+      spec.roi = inverseDirection;
+      spec.winRate = inverseDirection;
+      break;
+    case 'winRate':
+      spec.winRate = direction;
+      spec.roi = inverseDirection;
+      break;
+    case 'roi':
+      spec.roi = direction;
+      spec.winRate = inverseDirection;
+      break;
+    case 'netPnl':
+      spec.netPnl = direction;
+      spec.roi = inverseDirection;
+      break;
+    case 'winsLosses':
+      spec.plays = direction;
+      spec.roi = inverseDirection;
+      break;
+    case 'currentStreak':
+      spec.currentStreak = direction;
+      spec.roi = inverseDirection;
+      break;
+    case 'longestStreak':
+      spec.longestStreak = direction;
+      spec.roi = inverseDirection;
+      break;
+    case 'rank':
+    default:
+      spec.roi = direction;
+      spec.winRate = direction;
+      break;
+  }
+  spec.aliasLower = spec.aliasLower ?? 1;
+  spec._id = spec._id ?? 1;
+  return spec;
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,202 +85,344 @@ export async function GET(request: NextRequest) {
       role: 'companyOwner',
     };
 
-    // Get ALL owners and companyOwners who have companyId set and opted in (for global ranking calculation)
-    const allOwners = await User.find({ ...baseQuery, companyId: { $exists: true, $ne: null } }).lean();
+    const cutoffDate = rangeToCutoff(range);
 
-    // Calculate stats for each owner/companyOwner (aggregating all company trades)
-    const allLeaderboardEntries = await Promise.all(
-      allOwners.map(async (ownerRaw) => {
-        const owner = ownerRaw as unknown as IUser;
-        
-        if (!owner.companyId) {
-          return null; // Skip if no companyId
-        }
+    const searchRegex = search
+      ? new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+      : null;
 
-        // Get company owner for this company (to show company info)
-        const companyOwner = await User.findOne({ 
-          companyId: owner.companyId, 
-          role: 'companyOwner' 
-        }).lean();
-        
-        // Use company owner's company info, or fall back to current owner's info
-        const displayOwner = (companyOwner as unknown as IUser) || owner;
-
-        // Get all users in the same company with roles that contribute to company stats
-        // Exclude members - only include owner/admin/companyOwner roles
-        const companyUsers = await User.find({ 
-          companyId: owner.companyId,
-          role: { $in: ['companyOwner', 'owner', 'admin'] }
-        }).select('_id');
-        const companyUserIds = companyUsers.map(u => u._id);
-        
-        // Get ALL trades from all users in the company (only BUY trades, aggregated stats)
-        const allCompanyTradesRaw = await Trade.find({ 
-          userId: { $in: companyUserIds }, 
-          side: 'BUY', // Only count BUY trades (SELL fills are part of the trade)
-          companyId: owner.companyId, // Ensure we only get trades for this company
-        }).lean();
-        const allCompanyTrades = filterTradesByDateRange(allCompanyTradesRaw as unknown as ITrade[], range);
-
-        // Calculate trade stats (only CLOSED trades with priceVerified = true)
-        const stats = calculateTradeStats(allCompanyTrades as unknown as ITrade[]);
-
-        // Get membership plans with affiliate links (use company owner's username)
-        const userUsername = displayOwner.whopUsername || displayOwner.whopDisplayName || displayOwner.alias || 'user';
-        const membershipPlans = (displayOwner.membershipPlans || []).map((plan) => {
-          let affiliateLink: string | null = null;
-          if (plan.url) {
-            try {
-              const url = new URL(plan.url);
-              url.searchParams.set('a', "woodiee");
-              affiliateLink = url.toString();
-            } catch {
-              affiliateLink = `${plan.url}${plan.url.includes('?') ? '&' : '?'}a=woodiee`;
-            }
-          }
-          return {
-            id: plan.id,
-            name: plan.name,
-            description: plan.description,
-            price: plan.price,
-            url: plan.url,
-            affiliateLink,
-            isPremium: plan.isPremium || false,
-          };
-        });
-
-        return {
-          userId: String(displayOwner._id),
-          alias: displayOwner.alias,
-          whopDisplayName: displayOwner.whopDisplayName,
-          whopUsername: displayOwner.whopUsername,
-          whopAvatarUrl: displayOwner.whopAvatarUrl,
-          companyId: displayOwner.companyId,
-          membershipPlans,
-          winRate: stats.winRate,
-          roi: stats.totalBuyNotional > 0 
-            ? Math.round((stats.netPnl / stats.totalBuyNotional) * 10000) / 100 
-            : 0,
-          netPnl: stats.netPnl,
-          plays: stats.totalTrades,
-          winCount: stats.winCount,
-          lossCount: stats.lossCount,
-          currentStreak: stats.currentStreak,
-          longestStreak: stats.longestStreak,
-        };
-      })
-    );
-
-    // Filter out null entries
-    const validEntries = allLeaderboardEntries.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
-
-    // First, assign initial ranks based on ROI then Win% (default ranking)
-    validEntries.sort((a, b) => {
-      if (b.roi !== a.roi) return b.roi - a.roi;
-      return b.winRate - a.winRate;
+    const startTime = performance.now();
+    const sortSpec = buildSortSpec(sortColumn, sortDirection);
+    const cacheKey = JSON.stringify({
+      range,
+      page,
+      pageSize,
+      search,
+      sortColumn,
+      sortDirection,
     });
-    const initiallyRanked = validEntries.map((entry, index) => ({
-      ...entry,
-      rank: index + 1,
-    }));
 
-    // Now sort by the requested column
-    if (sortColumn) {
-      initiallyRanked.sort((a, b) => {
-        let aVal: number | string;
-        let bVal: number | string;
-        
-        switch (sortColumn) {
-          case 'rank':
-            // Sort by existing rank
-            aVal = a.rank;
-            bVal = b.rank;
-            break;
-          case 'capper':
-            aVal = (a.alias || '').toLowerCase();
-            bVal = (b.alias || '').toLowerCase();
-            break;
-          case 'winRate':
-            aVal = a.winRate;
-            bVal = b.winRate;
-            break;
-          case 'roi':
-            aVal = a.roi;
-            bVal = b.roi;
-            // Secondary sort by winRate for ROI
-            if (aVal === bVal) {
-              return sortDirection === 'asc' 
-                ? a.winRate - b.winRate
-                : b.winRate - a.winRate;
-            }
-            break;
-          case 'netPnl':
-            aVal = a.netPnl;
-            bVal = b.netPnl;
-            break;
-          case 'winsLosses':
-            // W-L sorted by total plays (wins + losses)
-            aVal = a.plays;
-            bVal = b.plays;
-            break;
-          case 'currentStreak':
-            aVal = a.currentStreak || 0;
-            bVal = b.currentStreak || 0;
-            break;
-          case 'longestStreak':
-            aVal = a.longestStreak || 0;
-            bVal = b.longestStreak || 0;
-            break;
-          default:
-            return 0;
-        }
-        
-        if (typeof aVal === 'string' && typeof bVal === 'string') {
-          const comparison = aVal.localeCompare(bVal);
-          return sortDirection === 'asc' ? comparison : -comparison;
-        }
-        
-        const comparison = (aVal as number) - (bVal as number);
-        return sortDirection === 'asc' ? comparison : -comparison;
+    const cachedResponse = getLeaderboardCache(cacheKey);
+    if (cachedResponse) {
+      recordCacheMetric('leaderboard', true);
+      recordApiMetric('leaderboard#get', {
+        durationMs: Math.round(performance.now() - startTime),
+        cacheHit: true,
+        meta: { total: cachedResponse.total },
       });
+      return NextResponse.json(cachedResponse);
+    }
 
-      // Recalculate ranks after sorting (unless sorting by rank itself)
-      if (sortColumn !== 'rank') {
-        initiallyRanked.forEach((entry, index) => {
-          entry.rank = index + 1;
-        });
+    const pipeline: PipelineStage[] = [
+      { $match: { ...baseQuery, companyId: { $exists: true, $ne: null } } },
+      {
+        $lookup: {
+          from: User.collection.name,
+          let: { companyId: '$companyId' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$companyId', '$$companyId'] },
+                    { $in: ['$role', ['companyOwner', 'owner', 'admin']] },
+                  ],
+                },
+              },
+            },
+            { $project: { _id: 1 } },
+          ],
+          as: 'companyUsers',
+        },
+      },
+      {
+        $addFields: {
+          companyUserIds: {
+            $map: { input: '$companyUsers', as: 'u', in: '$$u._id' },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: Trade.collection.name,
+          let: { companyId: '$companyId', userIds: '$companyUserIds' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$companyId', '$$companyId'] },
+                    { $eq: ['$side', 'BUY'] },
+                    {
+                      $cond: [
+                        { $gt: [{ $size: '$$userIds' }, 0] },
+                        { $in: ['$userId', '$$userIds'] },
+                        false,
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+            ...(cutoffDate ? [{ $match: { createdAt: { $gte: cutoffDate } } }] : []),
+            { $match: { status: 'CLOSED', priceVerified: true } },
+            {
+              $project: {
+                outcome: 1,
+                netPnl: { $ifNull: ['$netPnl', 0] },
+                totalBuyNotional: { $ifNull: ['$totalBuyNotional', 0] },
+                totalSellNotional: { $ifNull: ['$totalSellNotional', 0] },
+                updatedAt: 1,
+                createdAt: 1,
+              },
+            },
+          ],
+          as: 'closedTrades',
+        },
+      },
+      {
+        $addFields: {
+          winCount: {
+            $size: {
+              $filter: {
+                input: '$closedTrades',
+                cond: { $eq: ['$$this.outcome', 'WIN'] },
+              },
+            },
+          },
+          lossCount: {
+            $size: {
+              $filter: {
+                input: '$closedTrades',
+                cond: { $eq: ['$$this.outcome', 'LOSS'] },
+              },
+            },
+          },
+          breakevenCount: {
+            $size: {
+              $filter: {
+                input: '$closedTrades',
+                cond: { $eq: ['$$this.outcome', 'BREAKEVEN'] },
+              },
+            },
+          },
+          plays: { $size: '$closedTrades' },
+          netPnl: {
+            $round: [{ $sum: '$closedTrades.netPnl' }, 2],
+          },
+          totalBuyNotional: {
+            $round: [{ $sum: '$closedTrades.totalBuyNotional' }, 2],
+          },
+          totalSellNotional: {
+            $round: [{ $sum: '$closedTrades.totalSellNotional' }, 2],
+          },
+          tradeOutcomes: {
+            $map: {
+              input: '$closedTrades',
+              as: 'trade',
+              in: {
+                outcome: '$$trade.outcome',
+                updatedAt: '$$trade.updatedAt',
+                createdAt: '$$trade.createdAt',
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          winRate: {
+            $round: [
+              {
+                $cond: [
+                  { $gt: [{ $add: ['$winCount', '$lossCount'] }, 0] },
+                  {
+                    $multiply: [
+                      {
+                        $divide: ['$winCount', { $add: ['$winCount', '$lossCount'] }],
+                      },
+                      100,
+                    ],
+                  },
+                  0,
+                ],
+              },
+              2,
+            ],
+          },
+          roi: {
+            $round: [
+              {
+                $cond: [
+                  { $gt: ['$totalBuyNotional', 0] },
+                  {
+                    $multiply: [
+                      { $divide: ['$netPnl', '$totalBuyNotional'] },
+                      100,
+                    ],
+                  },
+                  0,
+                ],
+              },
+              2,
+            ],
+          },
+          averagePnl: {
+            $round: [
+              {
+                $cond: [
+                  { $gt: ['$plays', 0] },
+                  { $divide: ['$netPnl', '$plays'] },
+                  0,
+                ],
+              },
+              2,
+            ],
+          },
+          aliasLower: {
+            $toLower: {
+              $ifNull: [
+                '$alias',
+                { $ifNull: ['$whopDisplayName', '$whopUsername'] },
+              ],
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          streaks: {
+            $function: {
+              body: aggregationStreakFunction,
+              args: ['$tradeOutcomes'],
+              lang: 'js',
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          currentStreak: { $ifNull: ['$streaks.current', 0] },
+          longestStreak: { $ifNull: ['$streaks.longest', 0] },
+        },
+      },
+      { $sort: sortSpec },
+      {
+        $setWindowFields: {
+          sortBy: sortSpec,
+          output: {
+            rank: { $rank: {} },
+          },
+        },
+      },
+      {
+        $project: {
+          companyUsers: 0,
+          companyUserIds: 0,
+          closedTrades: 0,
+          tradeOutcomes: 0,
+          streaks: 0,
+          aliasLower: 0,
+        },
+      },
+      {
+        $facet: {
+          data: [
+            { $skip: (page - 1) * pageSize },
+            { $limit: pageSize },
+          ],
+          totalCount: [{ $count: 'count' }],
+        },
+      },
+    ];
+
+    if (searchRegex) {
+      const sortStageIndex = pipeline.findIndex(stage => Object.prototype.hasOwnProperty.call(stage, '$sort'));
+      const searchStage: PipelineStage.Match = {
+        $match: {
+          $or: [
+            { alias: searchRegex },
+            { whopDisplayName: searchRegex },
+            { whopUsername: searchRegex },
+          ],
+        },
+      };
+      if (sortStageIndex === -1) {
+        pipeline.push(searchStage);
+      } else {
+        pipeline.splice(sortStageIndex, 0, searchStage);
       }
     }
 
-    const globallyRanked = initiallyRanked;
+    const aggregated = await User.aggregate(pipeline).allowDiskUse(true);
+    const facetResult = aggregated[0] || { data: [], totalCount: [] };
+    const total = facetResult.totalCount[0]?.count || 0;
 
-    // Filter by search if provided
-    let filteredLeaderboard = globallyRanked;
-    if (search) {
-      const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-      filteredLeaderboard = globallyRanked.filter((entry) => 
-        regex.test(entry.alias) || 
-        (entry.whopDisplayName && regex.test(entry.whopDisplayName)) ||
-        (entry.whopUsername && regex.test(entry.whopUsername))
-      );
-    }
+    const leaderboard = (facetResult.data as Array<IUser & Record<string, unknown>>).map((entry) => {
+      const membershipPlans = (entry.membershipPlans || []).map((plan) => {
+        const typedPlan = plan as {
+          id: string;
+          name: string;
+          description?: string;
+          price: string;
+          url: string;
+          isPremium?: boolean;
+        };
+        let affiliateLink: string | null = null;
+        if (typedPlan.url) {
+          try {
+            const url = new URL(typedPlan.url);
+            url.searchParams.set('a', 'woodiee');
+            affiliateLink = url.toString();
+          } catch {
+            affiliateLink = `${typedPlan.url}${typedPlan.url.includes('?') ? '&' : '?'}a=woodiee`;
+          }
+        }
+        return {
+          ...typedPlan,
+          affiliateLink,
+          isPremium: typedPlan.isPremium ?? false,
+        };
+      });
 
-    const total = filteredLeaderboard.length;
+      return {
+        userId: String(entry._id),
+        alias: entry.alias,
+        whopDisplayName: entry.whopDisplayName,
+        whopUsername: entry.whopUsername,
+        whopAvatarUrl: entry.whopAvatarUrl,
+        companyId: entry.companyId,
+        membershipPlans,
+        winRate: Number(entry.winRate ?? 0),
+        roi: Number(entry.roi ?? 0),
+        netPnl: Number(entry.netPnl ?? 0),
+        plays: Number(entry.plays ?? 0),
+        winCount: Number(entry.winCount ?? 0),
+        lossCount: Number(entry.lossCount ?? 0),
+        currentStreak: Number(entry.currentStreak ?? 0),
+        longestStreak: Number(entry.longestStreak ?? 0),
+        rank: Number(entry.rank ?? 0),
+      };
+    });
 
-    // Paginate the filtered results
-    const paginatedLeaderboard = filteredLeaderboard.slice(
-      (page - 1) * pageSize,
-      page * pageSize
-    );
-
-    return NextResponse.json({ 
-      leaderboard: paginatedLeaderboard,
+    const payload = {
+      leaderboard,
       range,
       page,
       pageSize,
       total,
       totalPages: Math.ceil(total / pageSize),
+    };
+
+    setLeaderboardCache(cacheKey, payload);
+    recordCacheMetric('leaderboard', false);
+    recordApiMetric('leaderboard#get', {
+      durationMs: Math.round(performance.now() - startTime),
+      cacheHit: false,
+      meta: { total },
     });
+
+    return NextResponse.json(payload);
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
     return NextResponse.json(

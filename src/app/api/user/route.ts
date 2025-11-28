@@ -1,11 +1,175 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import { User, MembershipPlan } from '@/models/User';
-import { Trade, ITrade } from '@/models/Trade';
-import { calculateTradeStats } from '@/lib/tradeStats';
+import { Trade } from '@/models/Trade';
 import { z } from 'zod';
+import { PipelineStage } from 'mongoose';
+import { aggregationStreakFunction } from '@/lib/aggregation/streaks';
+import { AggregatedStats, EMPTY_AGGREGATED_STATS } from '@/types/tradeStats';
+import {
+  getCompanyStatsCache,
+  getPersonalStatsCache,
+  setCompanyStatsCache,
+  setPersonalStatsCache,
+} from '@/lib/cache/statsCache';
+import { recordApiMetric, recordCacheMetric } from '@/lib/metrics';
+import { performance } from 'node:perf_hooks';
 
 export const runtime = 'nodejs';
+
+async function aggregateTradeStats(match: Record<string, unknown>): Promise<AggregatedStats> {
+  const baseMatch = {
+    ...match,
+    side: 'BUY',
+    status: 'CLOSED',
+    priceVerified: true,
+  };
+
+  const pipeline: PipelineStage[] = [
+    { $match: baseMatch },
+    {
+      $facet: {
+        metrics: [
+          {
+            $group: {
+              _id: null,
+              totalTrades: { $sum: 1 },
+              winCount: { $sum: { $cond: [{ $eq: ['$outcome', 'WIN'] }, 1, 0] } },
+              lossCount: { $sum: { $cond: [{ $eq: ['$outcome', 'LOSS'] }, 1, 0] } },
+              breakevenCount: { $sum: { $cond: [{ $eq: ['$outcome', 'BREAKEVEN'] }, 1, 0] } },
+              netPnl: { $sum: { $ifNull: ['$netPnl', 0] } },
+              totalBuyNotional: { $sum: { $ifNull: ['$totalBuyNotional', 0] } },
+              totalSellNotional: { $sum: { $ifNull: ['$totalSellNotional', 0] } },
+            },
+          },
+        ],
+        outcomes: [
+          { $sort: { updatedAt: -1 } },
+          {
+            $project: {
+              outcome: 1,
+              updatedAt: { $ifNull: ['$updatedAt', '$createdAt'] },
+              createdAt: 1,
+            },
+          },
+          { $limit: 1000 },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        metricsDoc: {
+          $ifNull: [
+            { $arrayElemAt: ['$metrics', 0] },
+            {
+              totalTrades: 0,
+              winCount: 0,
+              lossCount: 0,
+              breakevenCount: 0,
+              netPnl: 0,
+              totalBuyNotional: 0,
+              totalSellNotional: 0,
+            },
+          ],
+        },
+        tradeOutcomes: '$outcomes',
+      },
+    },
+    {
+      $addFields: {
+        winRate: {
+          $round: [
+            {
+              $cond: [
+                {
+                  $gt: [
+                    {
+                      $add: [
+                        { $ifNull: ['$metricsDoc.winCount', 0] },
+                        { $ifNull: ['$metricsDoc.lossCount', 0] },
+                      ],
+                    },
+                    0,
+                  ],
+                },
+                {
+                  $multiply: [
+                    {
+                      $divide: [
+                        { $ifNull: ['$metricsDoc.winCount', 0] },
+                        {
+                          $add: [
+                            { $ifNull: ['$metricsDoc.winCount', 0] },
+                            { $ifNull: ['$metricsDoc.lossCount', 0] },
+                          ],
+                        },
+                      ],
+                    },
+                    100,
+                  ],
+                },
+                0,
+              ],
+            },
+            2,
+          ],
+        },
+        averagePnl: {
+          $round: [
+            {
+              $cond: [
+                { $gt: [{ $ifNull: ['$metricsDoc.totalTrades', 0] }, 0] },
+                {
+                  $divide: [
+                    { $ifNull: ['$metricsDoc.netPnl', 0] },
+                    { $ifNull: ['$metricsDoc.totalTrades', 0] },
+                  ],
+                },
+                0,
+              ],
+            },
+            2,
+          ],
+        },
+      },
+    },
+    {
+      $addFields: {
+        streaks: {
+          $function: {
+            body: aggregationStreakFunction,
+            args: ['$tradeOutcomes'],
+            lang: 'js',
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        totalTrades: { $ifNull: ['$metricsDoc.totalTrades', 0] },
+        winCount: { $ifNull: ['$metricsDoc.winCount', 0] },
+        lossCount: { $ifNull: ['$metricsDoc.lossCount', 0] },
+        breakevenCount: { $ifNull: ['$metricsDoc.breakevenCount', 0] },
+        winRate: { $ifNull: ['$winRate', 0] },
+        netPnl: { $round: [{ $ifNull: ['$metricsDoc.netPnl', 0] }, 2] },
+        totalBuyNotional: { $round: [{ $ifNull: ['$metricsDoc.totalBuyNotional', 0] }, 2] },
+        totalSellNotional: { $round: [{ $ifNull: ['$metricsDoc.totalSellNotional', 0] }, 2] },
+        averagePnl: { $ifNull: ['$averagePnl', 0] },
+        currentStreak: { $ifNull: ['$streaks.current', 0] },
+        longestStreak: { $ifNull: ['$streaks.longest', 0] },
+      },
+    },
+  ];
+
+  const result = await Trade.aggregate(pipeline);
+  if (!result.length) {
+    return EMPTY_AGGREGATED_STATS;
+  }
+  return {
+    ...EMPTY_AGGREGATED_STATS,
+    ...result[0],
+  };
+}
 
 // Validate Whop product page URL (not checkout links)
 const whopProductUrlSchema = z.string().url().refine(
@@ -55,6 +219,9 @@ const updateUserSchema = z.object({
  * For owners: returns both personal stats and company stats (aggregated from all company trades)
  */
 export async function GET() {
+  const startTime = performance.now();
+  let personalCacheHit = false;
+  let companyCacheHit: boolean | null = null;
   try {
     await connectDB();
     const headers = await import('next/headers').then(m => m.headers());
@@ -72,25 +239,17 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Get personal trades (only BUY trades) and calculate personal stats
-    const personalTrades = await Trade.find({ 
-      userId: user._id,
-      side: 'BUY', // Only count BUY trades (SELL fills are part of the trade)
-      companyId: companyId
-    }).lean();
-    const personalStats = calculateTradeStats(personalTrades as unknown as ITrade[]) || {
-      totalTrades: 0,
-      winCount: 0,
-      lossCount: 0,
-      breakevenCount: 0,
-      winRate: 0,
-      netPnl: 0,
-      totalBuyNotional: 0,
-      totalSellNotional: 0,
-      averagePnl: 0,
-      currentStreak: 0,
-      longestStreak: 0,
-    };
+    const personalCacheKey = `personal:${user._id.toString()}:${companyId ?? 'none'}`;
+    let personalStats = getPersonalStatsCache(personalCacheKey);
+    personalCacheHit = Boolean(personalStats);
+    recordCacheMetric('personalStats', personalCacheHit);
+    if (!personalStats) {
+      personalStats = await aggregateTradeStats({
+        userId: user._id,
+        companyId,
+      });
+      setPersonalStatsCache(personalCacheKey, personalStats);
+    }
 
     // Auto-fetch company name from Whop if not set
     if (user.companyId && !user.companyName) {
@@ -118,27 +277,25 @@ export async function GET() {
       const companyUserIds = companyUsers.map(u => u._id);
       
       // Get all trades from all users in the company
-      const companyTrades = await Trade.find({ 
-        userId: { $in: companyUserIds },
-        side: 'BUY', // Only count BUY trades
-        companyId: companyId
-      }).lean();
-      companyStats = calculateTradeStats(companyTrades as unknown as ITrade[]) || {
-        totalTrades: 0,
-        winCount: 0,
-        lossCount: 0,
-        breakevenCount: 0,
-        winRate: 0,
-        netPnl: 0,
-        totalBuyNotional: 0,
-        totalSellNotional: 0,
-        averagePnl: 0,
-        currentStreak: 0,
-        longestStreak: 0,
-      };
+      if (companyUserIds.length > 0) {
+        const companyCacheKey = `company:${companyId}`;
+        const cachedCompanyStats = getCompanyStatsCache(companyCacheKey);
+        companyCacheHit = Boolean(cachedCompanyStats);
+        if (cachedCompanyStats) {
+          companyStats = cachedCompanyStats;
+        } else {
+          companyStats = await aggregateTradeStats({
+            companyId,
+            userId: { $in: companyUserIds },
+          });
+          setCompanyStatsCache(companyCacheKey, companyStats);
+          companyCacheHit = false;
+        }
+        recordCacheMetric('companyStats', companyCacheHit);
+      }
     }
 
-    return NextResponse.json({
+    const responsePayload = {
       user: {
         alias: user.alias,
         role: user.role,
@@ -157,7 +314,15 @@ export async function GET() {
       },
       personalStats,
       companyStats, // Only for owners with companyId
+    };
+
+    recordApiMetric('user#get', {
+      durationMs: Math.round(performance.now() - startTime),
+      cacheHit: personalCacheHit && (companyCacheHit ?? true),
+      meta: { role: user.role },
     });
+
+    return NextResponse.json(responsePayload);
   } catch (error) {
     console.error('Error fetching user:', error);
     return NextResponse.json(

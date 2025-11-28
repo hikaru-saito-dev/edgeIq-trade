@@ -9,14 +9,27 @@ import { isMarketOpen } from '@/utils/marketHours';
 import { formatExpiryDateForAPI, getOptionContractSnapshot, getMarketFillPrice } from '@/lib/polygon';
 import { notifyTradeCreated, notifyTradeDeleted } from '@/lib/tradeNotifications';
 import { z } from 'zod';
+import { PipelineStage } from 'mongoose';
+import { SlidingWindowRateLimiter } from '@/lib/rateLimit';
+import { recordApiMetric } from '@/lib/metrics';
+import { performance } from 'node:perf_hooks';
+import {
+  invalidateCompanyStatsCache,
+  invalidateLeaderboardCache,
+  invalidatePersonalStatsCache,
+} from '@/lib/cache/statsCache';
 
 export const runtime = 'nodejs';
+
+const tradeWriteLimiter = new SlidingWindowRateLimiter(60, 60_000);
 
 /**
  * GET /api/trades
  * Get trades for the authenticated user with pagination and filtering
  */
 export async function GET(request: NextRequest) {
+  const startTime = performance.now();
+  const metricMeta: Record<string, unknown> = { status: 'success' };
   try {
     await connectDB();
     const headers = await import('next/headers').then(m => m.headers());
@@ -26,12 +39,14 @@ export async function GET(request: NextRequest) {
     const companyId = headers.get('x-company-id');
     
     if (!userId) {
+      metricMeta.status = 'unauthorized';
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Find user by whopUserId
     const user = await User.findOne({ whopUserId: userId, companyId: companyId });
     if (!user) {
+      metricMeta.status = 'user_not_found';
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
@@ -73,48 +88,72 @@ export async function GET(request: NextRequest) {
       query.companyId = companyId;
     }
 
-    const total = await Trade.countDocuments(query);
-    const trades = await Trade.find(query)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * pageSize)
-      .limit(pageSize)
-      .lean();
+    const skip = (page - 1) * pageSize;
+    const tradeFillCollection = TradeFill.collection.name;
 
-    // Get all SELL fills for these trades
-    const tradeIds = trades.map(t => t._id);
-    const fills = await TradeFill.find({ tradeId: { $in: tradeIds } })
-      .sort({ createdAt: -1 })
-      .lean();
+    const pipeline: PipelineStage[] = [
+      { $match: query },
+      { $sort: { createdAt: -1, _id: -1 } },
+      {
+        $facet: {
+          data: [
+            { $skip: skip },
+            { $limit: pageSize },
+            {
+              $lookup: {
+                from: tradeFillCollection,
+                let: { tradeId: '$_id' },
+                pipeline: [
+                  { $match: { $expr: { $eq: ['$tradeId', '$$tradeId'] } } },
+                  { $sort: { createdAt: -1 } },
+                ],
+                as: 'fills',
+              },
+            },
+          ],
+          totalCount: [
+            { $count: 'count' },
+          ],
+        },
+      },
+      {
+        $project: {
+          trades: '$data',
+          total: {
+            $ifNull: [{ $arrayElemAt: ['$totalCount.count', 0] }, 0],
+          },
+        },
+      },
+    ];
 
-    // Group fills by tradeId
-    const fillsByTradeId: Record<string, typeof fills> = {};
-    fills.forEach(fill => {
-      const tradeId = String(fill.tradeId);
-      if (!fillsByTradeId[tradeId]) {
-        fillsByTradeId[tradeId] = [];
-      }
-      fillsByTradeId[tradeId].push(fill);
-    });
+    const aggregated = await Trade.aggregate(pipeline).allowDiskUse(true);
+    const aggregationResult = aggregated[0] || { trades: [], total: 0 };
 
-    // Attach fills to trades
-    const tradesWithFills = trades.map(trade => ({
-      ...trade,
-      fills: fillsByTradeId[String(trade._id)] || [],
-    }));
-
-    return NextResponse.json({
-      trades: tradesWithFills,
+    const responsePayload = {
+      trades: aggregationResult.trades,
       page,
       pageSize,
-      total,
-      totalPages: Math.ceil(total / pageSize),
-    });
+      total: aggregationResult.total,
+      totalPages: Math.ceil((aggregationResult.total || 0) / pageSize),
+    };
+
+    metricMeta.total = aggregationResult.total || 0;
+
+    return NextResponse.json(responsePayload);
   } catch (error) {
     console.error('Error fetching trades:', error);
+    metricMeta.status = 'error';
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    metricMeta.total = metricMeta.total ?? 0;
+    recordApiMetric('trades#get', {
+      durationMs: Math.round(performance.now() - startTime),
+      cacheHit: false,
+      meta: metricMeta,
+    });
   }
 }
 
@@ -123,6 +162,8 @@ export async function GET(request: NextRequest) {
  * Create a new BUY trade (OPEN)
  */
 export async function POST(request: NextRequest) {
+  const startTime = performance.now();
+  let metricMeta: Record<string, unknown> = { status: 'success' };
   try {
     await connectDB();
     const headers = await import('next/headers').then(m => m.headers());
@@ -132,25 +173,42 @@ export async function POST(request: NextRequest) {
     const companyId = headers.get('x-company-id');
     
     if (!userId) {
+      metricMeta = { status: 'unauthorized' };
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Find user by whopUserId
     const user = await User.findOne({ whopUserId: userId, companyId: companyId });
     if (!user) {
+      metricMeta = { status: 'user_not_found' };
       return NextResponse.json({ error: 'User not found. Please set up your profile first.' }, { status: 404 });
     }
 
     // Allow all roles (companyOwner, owner, admin, member) to create trades
+    const limitResult = tradeWriteLimiter.tryConsume(userId);
+    if (!limitResult.allowed) {
+      metricMeta = { status: 'rate_limited' };
+      return NextResponse.json(
+        { error: 'Too many trade actions. Please slow down.' },
+        {
+          status: 429,
+          headers: limitResult.retryAfterSeconds
+            ? { 'Retry-After': String(limitResult.retryAfterSeconds) }
+            : undefined,
+        },
+      );
+    }
 
     // Use companyId from headers or fall back to user's companyId
     const finalCompanyId = companyId || user.companyId;
     
     if (!finalCompanyId) {
+      metricMeta = { status: 'missing_company' };
       return NextResponse.json({ 
         error: 'Company ID is required. Please ensure you are accessing the app through a Whop company.' 
       }, { status: 400 });
     }
+    metricMeta.companyId = finalCompanyId;
 
     // Check market hours
     const now = new Date();
@@ -168,11 +226,13 @@ export async function POST(request: NextRequest) {
       validated = createTradeSchema.parse(body);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        metricMeta = { status: 'validation_error' };
         return NextResponse.json(
           { error: 'Validation error', details: error.errors },
           { status: 400 }
         );
       }
+      metricMeta = { status: 'invalid_request' };
       return NextResponse.json(
         { error: 'Invalid request data' },
         { status: 400 }
@@ -193,6 +253,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (!snapshot) {
+      metricMeta = { status: 'market_data_unavailable' };
       return NextResponse.json({
         error: 'Unable to fetch market data to place order. Please try again.',
       }, { status: 400 });
@@ -200,6 +261,7 @@ export async function POST(request: NextRequest) {
 
     const marketFillPrice = getMarketFillPrice(snapshot);
     if (marketFillPrice === null) {
+      metricMeta = { status: 'market_price_unavailable' };
       return NextResponse.json({
         error: 'Unable to determine market price. Please try again.',
       }, { status: 400 });
@@ -251,22 +313,38 @@ export async function POST(request: NextRequest) {
     // Send notification
     await notifyTradeCreated(trade, user, finalCompanyId);
 
-    return NextResponse.json({ 
+    invalidateLeaderboardCache();
+    if (finalCompanyId) {
+      invalidateCompanyStatsCache(finalCompanyId);
+    }
+    invalidatePersonalStatsCache(user._id.toString());
+
+    const responsePayload = { 
       trade,
       message: `Buy Order: ${validated.contracts}x ${validated.ticker} ${validated.strike}${validated.optionType} ${validated.expiryDate} @ $${finalFillPrice.toFixed(2)}`,
-    }, { status: 201 });
+    };
+
+    return NextResponse.json(responsePayload, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      metricMeta = { status: 'validation_error' };
       return NextResponse.json(
         { error: 'Validation error', details: error.errors },
         { status: 400 }
       );
     }
     console.error('Error creating trade:', error);
+    metricMeta = { status: 'error' };
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    recordApiMetric('trades#post', {
+      durationMs: Math.round(performance.now() - startTime),
+      cacheHit: false,
+      meta: metricMeta,
+    });
   }
 }
 
@@ -275,6 +353,8 @@ export async function POST(request: NextRequest) {
  * Delete a trade (only if OPEN and before market close)
  */
 export async function DELETE(request: NextRequest) {
+  const startTime = performance.now();
+  let metricMeta: Record<string, unknown> = { status: 'success' };
   try {
     await connectDB();
     const headers = await import('next/headers').then(m => m.headers());
@@ -284,31 +364,49 @@ export async function DELETE(request: NextRequest) {
     const companyId = headers.get('x-company-id');
     
     if (!userId) {
+      metricMeta = { status: 'unauthorized' };
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Find user by whopUserId
     const user = await User.findOne({ whopUserId: userId, companyId: companyId });
     if (!user) {
+      metricMeta = { status: 'user_not_found' };
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Allow all roles (companyOwner, owner, admin, member) to delete their own trades
+    const limitResult = tradeWriteLimiter.tryConsume(userId);
+    if (!limitResult.allowed) {
+      metricMeta = { status: 'rate_limited' };
+      return NextResponse.json(
+        { error: 'Too many trade actions. Please slow down.' },
+        {
+          status: 429,
+          headers: limitResult.retryAfterSeconds
+            ? { 'Retry-After': String(limitResult.retryAfterSeconds) }
+            : undefined,
+        },
+      );
+    }
 
     const body = await request.json();
     const { tradeId } = body;
 
     if (!tradeId) {
+      metricMeta = { status: 'missing_trade_id' };
       return NextResponse.json({ error: 'tradeId is required' }, { status: 400 });
     }
 
     const trade = await Trade.findOne({ _id: tradeId, userId: user._id, companyId: companyId });
     if (!trade) {
+      metricMeta = { status: 'trade_not_found' };
       return NextResponse.json({ error: 'Trade not found' }, { status: 404 });
     }
 
     // Only allow deletion of OPEN trades
     if (trade.status !== 'OPEN') {
+      metricMeta = { status: 'invalid_status' };
       return NextResponse.json(
         { error: 'Cannot delete trade that is not OPEN.' },
         { status: 403 }
@@ -336,13 +434,28 @@ export async function DELETE(request: NextRequest) {
     // Send notification
     await notifyTradeDeleted(tradeData as unknown as ITrade, user);
 
-    return NextResponse.json({ success: true });
+    invalidateLeaderboardCache();
+    if (companyId) {
+      invalidateCompanyStatsCache(companyId);
+    }
+    invalidatePersonalStatsCache(user._id.toString());
+
+    const responsePayload = { success: true };
+
+    return NextResponse.json(responsePayload);
   } catch (error) {
     console.error('Error deleting trade:', error);
+    metricMeta = { status: 'error' };
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    recordApiMetric('trades#delete', {
+      durationMs: Math.round(performance.now() - startTime),
+      cacheHit: false,
+      meta: metricMeta,
+    });
   }
 }
 
