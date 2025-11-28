@@ -291,14 +291,6 @@ export async function GET(request: NextRequest) {
       },
       { $sort: sortSpec },
       {
-        $setWindowFields: {
-          sortBy: sortSpec,
-          output: {
-            rank: { $rank: {} },
-          },
-        },
-      },
-      {
         $project: {
           companyUsers: 0,
           companyUserIds: 0,
@@ -339,7 +331,7 @@ export async function GET(request: NextRequest) {
     const facetResult = aggregated[0] || { data: [], totalCount: [] };
     const total = facetResult.totalCount[0]?.count || 0;
 
-    const leaderboard = (facetResult.data as Array<IUser & Record<string, unknown>>).map((entry) => {
+    const leaderboard = (facetResult.data as Array<IUser & Record<string, unknown>>).map((entry, index) => {
       const membershipPlans = (entry.membershipPlans || []).map((plan) => {
         const typedPlan = plan as {
           id: string;
@@ -386,7 +378,7 @@ export async function GET(request: NextRequest) {
         lossCount: Number(entry.lossCount ?? 0),
         currentStreak: streaks.current,
         longestStreak: streaks.longest,
-        rank: Number(entry.rank ?? 0),
+        rank: index + 1 + (page - 1) * pageSize,
       };
     });
 
