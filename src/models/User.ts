@@ -82,7 +82,6 @@ const UserSchema = new Schema<IUser>({
 UserSchema.index({ companyId: 1, whopUserId: 1 }, { unique: true, sparse: true }); // Unique user per company (sparse since companyId can be null)
 UserSchema.index({ companyId: 1, role: 1 }, { unique: true, partialFilterExpression: { $or: [ { role: 'owner' }, { role: 'companyOwner' } ], companyId: { $exists: true, $ne: null } } }); // Only 1 owner or companyOwner per companyId
 UserSchema.index({ companyId: 1, optIn: 1, 'stats.roi': -1, 'stats.winRate': -1 }); // For company-scoped leaderboard
-UserSchema.index({ companyId: 1, role: 1 });
 UserSchema.index({ role: 1, optIn: 1, companyId: 1 });
 
 export const User = (mongoose.models && mongoose.models.User) || mongoose.model<IUser>('User', UserSchema);

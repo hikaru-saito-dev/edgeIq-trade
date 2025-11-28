@@ -134,17 +134,6 @@ async function aggregateTradeStats(match: Record<string, unknown>): Promise<Aggr
       },
     },
     {
-      $addFields: {
-        streaks: {
-          $function: {
-            body: aggregationStreakFunction,
-            args: ['$tradeOutcomes'],
-            lang: 'js',
-          },
-        },
-      },
-    },
-    {
       $project: {
         totalTrades: { $ifNull: ['$metricsDoc.totalTrades', 0] },
         winCount: { $ifNull: ['$metricsDoc.winCount', 0] },
@@ -155,8 +144,7 @@ async function aggregateTradeStats(match: Record<string, unknown>): Promise<Aggr
         totalBuyNotional: { $round: [{ $ifNull: ['$metricsDoc.totalBuyNotional', 0] }, 2] },
         totalSellNotional: { $round: [{ $ifNull: ['$metricsDoc.totalSellNotional', 0] }, 2] },
         averagePnl: { $ifNull: ['$averagePnl', 0] },
-        currentStreak: { $ifNull: ['$streaks.current', 0] },
-        longestStreak: { $ifNull: ['$streaks.longest', 0] },
+        tradeOutcomes: '$tradeOutcomes',
       },
     },
   ];
@@ -165,9 +153,19 @@ async function aggregateTradeStats(match: Record<string, unknown>): Promise<Aggr
   if (!result.length) {
     return EMPTY_AGGREGATED_STATS;
   }
+  const { tradeOutcomes = [], ...metricValues } = result[0] as {
+    tradeOutcomes?: Array<{ outcome?: string; updatedAt?: Date; createdAt?: Date }>;
+  };
+
+  const streaks = aggregationStreakFunction(
+    (tradeOutcomes as Array<{ outcome?: string; updatedAt?: Date; createdAt?: Date }> | undefined) || []
+  );
+
   return {
     ...EMPTY_AGGREGATED_STATS,
-    ...result[0],
+    ...metricValues,
+    currentStreak: streaks.current,
+    longestStreak: streaks.longest,
   };
 }
 

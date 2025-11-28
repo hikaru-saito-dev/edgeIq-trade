@@ -289,23 +289,6 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      {
-        $addFields: {
-          streaks: {
-            $function: {
-              body: aggregationStreakFunction,
-              args: ['$tradeOutcomes'],
-              lang: 'js',
-            },
-          },
-        },
-      },
-      {
-        $addFields: {
-          currentStreak: { $ifNull: ['$streaks.current', 0] },
-          longestStreak: { $ifNull: ['$streaks.longest', 0] },
-        },
-      },
       { $sort: sortSpec },
       {
         $setWindowFields: {
@@ -320,8 +303,6 @@ export async function GET(request: NextRequest) {
           companyUsers: 0,
           companyUserIds: 0,
           closedTrades: 0,
-          tradeOutcomes: 0,
-          streaks: 0,
           aliasLower: 0,
         },
       },
@@ -385,6 +366,10 @@ export async function GET(request: NextRequest) {
         };
       });
 
+      const streaks = aggregationStreakFunction(
+        (entry.tradeOutcomes as Array<{ outcome?: string; updatedAt?: Date; createdAt?: Date }> | undefined) || []
+      );
+
       return {
         userId: String(entry._id),
         alias: entry.alias,
@@ -399,8 +384,8 @@ export async function GET(request: NextRequest) {
         plays: Number(entry.plays ?? 0),
         winCount: Number(entry.winCount ?? 0),
         lossCount: Number(entry.lossCount ?? 0),
-        currentStreak: Number(entry.currentStreak ?? 0),
-        longestStreak: Number(entry.longestStreak ?? 0),
+        currentStreak: streaks.current,
+        longestStreak: streaks.longest,
         rank: Number(entry.rank ?? 0),
       };
     });
