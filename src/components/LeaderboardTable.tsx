@@ -238,7 +238,7 @@ export default function LeaderboardTable() {
           <TextField
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search cappers..."
+            placeholder="Search Whops..."
             size="small"
             fullWidth
             onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchLeaderboard(); } }}
@@ -361,7 +361,7 @@ export default function LeaderboardTable() {
             <TableHead>
               <TableRow>
                 <SortableHeader column="rank" label="Rank" />
-                <SortableHeader column="capper" label="Capper" />
+                <SortableHeader column="Whop" label="Whop" />
                 <SortableHeader column="winRate" label="Win %" />
                 <SortableHeader column="roi" label="ROI %" />
                 <SortableHeader column="netPnl" label="P/L" />

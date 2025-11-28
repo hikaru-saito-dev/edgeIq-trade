@@ -27,7 +27,7 @@ const buildSortSpec = (sortColumn: string | null, sortDirection: 'asc' | 'desc')
   const inverseDirection: 1 | -1 = direction === 1 ? -1 : 1;
   const spec: Record<string, 1 | -1> = {};
   switch (sortColumn) {
-    case 'capper':
+    case 'Whop':
       spec.aliasLower = direction;
       spec.roi = inverseDirection;
       spec.winRate = inverseDirection;
