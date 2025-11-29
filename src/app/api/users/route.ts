@@ -49,9 +49,6 @@ export async function GET(request: NextRequest) {
       companyId,
     };
 
-    if (currentUser.role === 'owner') {
-      baseMatch.role = { $in: ['admin', 'member'] };
-    }
 
     const pipeline: PipelineStage[] = [
       { $match: baseMatch },
