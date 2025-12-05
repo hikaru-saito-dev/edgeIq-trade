@@ -1559,10 +1559,10 @@ const [followOfferPriceDollars, setFollowOfferPriceDollars] = useState<number>(0
       {( role === 'owner' || role === 'companyOwner') && companyStats && (
         <Box mt={4}>
           <Typography variant="h5" component="h2" mb={3} sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
-            Company Stats (Aggregated)
+            Company Stats
           </Typography>
           <Typography variant="body2" sx={{ color: 'var(--text-muted)', mb: 3 }}>
-            These stats include all trades from all users (owners and admins) in your company.
+            These stats include all trades from all users (companyOwners, owners and admins) in your company.
           </Typography>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
