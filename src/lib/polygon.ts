@@ -521,8 +521,8 @@ export async function validateOptionPrice(
     let isValid = true;
 
     if (shouldValidateBand) {
-      const allowedLow = refPrice * 0.95;
-      const allowedHigh = refPrice * 1.05;
+    const allowedLow = refPrice * 0.95;
+    const allowedHigh = refPrice * 1.05;
       isValid = userFillPrice! >= allowedLow && userFillPrice! <= allowedHigh;
     }
 
