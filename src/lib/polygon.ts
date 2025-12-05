@@ -108,23 +108,36 @@ export interface OptionChainResponse {
   next_url?: string;
 }
 
+export interface OptionContractError {
+  type: 'not_found' | 'invalid_input' | 'api_error' | 'network_error' | 'auth_error' | 'unknown';
+  message: string;
+  details?: string;
+}
+
+
 /**
  * Get option contract snapshot from Massive.com API
  * @param underlyingAsset - Base ticker (e.g., "AAPL")
  * @param strike - Strike price
  * @param expiryDate - Expiration date (YYYY-MM-DD format)
  * @param contractType - "call" or "put"
- * @returns Option contract snapshot or null if not found
+ * @returns Object with snapshot or error details
  */
 export async function getOptionContractSnapshot(
   underlyingAsset: string,
   strike: number,
   expiryDate: string, // YYYY-MM-DD
   contractType: 'call' | 'put'
-): Promise<OptionContractSnapshot | null> {
+): Promise<{ snapshot: OptionContractSnapshot | null; error: OptionContractError | null }> {
   if (!POLYGON_API_KEY) {
-    console.error('POLYGON_API_KEY not configured');
-    return null;
+    return {
+      snapshot: null,
+      error: {
+        type: 'api_error',
+        message: 'API key not configured',
+        details: 'POLYGON_API_KEY environment variable is missing',
+      },
+    };
   }
 
   try {
@@ -138,37 +151,141 @@ export async function getOptionContractSnapshot(
       next: { revalidate: 0 }, // Don't cache, always fetch fresh data
     });
 
+    // Handle HTTP errors (network, server errors)
     if (!response.ok) {
-      const errorText = await response.text().catch(() => '');
-      console.error(`Massive.com API error: ${response.status} ${response.statusText}`, errorText.substring(0, 200));
-      return null;
+      let errorData: OptionChainResponse | null = null;
+      try {
+        const errorText = await response.text();
+        errorData = JSON.parse(errorText);
+      } catch {
+        // Not JSON, use HTTP status
+      }
+
+      // Check for authentication error (401)
+      if (response.status === 401 || (errorData?.status === 'ERROR' && errorData?.error?.includes('Unknown API Key'))) {
+        return {
+          snapshot: null,
+          error: {
+            type: 'auth_error',
+            message: 'API authentication failed',
+            details: errorData?.error || 'Invalid API key',
+          },
+        };
+      }
+
+      // Check for API error response (400 Bad Request with ERROR status)
+      if (response.status === 400 && errorData?.status === 'ERROR') {
+        const errorMsg = errorData.error || errorData.message || 'Unknown API error';
+        
+        // Check for specific error types
+        if (errorMsg.includes('expiration_date not formatted')) {
+          return {
+            snapshot: null,
+            error: {
+              type: 'invalid_input',
+              message: 'Invalid expiration date format',
+              details: errorMsg,
+            },
+          };
+        }
+        
+        return {
+          snapshot: null,
+          error: {
+            type: 'api_error',
+            message: 'API returned an error',
+            details: errorMsg,
+          },
+        };
+      }
+
+      // Generic HTTP error
+      return {
+        snapshot: null,
+        error: {
+          type: 'network_error',
+          message: 'Unable to connect to market data service',
+          details: `HTTP ${response.status} ${response.statusText}`,
+        },
+      };
     }
 
     const data: OptionChainResponse = await response.json();
 
-    // Check for API errors in response
-    if (data.status === 'ERROR' || data.status === 'NOT_FOUND' || data.status === 'NOT_AUTHORIZED') {
-      console.warn(`Massive.com API returned error status: ${data.status}`, data.error || data.message);
-      return null;
+    // Check for API errors in response (status: "ERROR")
+    if (data.status === 'ERROR') {
+      const errorMsg = data.error || data.message || 'Unknown API error';
+      
+      if (errorMsg.includes('Unknown API Key')) {
+        return {
+          snapshot: null,
+          error: {
+            type: 'auth_error',
+            message: 'API authentication failed',
+            details: errorMsg,
+          },
+        };
+      }
+      
+      if (errorMsg.includes('expiration_date not formatted')) {
+        return {
+          snapshot: null,
+          error: {
+            type: 'invalid_input',
+            message: 'Invalid expiration date format',
+            details: errorMsg,
+          },
+        };
+      }
+      
+      return {
+        snapshot: null,
+        error: {
+          type: 'api_error',
+          message: 'API returned an error',
+          details: errorMsg,
+        },
+      };
     }
     
     // Ensure status is OK
     if (data.status !== 'OK' && data.status !== undefined) {
-      console.warn(`Massive.com API returned unexpected status: ${data.status}`);
+      return {
+        snapshot: null,
+        error: {
+          type: 'api_error',
+          message: 'Unexpected API response',
+          details: `Status: ${data.status}`,
+        },
+      };
     }
 
     // Handle results - can be single object or array
+    // Based on test: API returns status: "OK" with results: [] when contract not found
     if (!data.results) {
-      console.warn(`No option contract found for ${underlyingAsset} ${strike} ${contractType} ${expiryDate}`);
-      return null;
+      return {
+        snapshot: null,
+        error: {
+          type: 'not_found',
+          message: `Option contract not found for ${underlyingAsset} ${strike} ${contractType.toUpperCase()} ${expiryDate}`,
+          details: 'Please verify the ticker, strike price, expiry date, and option type are correct',
+        },
+      };
     }
 
     // Convert single object to array for consistent processing
     const resultsArray = Array.isArray(data.results) ? data.results : [data.results];
 
+    // Based on test: API returns empty array [] when contract doesn't exist
     if (resultsArray.length === 0) {
-      console.warn(`No option contract found for ${underlyingAsset} ${strike} ${contractType} ${expiryDate}`);
-      return null;
+      return {
+        snapshot: null,
+        error: {
+          type: 'not_found',
+          message: `Option contract not found for ${underlyingAsset} ${strike} ${contractType.toUpperCase()} ${expiryDate}`,
+          details: 'Please verify the ticker, strike price, expiry date, and option type are correct',
+        },
+      };
     }
 
     // Find exact match if multiple results (should be rare with all params)
@@ -183,11 +300,33 @@ export async function getOptionContractSnapshot(
              contractTypeValue === contractType;
     });
 
+    // If no exact match found, return error
+    if (!exactMatch && resultsArray.length > 0) {
+      return {
+        snapshot: null,
+        error: {
+          type: 'not_found',
+          message: `Option contract not found for ${underlyingAsset} ${strike} ${contractType.toUpperCase()} ${expiryDate}`,
+          details: 'No exact match found. Please verify the strike price, expiry date, and option type',
+        },
+      };
+    }
+
     // Return exact match or first result
-    return exactMatch || resultsArray[0];
+    return {
+      snapshot: exactMatch || resultsArray[0],
+      error: null,
+    };
   } catch (error) {
     console.error('Error fetching option contract from Massive.com:', error);
-    return null;
+    return {
+      snapshot: null,
+      error: {
+        type: 'network_error',
+        message: 'Network error while fetching market data',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+    };
   }
 }
 
@@ -352,7 +491,8 @@ export async function validateOptionPrice(
 
     // Fallback to chain snapshot if contract lookup failed
     if (!snapshot) {
-      snapshot = await getOptionContractSnapshot(underlyingAsset, strike, expiryDate, contractType);
+      const { snapshot: fetchedSnapshot } = await getOptionContractSnapshot(underlyingAsset, strike, expiryDate, contractType);
+      snapshot = fetchedSnapshot;
     }
 
     if (!snapshot) {

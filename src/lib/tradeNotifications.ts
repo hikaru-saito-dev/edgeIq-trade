@@ -1,4 +1,3 @@
-import { Trade } from '@/models/Trade';
 import type { ITrade } from '@/models/Trade';
 import type { IUser } from '@/models/User';
 import { User } from '@/models/User';
@@ -298,7 +297,6 @@ function formatDate(date: Date): string {
 function formatTradeLabel(trade: ITrade): string {
   const expiry = new Date(trade.expiryDate);
   const expiryStr = `${expiry.getMonth() + 1}/${expiry.getDate()}/${expiry.getFullYear()}`;
-  const optionLabel = trade.optionType === 'C' ? 'CALL' : 'PUT';
   return `${trade.contracts}x ${trade.ticker} ${trade.strike}${trade.optionType} ${expiryStr}`;
 }
 
@@ -414,5 +412,95 @@ export async function notifyTradeSettled(trade: ITrade, fillContracts: number, f
 
   // Send to the same webhooks that were used when the trade was created
   await sendMessageToUser(messageLines.join('\n'), userForNotification, undefined, webhookIdsToUse);
+}
+
+/**
+ * Notify all followers when a creator creates a new trade
+ * This sends notifications to followers' followingWebhook if configured
+ */
+export async function notifyFollowers(trade: ITrade, creatorUser: IUser): Promise<void> {
+  if (!creatorUser || !creatorUser.whopUserId) {
+    return;
+  }
+
+  try {
+    await connectDB();
+    
+    // Find all active follow purchases for this creator
+    const { FollowPurchase } = await import('@/models/FollowPurchase');
+    const activeFollows = await FollowPurchase.find({
+      capperWhopUserId: creatorUser.whopUserId,
+      status: 'active',
+      $expr: { $lt: ['$numPlaysConsumed', '$numPlaysPurchased'] },
+    }).lean();
+
+    if (activeFollows.length === 0) {
+      return;
+    }
+
+    // Get unique follower Whop user IDs
+    const followerWhopUserIds = [...new Set(activeFollows.map(f => f.followerWhopUserId))];
+
+    // Find all follower users who have at least one following webhook configured
+    const followers = await User.find({
+      whopUserId: { $in: followerWhopUserIds },
+      $or: [
+        { followingDiscordWebhook: { $exists: true, $ne: null, $regex: /^(?!\s*$).+/ } },
+        { followingWhopWebhook: { $exists: true, $ne: null, $regex: /^(?!\s*$).+/ } },
+      ],
+    }).lean();
+
+    if (followers.length === 0) {
+      return;
+    }
+
+    // Deduplicate by whopUserId to ensure each follower only gets one notification per webhook type
+    // (A user might have multiple User documents across different companies)
+    const uniqueFollowers = new Map<string, typeof followers[0]>();
+    for (const follower of followers) {
+      if (follower.whopUserId) {
+        // Use the first one found for each whopUserId
+        if (!uniqueFollowers.has(follower.whopUserId)) {
+          uniqueFollowers.set(follower.whopUserId, follower);
+        }
+      }
+    }
+
+    if (uniqueFollowers.size === 0) {
+      return;
+    }
+
+    // Format the notification message
+    const creatorName = formatUser(creatorUser);
+    const tradeLabel = formatTradeLabel(trade);
+    const messageLines = [
+      '🆕 **New Trade from Creator**',
+      `Creator: ${creatorName}`,
+      `Trade: ${tradeLabel}`,
+      `Contracts: ${trade.contracts}`,
+      `Fill Price: $${trade.fillPrice.toFixed(2)}`,
+      `Notional: ${formatNotional(trade.contracts * trade.fillPrice * 100)}`,
+      `Created: ${formatDate(new Date(trade.createdAt))}`,
+    ];
+
+    const message = messageLines.join('\n');
+
+    // Send notification to each follower's configured webhooks (Discord and/or Whop)
+    const webhookPromises: Promise<void>[] = [];
+    for (const follower of uniqueFollowers.values()) {
+      if (follower.followingDiscordWebhook && follower.followingDiscordWebhook.trim()) {
+        webhookPromises.push(sendWebhookMessage(message, follower.followingDiscordWebhook));
+      }
+      if (follower.followingWhopWebhook && follower.followingWhopWebhook.trim()) {
+        webhookPromises.push(sendWebhookMessage(message, follower.followingWhopWebhook));
+      }
+    }
+
+    // Use Promise.allSettled so if one fails, the others still work
+    await Promise.allSettled(webhookPromises);
+  } catch (error) {
+    // Silently fail to prevent breaking trade creation
+    console.error('Error notifying followers:', error);
+  }
 }
 

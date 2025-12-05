@@ -9,7 +9,6 @@ export interface ITradeFill extends Document {
   refPrice?: number; // Reference price from Massive.com API
   refTimestamp?: Date; // Timestamp when ref price was fetched
   notional: number; // contracts * fill_price * 100
-  companyId?: string; // Whop company ID (for consistency with Trade)
   isMarketOrder?: boolean; // Whether this was a market order (always true now)
   createdAt: Date;
   updatedAt: Date;
@@ -24,7 +23,6 @@ const TradeFillSchema = new Schema<ITradeFill>({
   refPrice: { type: Number },
   refTimestamp: { type: Date },
   notional: { type: Number, required: true }, // contracts * fill_price * 100
-  companyId: { type: String, index: true },
   isMarketOrder: { type: Boolean, default: true }, // Always true - market orders only
 }, {
   timestamps: true,

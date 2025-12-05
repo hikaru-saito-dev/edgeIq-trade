@@ -121,6 +121,7 @@ export default function TradesPage() {
     };
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthorized]);
 
   const fetchUserProfile = async () => {
@@ -332,13 +333,6 @@ export default function TradesPage() {
                 startAdornment: (
                   <InputAdornment position="start">
                     <SearchIcon sx={{ color: 'var(--text-muted)' }} />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => { setPage(1); fetchTrades(); }} sx={{ color: 'var(--app-text)' }}>
-                      <SearchIcon />
-                    </IconButton>
                   </InputAdornment>
                 ),
               }}

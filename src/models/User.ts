@@ -32,10 +32,17 @@ export interface IUser extends Document {
   webhooks?: Webhook[]; // Array of webhooks with names
   notifyOnSettlement?: boolean; // Whether to send notifications when trades are settled
   onlyNotifyWinningSettlements?: boolean; // If true, only send settlement webhooks for winning trades
+  followingDiscordWebhook?: string; // Discord webhook URL for following page notifications
+  followingWhopWebhook?: string; // Whop webhook URL for following page notifications
   membershipPlans?: MembershipPlan[]; // Array of membership plans for this Whop (only for owners)
   membershipUrl?: string; // Legacy: Primary membership URL (deprecated, use membershipPlans)
   optIn: boolean; // Only owners can opt-in to leaderboard
   hideLeaderboardFromMembers?: boolean; // Company owner setting to hide leaderboard from members
+  followOfferEnabled?: boolean; // Whether follow offer is enabled
+  followOfferPriceCents?: number; // Price in cents (e.g., 1000 = $10.00)
+  followOfferNumPlays?: number; // Number of plays included in follow purchase
+  followOfferPlanId?: string; // Whop plan ID (created automatically when settings saved)
+  followOfferCheckoutUrl?: string; // Checkout URL with affiliate param
   stats: {
     winRate: number;
     roi: number;
@@ -77,10 +84,17 @@ const UserSchema = new Schema<IUser>({
   webhooks: { type: [WebhookSchema], default: [] }, // Array of webhooks with names
   notifyOnSettlement: { type: Boolean, default: false },
   onlyNotifyWinningSettlements: { type: Boolean, default: false }, // Only send settlement webhooks for winning trades
+  followingDiscordWebhook: { type: String, trim: true }, // Discord webhook URL for following page notifications
+  followingWhopWebhook: { type: String, trim: true }, // Whop webhook URL for following page notifications
   membershipPlans: { type: [MembershipPlanSchema], default: [] }, //only for owners
   membershipUrl: { type: String }, // Legacy field for backward compatibility
   optIn: { type: Boolean, default: false }, // Default false, only owners can opt-in
   hideLeaderboardFromMembers: { type: Boolean, default: false }, // Company owner setting to hide leaderboard from members
+  followOfferEnabled: { type: Boolean, default: false }, // Whether follow offer is enabled
+  followOfferPriceCents: { type: Number, min: 0 }, // Price in cents
+  followOfferNumPlays: { type: Number, min: 1 }, // Number of plays included
+  followOfferPlanId: { type: String }, // Whop plan ID
+  followOfferCheckoutUrl: { type: String }, // Checkout URL with affiliate
   stats: {
     winRate: { type: Number, default: 0 },
     roi: { type: Number, default: 0 },
@@ -97,6 +111,7 @@ UserSchema.index({ companyId: 1, whopUserId: 1 }, { unique: true, sparse: true }
 UserSchema.index({ companyId: 1, role: 1 }, { unique: true, partialFilterExpression: { $or: [ { role: 'owner' }, { role: 'companyOwner' } ], companyId: { $exists: true, $ne: null } } }); // Only 1 owner or companyOwner per companyId
 UserSchema.index({ companyId: 1, optIn: 1, 'stats.roi': -1, 'stats.winRate': -1 }); // For company-scoped leaderboard
 UserSchema.index({ role: 1, optIn: 1, companyId: 1 });
+UserSchema.index({ followOfferPlanId: 1, followOfferEnabled: 1 }); // For webhook lookup by plan_id
 
 export const User = (mongoose.models && mongoose.models.User) || mongoose.model<IUser>('User', UserSchema);
 

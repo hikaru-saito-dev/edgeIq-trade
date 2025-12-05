@@ -12,9 +12,7 @@ import {
   ListItem,
   ListItemButton,
   ListItemText,
-  useMediaQuery,
   useTheme,
-  Divider,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
@@ -27,7 +25,6 @@ export default function Navigation() {
   const { isAuthorized, role, loading, hideLeaderboardFromMembers } = useAccess();
   const [mobileOpen, setMobileOpen] = useState(false);
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isDark = theme.palette.mode === 'dark';
 
   const navGradient = isDark
@@ -46,6 +43,7 @@ export default function Navigation() {
 
   const navItems = [
     ...(isAuthorized && !loading ? [{ label: 'Trades', href: '/trades' }] : []),
+    ...(isAuthorized && !loading ? [{ label: 'Following', href: '/following' }] : []),
     // Hide leaderboard from members if company owner has enabled the setting
     ...(!loading && isAuthorized && !(role === 'member' && hideLeaderboardFromMembers)
       ? [{ label: 'Leaderboard', href: '/leaderboard' }]
@@ -112,17 +110,17 @@ export default function Navigation() {
 
   return (
     <>
-      <AppBar
-        position="static"
-        elevation={0}
-        sx={{
+    <AppBar 
+      position="static" 
+      elevation={0}
+      sx={{
           background: navGradient,
-          backdropFilter: 'blur(20px)',
+        backdropFilter: 'blur(20px)',
           borderBottom: `1px solid ${alpha('#FFFFFF', 0.08)}`,
           color: navTextColor,
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-        }}
-      >
+      }}
+    >
         <Toolbar sx={{ py: 2, px: { xs: 2, sm: 3 } }}>
           <Box sx={{ flexGrow: 1 }}>
             <Logo />
@@ -130,10 +128,32 @@ export default function Navigation() {
 
           {/* Desktop Navigation */}
           <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
+          {!loading && isAuthorized && (
+            <Button 
+              component={Link} 
+              href="/trades"
+              sx={{
+                  color: navTextColor,
+                  fontWeight: 500,
+                  textTransform: 'none',
+                  fontSize: '0.95rem',
+                  px: 2,
+                  borderRadius: 1,
+                  transition: 'all 0.2s ease',
+                '&:hover': {
+                    color: navTextColor,
+                    background: navHoverBg,
+                    transform: 'translateY(-1px)',
+                },
+              }}
+            >
+              Trades
+            </Button>
+          )}
             {!loading && isAuthorized && (
               <Button
                 component={Link}
-                href="/trades"
+                href="/following"
                 sx={{
                   color: navTextColor,
                   fontWeight: 500,
@@ -149,58 +169,36 @@ export default function Navigation() {
                   },
                 }}
               >
-                Trades
+                Following
               </Button>
             )}
             {!loading && isAuthorized && !(role === 'member' && hideLeaderboardFromMembers) && (
-              <Button
-                component={Link}
-                href="/leaderboard"
-                sx={{
+          <Button 
+            component={Link} 
+            href="/leaderboard"
+            sx={{
                   color: navTextColor,
-                  fontWeight: 600,
+              fontWeight: 600,
                   textTransform: 'none',
                   fontSize: '0.95rem',
                   px: 2,
                   borderRadius: 1,
                   transition: 'all 0.2s ease',
-                  '&:hover': {
+              '&:hover': {
                     color: navTextColor,
                     background: navHoverBg,
                     transform: 'translateY(-1px)',
-                  },
-                }}
-              >
-                Leaderboard
-              </Button>
+              },
+            }}
+          >
+            Leaderboard
+          </Button>
             )}
-            {!loading && isAuthorized && (
-              <Button
-                component={Link}
-                href="/profile"
-                sx={{
-                  color: navTextColor,
-                  fontWeight: 500,
-                  textTransform: 'none',
-                  fontSize: '0.95rem',
-                  px: 2,
-                  borderRadius: 1,
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    color: navTextColor,
-                    background: navHoverBg,
-                    transform: 'translateY(-1px)',
-                  },
-                }}
-              >
-                Profile
-              </Button>
-            )}
-            {!loading && (role === 'companyOwner' || role === 'owner') && (
-              <Button
-                component={Link}
-                href="/users"
-                sx={{
+          {!loading && isAuthorized && (
+            <Button 
+              component={Link} 
+              href="/profile"
+              sx={{
                   color: navTextColor,
                   fontWeight: 500,
                   textTransform: 'none',
@@ -208,17 +206,39 @@ export default function Navigation() {
                   px: 2,
                   borderRadius: 1,
                   transition: 'all 0.2s ease',
-                  '&:hover': {
+                '&:hover': {
                     color: navTextColor,
                     background: navHoverBg,
                     transform: 'translateY(-1px)',
-                  },
-                }}
-              >
-                Users
-              </Button>
-            )}
-          </Box>
+                },
+              }}
+            >
+              Profile
+            </Button>
+          )}
+          {!loading && (role === 'companyOwner' || role === 'owner') && (
+            <Button 
+              component={Link} 
+              href="/users"
+              sx={{
+                  color: navTextColor,
+                  fontWeight: 500,
+                  textTransform: 'none',
+                  fontSize: '0.95rem',
+                  px: 2,
+                  borderRadius: 1,
+                  transition: 'all 0.2s ease',
+                '&:hover': {
+                    color: navTextColor,
+                    background: navHoverBg,
+                    transform: 'translateY(-1px)',
+                },
+              }}
+            >
+              Users
+            </Button>
+          )}
+        </Box>
 
           {/* Mobile Menu Button */}
           <IconButton
@@ -233,8 +253,8 @@ export default function Navigation() {
           >
             <MenuIcon />
           </IconButton>
-        </Toolbar>
-      </AppBar>
+      </Toolbar>
+    </AppBar>
 
       {/* Mobile Drawer */}
       <Drawer

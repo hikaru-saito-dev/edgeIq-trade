@@ -23,6 +23,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Alert
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -94,6 +95,8 @@ interface UserData {
   webhooks?: Array<{ id: string; name: string; url: string; type: 'whop' | 'discord' }>;
   notifyOnSettlement?: boolean;
   onlyNotifyWinningSettlements?: boolean;
+  followingDiscordWebhook?: string | null;
+  followingWhopWebhook?: string | null;
   membershipPlans?: Array<{
     id: string;
     name: string;
@@ -113,6 +116,8 @@ export default function ProfileForm() {
   const [webhooks, setWebhooks] = useState<Array<{ id: string; name: string; url: string; type: 'whop' | 'discord' }>>([]);
   const [notifyOnSettlement, setNotifyOnSettlement] = useState(false);
   const [onlyNotifyWinningSettlements, setOnlyNotifyWinningSettlements] = useState(false);
+  const [followingDiscordWebhook, setFollowingDiscordWebhook] = useState<string>('');
+  const [followingWhopWebhook, setFollowingWhopWebhook] = useState<string>('');
   const [membershipPlans, setMembershipPlans] = useState<Array<{
     id: string;
     name: string;
@@ -121,6 +126,11 @@ export default function ProfileForm() {
     url: string;
     isPremium?: boolean;
   }>>([]);
+const [followOfferEnabled, setFollowOfferEnabled] = useState(false);
+const [followOfferPriceDollars, setFollowOfferPriceDollars] = useState<number>(0);
+  const [followOfferNumPlays, setFollowOfferNumPlays] = useState<number>(0);
+  const [followOfferCheckoutUrl, setFollowOfferCheckoutUrl] = useState<string | null>(null);
+  const [savingFollowOffer, setSavingFollowOffer] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [personalStats, setPersonalStats] = useState<UserStats | null>(null);
   const [companyStats, setCompanyStats] = useState<UserStats | null>(null);
@@ -196,7 +206,14 @@ export default function ProfileForm() {
       setWebhooks(profileData.user.webhooks || []);
       setNotifyOnSettlement(profileData.user.notifyOnSettlement ?? false);
       setOnlyNotifyWinningSettlements(profileData.user.onlyNotifyWinningSettlements ?? false);
+      setFollowingDiscordWebhook(profileData.user.followingDiscordWebhook || '');
+      setFollowingWhopWebhook(profileData.user.followingWhopWebhook || '');
       setMembershipPlans(profileData.user.membershipPlans || []);
+      // Follow offer fields (if available from API)
+      setFollowOfferEnabled(profileData.user.followOfferEnabled ?? false);
+      setFollowOfferPriceDollars((profileData.user.followOfferPriceCents ?? 0));
+      setFollowOfferNumPlays(profileData.user.followOfferNumPlays ?? 0);
+      setFollowOfferCheckoutUrl(profileData.user.followOfferCheckoutUrl ?? null);
       setPersonalStats(profileData.personalStats || null);
       setCompanyStats(profileData.companyStats || null);
       setTrades(tradesData.trades || []);
@@ -236,6 +253,38 @@ export default function ProfileForm() {
     ));
   };
 
+  const createOrUpdateFollowOffer = async () => {
+    if (!followOfferPriceDollars || !followOfferNumPlays) {
+      throw new Error('Please enter price and number of plays');
+    }
+
+    setSavingFollowOffer(true);
+    try {
+      const username = userData?.whopUsername || userData?.whopDisplayName || 'user';
+      const priceCents = Math.round(followOfferPriceDollars);
+      const response = await apiRequest('/api/follow/checkout', {
+        method: 'POST',
+        body: JSON.stringify({
+          priceCents,
+          numPlays: followOfferNumPlays,
+          capperUsername: username,
+        }),
+        userId,
+        companyId,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create follow offer');
+      }
+
+      const data = await response.json();
+      setFollowOfferCheckoutUrl(data.checkoutUrl);
+    } finally {
+      setSavingFollowOffer(false);
+    }
+  };
+
   const handleAddWebhook = () => {
     setWebhooks([
       ...webhooks,
@@ -262,6 +311,14 @@ export default function ProfileForm() {
     if (!isAuthorized) return;
     setSaving(true);
     try {
+      if (role === 'companyOwner' && followOfferEnabled) {
+        if (!followOfferPriceDollars || !followOfferNumPlays) {
+          toast.showError('Follow offer price and number of plays are required');
+          setSaving(false);
+          return;
+        }
+      }
+
       // Validate membership plans
       const validPlans = membershipPlans.filter(plan =>
         plan.name.trim() && plan.url.trim() && plan.price.trim()
@@ -274,12 +331,16 @@ export default function ProfileForm() {
         webhooks?: typeof webhooks;
         notifyOnSettlement?: boolean;
         onlyNotifyWinningSettlements?: boolean;
+        followingDiscordWebhook?: string | null;
+        followingWhopWebhook?: string | null;
         membershipPlans?: typeof membershipPlans;
       } = {
         alias,
         webhooks: webhooks.filter(w => w.name.trim() && w.url.trim()),
         notifyOnSettlement,
         onlyNotifyWinningSettlements,
+        followingDiscordWebhook: followingDiscordWebhook.trim() || null,
+        followingWhopWebhook: followingWhopWebhook.trim() || null,
       };
 
       // Only owners and companyOwners can set opt-in and membership plans
@@ -296,6 +357,20 @@ export default function ProfileForm() {
         const error = await response.json() as { error: string };
         toast.showError(error.error || 'Failed to update profile');
         return;
+      }
+
+      if (role === 'companyOwner' && followOfferEnabled) {
+        try {
+          await createOrUpdateFollowOffer();
+        } catch (followError) {
+          if (followError instanceof Error) {
+            toast.showError(followError.message);
+          } else {
+            toast.showError('Failed to create follow offer');
+          }
+          setSaving(false);
+          return;
+        }
       }
 
       // Refresh stats
@@ -702,6 +777,39 @@ export default function ProfileForm() {
           </>
         )}
 
+        {/* Following Webhooks - Available to all users */}
+        <Divider sx={{ my: 4, borderColor: 'var(--surface-border)' }} />
+        <Typography variant="h6" sx={{ color: 'var(--app-text)', mt: 3, mb: 2, fontWeight: 600 }}>
+          Following Page Webhooks
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'var(--text-muted)', mb: 2 }}>
+          Receive notifications when creators you follow create new trades. You can configure both Discord and Whop webhooks.
+        </Typography>
+        
+        <Box sx={{ mb: 2 }}>
+          <TextField
+            fullWidth
+            label="Discord Webhook URL"
+            value={followingDiscordWebhook}
+            onChange={(e) => setFollowingDiscordWebhook(e.target.value)}
+            placeholder="https://discord.com/api/webhooks/..."
+            margin="normal"
+            size="small"
+            sx={fieldStyles}
+          />
+          
+          <TextField
+            fullWidth
+            label="Whop Webhook URL"
+            value={followingWhopWebhook}
+            onChange={(e) => setFollowingWhopWebhook(e.target.value)}
+            placeholder="https://whop.com/api/webhooks/..."
+            margin="normal"
+            size="small"
+            sx={fieldStyles}
+          />
+        </Box>
+
         <Box display="flex" gap={2} flexWrap="wrap" mt={3}>
           <Button
             variant="contained"
@@ -962,6 +1070,76 @@ export default function ProfileForm() {
           </Button>
         </Box>
 
+        {/* Follow Offer Section */}
+        <Divider sx={{ my: 4, borderColor: 'var(--surface-border)' }} />
+        <Box mb={3}>
+          <Typography variant="h6" sx={{ color: 'var(--app-text)', mb: 1, fontWeight: 600 }}>
+            Follow Offer
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'var(--text-muted)' }}>
+            Enable followers to purchase access to your trades. Only owners and company owners can set up follow offers.
+          </Typography>
+        </Box>
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={followOfferEnabled}
+              onChange={(e) => setFollowOfferEnabled(e.target.checked)}
+              disabled={savingFollowOffer}
+            />
+          }
+          label={
+            <Box>
+              <Typography variant="body2" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
+                Enable Follow Offer
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'var(--text-muted)', display: 'block' }}>
+                Allow users to purchase access to follow your trades
+              </Typography>
+            </Box>
+          }
+          sx={{ mb: 3 }}
+        />
+
+        {followOfferEnabled && (
+          <Box>
+            <TextField
+              fullWidth
+              label="Price (in dollars)"
+              type="number"
+              value={followOfferPriceDollars}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value);
+                setFollowOfferPriceDollars(Number.isNaN(value) ? 0 : value);
+              }}
+              placeholder="10.00"
+              margin="normal"
+              size="small"
+              required
+              inputProps={{ min: 0, step: 0.01 }}
+              sx={fieldStyles}
+            />
+
+            <TextField
+              fullWidth
+              label="Number of Plays"
+              type="number"
+              value={followOfferNumPlays}
+              onChange={(e) => setFollowOfferNumPlays(parseInt(e.target.value) || 0)}
+              placeholder="10"
+              margin="normal"
+              size="small"
+              required
+              inputProps={{ min: 1 }}
+              sx={fieldStyles}
+            />
+
+         
+
+          </Box>
+        )}
+
         <Box display="flex" gap={2} flexWrap="wrap" mt={3}>
           <Button
             variant="contained"
@@ -974,7 +1152,7 @@ export default function ProfileForm() {
               py: 1.5,
               fontWeight: 600,
               '&:hover': {
-                background: 'linear-gradient(135deg, #5855eb, #db2777)',
+                background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
                 transform: 'translateY(-2px)',
                 boxShadow: '0 4px 12px rgba(34, 197, 94, 0.4)',
               },

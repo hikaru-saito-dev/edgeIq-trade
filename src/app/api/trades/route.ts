@@ -18,6 +18,7 @@ import {
   invalidateLeaderboardCache,
   invalidatePersonalStatsCache,
 } from '@/lib/cache/statsCache';
+import { FollowPurchase } from '@/models/FollowPurchase';
 
 export const runtime = 'nodejs';
 
@@ -50,8 +51,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Allow all roles (companyOwner, owner, admin, member) to view their trades
-    // Members can only see their own trades, while owners/admins can see all company trades
+    // All roles (companyOwner, owner, admin, member) can only view their OWN trades
+    // The "My Trades" page shows personal trades only, not all company trades (matching betting-whop pattern)
 
     // Parse query params
     const { searchParams } = new URL(request.url);
@@ -60,34 +61,29 @@ export async function GET(request: NextRequest) {
     const search = (searchParams.get('search') || '').trim();
     const status = searchParams.get('status')?.trim();
 
-    // Build query - only get BUY trades (the main trade entries)
-    // Members can only see their own trades, while owners/admins see all company trades
-    const query: Record<string, unknown> = 
-      user.role === 'member' 
-        ? { userId: user._id, side: 'BUY' }
-        : { companyId: companyId, side: 'BUY' };
+    // Build match query - ALL users see only their own trades (by whopUserId for cross-company)
+    const matchQuery: Record<string, unknown> = {
+      whopUserId: user.whopUserId,
+      side: 'BUY', // Only get BUY trades (the main trade entries)
+    };
 
     // Filter by status if provided
     if (status && ['OPEN', 'CLOSED', 'REJECTED'].includes(status)) {
-      query.status = status;
+      matchQuery.status = status;
     }
 
     // Search by ticker
     if (search) {
       const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-      query.ticker = regex;
+      matchQuery.ticker = regex;
     }
-
-    // Add companyId to query for all roles
-      query.userId = user._id;
-      query.companyId = companyId;
     
 
     const skip = (page - 1) * pageSize;
     const tradeFillCollection = TradeFill.collection.name;
 
     const pipeline: PipelineStage[] = [
-      { $match: query },
+      { $match: matchQuery },
       { $sort: { createdAt: -1, _id: -1 } },
       {
         $facet: {
@@ -194,16 +190,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use companyId from headers or fall back to user's companyId
-    const finalCompanyId = companyId || user.companyId;
-    
-    if (!finalCompanyId) {
-      metricMeta = { status: 'missing_company' };
-      return NextResponse.json({ 
-        error: 'Company ID is required. Please ensure you are accessing the app through a Whop company.' 
-      }, { status: 400 });
-    }
-    metricMeta.companyId = finalCompanyId;
+    // CompanyId is only used for user lookup, not stored on trades
 
     // Check market hours
     const now = new Date();
@@ -240,17 +227,48 @@ export async function POST(request: NextRequest) {
     const contractType = validated.optionType === 'C' ? 'call' : 'put';
 
     // Always use market orders - fetch market price
-    const snapshot = await getOptionContractSnapshot(
+    const { snapshot, error: snapshotError } = await getOptionContractSnapshot(
       validated.ticker,
       validated.strike,
       expiryDateAPI,
       contractType
     );
 
-    if (!snapshot) {
-      metricMeta = { status: 'market_data_unavailable' };
+    if (snapshotError || !snapshot) {
+      // Determine error message based on error type
+      let errorMessage = 'Unable to fetch market data to place order. Please try again.';
+      let metricStatus = 'market_data_unavailable';
+
+      if (snapshotError) {
+        switch (snapshotError.type) {
+          case 'not_found':
+            errorMessage = snapshotError.message;
+            metricStatus = 'contract_not_found';
+            break;
+          case 'invalid_input':
+            errorMessage = snapshotError.message;
+            metricStatus = 'invalid_input';
+            break;
+          case 'auth_error':
+            errorMessage = 'Market data service authentication failed. Please contact support.';
+            metricStatus = 'auth_error';
+            break;
+          case 'network_error':
+            errorMessage = 'Unable to connect to market data service. Please try again.';
+            metricStatus = 'network_error';
+            break;
+          case 'api_error':
+            errorMessage = 'Market data service error. Please try again.';
+            metricStatus = 'api_error';
+            break;
+          default:
+            errorMessage = snapshotError.message || errorMessage;
+        }
+      }
+
+      metricMeta = { status: metricStatus };
       return NextResponse.json({
-        error: 'Unable to fetch market data to place order. Please try again.',
+        error: errorMessage,
       }, { status: 400 });
     }
 
@@ -290,6 +308,7 @@ export async function POST(request: NextRequest) {
     // Create trade
     const trade = await Trade.create({
       userId: user._id,
+      whopUserId: user.whopUserId,
       side: 'BUY',
       contracts: validated.contracts,
       ticker: validated.ticker,
@@ -304,10 +323,43 @@ export async function POST(request: NextRequest) {
       refTimestamp,
       remainingOpenContracts: validated.contracts,
       totalBuyNotional: notional,
-      companyId: finalCompanyId,
       isMarketOrder: true, // Always market orders
       ...(normalizedSelectedWebhookIds !== undefined && { selectedWebhookIds: normalizedSelectedWebhookIds }),
     });
+
+    // Track consumed plays for follow purchases
+    // Use atomic $inc operator to prevent race conditions
+    try {
+      // Use atomic bulk update to increment plays for all active follows
+      // This prevents race conditions where multiple requests try to increment simultaneously
+      if (user.whopUserId) {
+        // Atomic update using aggregation pipeline to increment and update status in one operation
+        await FollowPurchase.updateMany(
+          {
+            capperWhopUserId: user.whopUserId,
+            status: 'active',
+            $expr: { $lt: ['$numPlaysConsumed', '$numPlaysPurchased'] },
+          },
+          [
+            {
+              $set: {
+                numPlaysConsumed: { $add: ['$numPlaysConsumed', 1] },
+                status: {
+                  $cond: {
+                    if: { $gte: [{ $add: ['$numPlaysConsumed', 1] }, '$numPlaysPurchased'] },
+                    then: 'completed',
+                    else: 'active',
+                  },
+                },
+              },
+            },
+          ]
+        );
+      }
+    } catch (followError) {
+      // Don't fail trade creation if follow tracking fails
+      console.error('Error tracking follow purchases:', followError);
+    }
 
     // Log the action
     await Log.create({
@@ -323,12 +375,21 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Send notification
-    await notifyTradeCreated(trade, user, finalCompanyId, normalizedSelectedWebhookIds);
+    // Send notification to creator's webhooks
+    await notifyTradeCreated(trade, user, companyId || undefined, normalizedSelectedWebhookIds);
+
+    // Notify all followers of this creator
+    try {
+      const { notifyFollowers } = await import('@/lib/tradeNotifications');
+      await notifyFollowers(trade, user);
+    } catch (followError) {
+      // Don't fail trade creation if follower notification fails
+      console.error('Error notifying followers:', followError);
+    }
 
     invalidateLeaderboardCache();
-    if (finalCompanyId) {
-      invalidateCompanyStatsCache(finalCompanyId);
+    if (companyId) {
+      invalidateCompanyStatsCache(companyId);
     }
     invalidatePersonalStatsCache(user._id.toString());
 
@@ -411,7 +472,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'tradeId is required' }, { status: 400 });
     }
 
-    const trade = await Trade.findOne({ _id: tradeId, userId: user._id, companyId: companyId });
+    const trade = await Trade.findOne({ _id: tradeId, whopUserId: user.whopUserId });
     if (!trade) {
       metricMeta = { status: 'trade_not_found' };
       return NextResponse.json({ error: 'Trade not found' }, { status: 404 });

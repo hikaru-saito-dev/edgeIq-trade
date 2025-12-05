@@ -33,9 +33,13 @@ import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import SearchIcon from '@mui/icons-material/Search';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import FollowDetailModal from './FollowDetailModal';
 import { useState, useEffect, useRef } from 'react';
-import { useToast } from './ToastProvider';
 import { alpha, useTheme } from '@mui/material/styles';
+import { useAccess } from './AccessProvider';
+import { useToast } from './ToastProvider';
+import { apiRequest } from '@/lib/apiClient';
 
 interface MembershipPlan {
   id: string;
@@ -45,6 +49,13 @@ interface MembershipPlan {
   url: string;
   affiliateLink: string | null;
   isPremium: boolean;
+}
+
+interface FollowOffer {
+  enabled: boolean;
+  priceCents: number;
+  numPlays: number;
+  checkoutUrl: string | null;
 }
 
 interface LeaderboardEntry {
@@ -57,6 +68,7 @@ interface LeaderboardEntry {
   whopAvatarUrl?: string;
   companyId: string;
   membershipPlans?: MembershipPlan[];
+  followOffer?: FollowOffer | null;
   winRate: number;
   roi: number;
   netPnl: number;
@@ -69,12 +81,15 @@ interface LeaderboardEntry {
 
 export default function LeaderboardTable() {
   const toast = useToast();
+  const { userId, companyId, isAuthorized } = useAccess();
   const [range, setRange] = useState<'all' | '30d' | '7d'>('all');
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<LeaderboardEntry | null>(null);
   const [membershipModalOpen, setMembershipModalOpen] = useState(false);
+  const [followModalOpen, setFollowModalOpen] = useState(false);
+  const [selectedFollowEntry, setSelectedFollowEntry] = useState<LeaderboardEntry | null>(null);
 
   // pagination + search
   const [page, setPage] = useState(1);
@@ -104,6 +119,57 @@ export default function LeaderboardTable() {
   const handleCloseModal = () => {
     setMembershipModalOpen(false);
     setSelectedCompany(null);
+  };
+
+  const handleFollowClick = async (entry: LeaderboardEntry) => {
+    // Verify eligibility before showing modal
+    if (!isAuthorized || !userId) {
+      toast.showError('You must be logged in to follow creators.');
+      return;
+    }
+
+    try {
+      const verifyResponse = await apiRequest(
+        `/api/follow/verify?capperUserId=${encodeURIComponent(entry.userId)}`,
+        {
+          method: 'GET',
+          userId,
+          companyId,
+        }
+      );
+
+      if (!verifyResponse.ok) {
+        toast.showError('Failed to verify follow eligibility. Please try again.');
+        return;
+      }
+
+      const verifyData = await verifyResponse.json() as {
+        canFollow: boolean;
+        reason?: string;
+        message?: string;
+        remainingPlays?: number;
+      };
+
+      if (!verifyData.canFollow) {
+        if (verifyData.message) {
+          toast.showError(verifyData.message);
+        } else {
+          toast.showError('You cannot follow this creator.');
+        }
+        return;
+      }
+
+      setSelectedFollowEntry(entry);
+      setFollowModalOpen(true);
+    } catch (error) {
+      console.error('Error verifying follow eligibility:', error);
+      toast.showError('An error occurred while verifying follow eligibility.');
+    }
+  };
+
+  const handleCloseFollowModal = () => {
+    setFollowModalOpen(false);
+    setSelectedFollowEntry(null);
   };
 
   // Removed unused copyAffiliateLink function
@@ -264,23 +330,6 @@ export default function LeaderboardTable() {
               },
             }}
           />
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => { setPage(1); fetchLeaderboard(); }}
-            sx={{
-              color: 'var(--app-text)',
-              borderColor: controlBorder,
-              backgroundColor: controlBg,
-              whiteSpace: 'nowrap',
-              '&:hover': {
-                borderColor: theme.palette.primary.main,
-                backgroundColor: controlHoverBg,
-              },
-            }}
-          >
-            Search
-          </Button>
           <TextField
             select
             size="small"
@@ -368,13 +417,14 @@ export default function LeaderboardTable() {
                 <SortableHeader column="winsLosses" label="W-L" />
                 <SortableHeader column="currentStreak" label="Current Streak" />
                 <SortableHeader column="longestStreak" label="Longest Streak" />
-                <TableCell align="center" sx={{ fontWeight: 600 }}><strong>Action</strong></TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600 }}><strong>Membership</strong></TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600 }}><strong>Follow</strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {leaderboard.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} align="center">
+                  <TableCell colSpan={10} align="center">
                     No entries found
                   </TableCell>
                 </TableRow>
@@ -500,6 +550,30 @@ export default function LeaderboardTable() {
                       ) : (
                         <Typography variant="caption" sx={{ color: 'var(--text-muted)' }}>
                           No membership
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
+                      {entry.followOffer && entry.followOffer.enabled ? (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<PersonAddIcon />}
+                          onClick={() => handleFollowClick(entry)}
+                          sx={{
+                            borderColor: theme.palette.primary.main,
+                            color: theme.palette.primary.main,
+                            '&:hover': {
+                              borderColor: theme.palette.primary.dark,
+                              backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                            },
+                          }}
+                        >
+                          Follow
+                        </Button>
+                      ) : (
+                        <Typography variant="caption" sx={{ color: 'var(--text-muted)' }}>
+                          -
                         </Typography>
                       )}
                     </TableCell>
@@ -697,6 +771,13 @@ export default function LeaderboardTable() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Follow Detail Modal */}
+      <FollowDetailModal
+        open={followModalOpen}
+        onClose={handleCloseFollowModal}
+        entry={selectedFollowEntry}
+      />
     </Box>
   );
 }

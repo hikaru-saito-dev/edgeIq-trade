@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import { Trade, ITrade } from '@/models/Trade';
+import { Trade } from '@/models/Trade';
 import { TradeFill } from '@/models/TradeFill';
 import { User } from '@/models/User';
 import { Log } from '@/models/Log';
@@ -35,11 +35,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Check if user is owner or admin
-    if (user.role !== 'companyOwner' && user.role !== 'owner' && user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden. Only owners and admins can settle trades.' }, { status: 403 });
-    }
-
     // Check market hours
     const now = new Date();
     if (!isMarketOpen(now)) {
@@ -71,7 +66,7 @@ export async function POST(request: NextRequest) {
     const trade = await Trade.findOne({ 
       _id: validated.tradeId, 
       userId: user._id, 
-      companyId: companyId,
+      whopUserId: user.whopUserId,
       side: 'BUY', // Only settle BUY trades
     });
 
@@ -107,18 +102,45 @@ export async function POST(request: NextRequest) {
     }
 
     if (!snapshot) {
-      snapshot = await getOptionContractSnapshot(
+      const { snapshot: fetchedSnapshot, error: snapshotError } = await getOptionContractSnapshot(
         trade.ticker,
         trade.strike,
         expiryDateAPI,
         contractType
       );
-    }
+      
+      if (snapshotError || !fetchedSnapshot) {
+        // Determine error message based on error type
+        let errorMessage = 'Unable to fetch market data to settle trade. Please try again.';
 
-    if (!snapshot) {
-      return NextResponse.json({
-        error: 'Unable to fetch market data to settle trade. Please try again.',
-      }, { status: 400 });
+        if (snapshotError) {
+          switch (snapshotError.type) {
+            case 'not_found':
+              errorMessage = snapshotError.message;
+              break;
+            case 'invalid_input':
+              errorMessage = snapshotError.message;
+              break;
+            case 'auth_error':
+              errorMessage = 'Market data service authentication failed. Please contact support.';
+              break;
+            case 'network_error':
+              errorMessage = 'Unable to connect to market data service. Please try again.';
+              break;
+            case 'api_error':
+              errorMessage = 'Market data service error. Please try again.';
+              break;
+            default:
+              errorMessage = snapshotError.message || errorMessage;
+          }
+        }
+
+        return NextResponse.json({
+          error: errorMessage,
+        }, { status: 400 });
+      }
+      
+      snapshot = fetchedSnapshot;
     }
 
     const marketFillPrice = getMarketFillPrice(snapshot);
@@ -150,7 +172,6 @@ export async function POST(request: NextRequest) {
       refPrice: referencePrice || undefined,
       refTimestamp,
       notional: sellNotional,
-      companyId: companyId,
       isMarketOrder: true, // Always market orders
     });
 

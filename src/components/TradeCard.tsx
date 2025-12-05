@@ -13,7 +13,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Alert,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -25,6 +24,8 @@ import CalculateIcon from '@mui/icons-material/Calculate';
 import SellIcon from '@mui/icons-material/Sell';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import { apiRequest } from '@/lib/apiClient';
 import { useAccess } from './AccessProvider';
 import { useToast } from './ToastProvider';
@@ -57,11 +58,17 @@ interface TradeCardProps {
     priceVerified: boolean;
     createdAt: string;
     fills?: TradeFill[];
+    actionStatus?: {
+      action: 'follow' | 'fade';
+      followedTradeId?: string;
+    } | null;
   };
   onUpdate?: () => void;
+  disableDelete?: boolean;
+  onAction?: (tradeId: string, action: 'follow' | 'fade') => Promise<void>;
 }
 
-export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
+export default function TradeCard({ trade, onUpdate, disableDelete, onAction }: TradeCardProps) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [settleOpen, setSettleOpen] = useState(false);
@@ -441,8 +448,72 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
             justifyContent="flex-end"
             flexDirection={{ xs: 'column', sm: 'row' }}
             sx={{ width: { xs: '100%', sm: 'auto' } }}
+            flexWrap="wrap"
           >
-            {trade.status === 'OPEN' && (
+            {/* Follow/Fade buttons - shown when trade is from following feed and no action taken yet */}
+            {trade.actionStatus !== undefined && trade.status === 'OPEN' && (
+              <>
+                {trade.actionStatus === null ? (
+                  // No action taken yet - show Follow and Fade buttons
+                  <>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      startIcon={<ThumbUpIcon />}
+                      disabled={loading}
+                      onClick={async () => {
+                        if (!onAction) return;
+                        setLoading(true);
+                        try {
+                          await onAction(trade._id, 'follow');
+                          if (onUpdate) onUpdate();
+                        } catch (err) {
+                          console.error('Error following trade:', err);
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      sx={{ width: { xs: '100%', sm: 'auto' }, textTransform: 'none' }}
+                    >
+                      Follow
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      size="small"
+                      startIcon={<ThumbDownIcon />}
+                      disabled={loading}
+                      onClick={async () => {
+                        if (!onAction) return;
+                        setLoading(true);
+                        try {
+                          await onAction(trade._id, 'fade');
+                          if (onUpdate) onUpdate();
+                        } catch (err) {
+                          console.error('Error fading trade:', err);
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      sx={{ width: { xs: '100%', sm: 'auto' }, textTransform: 'none' }}
+                    >
+                      Fade
+                    </Button>
+                  </>
+                ) : (
+                  // Action already taken - show status chip
+                  <Chip
+                    label={trade.actionStatus.action === 'follow' ? 'Followed' : 'Faded'}
+                    color={trade.actionStatus.action === 'follow' ? 'success' : 'default'}
+                    size="small"
+                    icon={trade.actionStatus.action === 'follow' ? <ThumbUpIcon /> : <ThumbDownIcon />}
+                    sx={{ textTransform: 'none' }}
+                  />
+                )}
+              </>
+            )}
+            {!disableDelete && trade.status === 'OPEN' && (
               <Button
                 variant="contained"
                 color="primary"
@@ -458,7 +529,7 @@ export default function TradeCard({ trade, onUpdate }: TradeCardProps) {
                 Settle
               </Button>
             )}
-            {trade.status === 'OPEN' && (
+            {!disableDelete && trade.status === 'OPEN' && (
               <Button
                 variant="outlined"
                 color="error"

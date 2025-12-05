@@ -7,6 +7,7 @@ export type OptionType = 'C' | 'P' | 'CALL' | 'PUT';
 
 export interface ITrade extends Document {
   userId: Types.ObjectId;
+  whopUserId: string; // Whop user ID for person-level tracking across companies
   side: TradeSide; // BUY for creation, SELL for settlement fills
   contracts: number; // Number of contracts
   ticker: string; // Underlying ticker (e.g., "AAPL")
@@ -24,7 +25,6 @@ export interface ITrade extends Document {
   netPnl?: number; // Net P&L in dollars (only for CLOSED trades)
   totalBuyNotional?: number; // Total buy notional (contracts * fill_price * 100)
   totalSellNotional?: number; // Total sell notional (sum of all SELL fills)
-  companyId?: string; // Whop company ID
   isMarketOrder?: boolean; // Whether this was a market order (always true now)
   selectedWebhookIds?: string[]; // IDs of all selected webhooks for notifications
   createdAt: Date;
@@ -33,6 +33,7 @@ export interface ITrade extends Document {
 
 const TradeSchema = new Schema<ITrade>({
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+  whopUserId: { type: String, required: true, index: true },
   side: { type: String, enum: ['BUY', 'SELL'], required: true, index: true },
   contracts: { type: Number, required: true, min: 1 },
   ticker: { type: String, required: true, trim: true, uppercase: true, index: true },
@@ -55,9 +56,11 @@ const TradeSchema = new Schema<ITrade>({
   netPnl: { type: Number },
   totalBuyNotional: { type: Number },
   totalSellNotional: { type: Number },
-  companyId: { type: String, index: true },
   isMarketOrder: { type: Boolean, default: true }, // Always true - market orders only
-  selectedWebhookIds: { type: [String], default: [] }, // IDs of all selected webhooks for notifications
+  selectedWebhookIds: {
+    type: [String],
+    default: undefined,
+  },
 }, {
   timestamps: true,
 });
@@ -67,8 +70,9 @@ TradeSchema.index({ userId: 1, createdAt: -1 });
 TradeSchema.index({ userId: 1, status: 1 });
 TradeSchema.index({ ticker: 1, strike: 1, optionType: 1, expiryDate: 1 });
 TradeSchema.index({ status: 1, priceVerified: 1 }); // For leaderboard filtering
-TradeSchema.index({ companyId: 1, side: 1, status: 1, createdAt: -1 });
-TradeSchema.index({ companyId: 1, userId: 1, createdAt: -1 });
+TradeSchema.index({ whopUserId: 1, createdAt: -1 });
+TradeSchema.index({ whopUserId: 1, status: 1 });
+TradeSchema.index({ whopUserId: 1, status: 1, createdAt: -1 }); // For cross-company stats aggregation
 
 export const Trade = (mongoose.models && mongoose.models.Trade) || mongoose.model<ITrade>('Trade', TradeSchema);
 

@@ -208,6 +208,8 @@ const updateUserSchema = z.object({
   webhooks: z.array(webhookSchema).optional(), // Array of webhooks with names
   notifyOnSettlement: z.boolean().optional(),
   onlyNotifyWinningSettlements: z.boolean().optional(), // Only send settlement webhooks for winning trades
+  followingDiscordWebhook: z.string().url().optional().nullable(), // Discord webhook URL for following page notifications
+  followingWhopWebhook: z.string().url().optional().nullable(), // Whop webhook URL for following page notifications
   membershipPlans: z.array(z.object({
     id: z.string(),
     name: z.string().min(1).max(100),
@@ -250,8 +252,7 @@ export async function GET() {
     recordCacheMetric('personalStats', personalCacheHit);
     if (!personalStats) {
       personalStats = await aggregateTradeStats({
-        userId: user._id,
-        companyId,
+        whopUserId: user.whopUserId,
       });
       setPersonalStatsCache(personalCacheKey, personalStats);
     }
@@ -278,11 +279,11 @@ export async function GET() {
       const companyUsers = await User.find({ 
         companyId: user.companyId,
         role: { $in: ['companyOwner', 'owner', 'admin'] }
-      }).select('_id');
-      const companyUserIds = companyUsers.map(u => u._id);
+      }).select('whopUserId');
+      const companyWhopUserIds = companyUsers.map(u => u.whopUserId).filter((id): id is string => Boolean(id));
       
-      // Get all trades from all users in the company
-      if (companyUserIds.length > 0) {
+      // Get all trades from all users in the company (by whopUserId for cross-company aggregation)
+      if (companyWhopUserIds.length > 0) {
         const companyCacheKey = `company:${companyId}`;
         const cachedCompanyStats = getCompanyStatsCache(companyCacheKey);
         companyCacheHit = Boolean(cachedCompanyStats);
@@ -290,8 +291,7 @@ export async function GET() {
           companyStats = cachedCompanyStats;
         } else {
           companyStats = await aggregateTradeStats({
-            companyId,
-            userId: { $in: companyUserIds },
+            whopUserId: { $in: companyWhopUserIds },
           });
           setCompanyStatsCache(companyCacheKey, companyStats);
           companyCacheHit = false;
@@ -314,8 +314,14 @@ export async function GET() {
         webhooks: user.webhooks || [],
         notifyOnSettlement: user.notifyOnSettlement ?? false,
         onlyNotifyWinningSettlements: user.onlyNotifyWinningSettlements ?? false,
+        followingDiscordWebhook: user.followingDiscordWebhook || null,
+        followingWhopWebhook: user.followingWhopWebhook || null,
         membershipPlans: user.membershipPlans || [],
         hideLeaderboardFromMembers: user.hideLeaderboardFromMembers ?? false,
+        followOfferEnabled: user.followOfferEnabled ?? false,
+        followOfferPriceCents: user.followOfferPriceCents ?? 0,
+        followOfferNumPlays: user.followOfferNumPlays ?? 0,
+        followOfferCheckoutUrl: user.followOfferCheckoutUrl ?? null,
       },
       personalStats,
       companyStats, // Only for owners with companyId
@@ -419,6 +425,15 @@ export async function PATCH(request: NextRequest) {
     if (validated.onlyNotifyWinningSettlements !== undefined) {
       user.onlyNotifyWinningSettlements = validated.onlyNotifyWinningSettlements;
     }
+    
+    // Update following webhooks (all roles can update - anyone with a Following page)
+    // Allow null to clear the webhook, undefined means no update
+    if (validated.followingDiscordWebhook !== undefined) {
+      user.followingDiscordWebhook = validated.followingDiscordWebhook || undefined;
+    }
+    if (validated.followingWhopWebhook !== undefined) {
+      user.followingWhopWebhook = validated.followingWhopWebhook || undefined;
+    }
 
     await user.save();
 
@@ -432,6 +447,10 @@ export async function PATCH(request: NextRequest) {
         companyDescription: user.companyDescription,
         optIn: user.optIn,
         membershipPlans: user.membershipPlans,
+        followOfferEnabled: user.followOfferEnabled ?? false,
+        followOfferPriceCents: user.followOfferPriceCents ?? 0,
+        followOfferNumPlays: user.followOfferNumPlays ?? 0,
+        followOfferCheckoutUrl: user.followOfferCheckoutUrl ?? null,
       }
     });
   } catch (error) {

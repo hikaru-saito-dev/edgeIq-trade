@@ -130,38 +130,33 @@ export async function GET(request: NextRequest) {
                 },
               },
             },
-            { $project: { _id: 1 } },
+            { $project: { _id: 1, whopUserId: 1 } },
           ],
           as: 'companyUsers',
         },
       },
       {
         $addFields: {
-          companyUserIds: {
-            $map: { input: '$companyUsers', as: 'u', in: '$$u._id' },
+          companyWhopUserIds: {
+            $map: { input: '$companyUsers', as: 'u', in: '$$u.whopUserId' },
           },
         },
       },
       {
         $lookup: {
           from: Trade.collection.name,
-          let: { companyId: '$companyId', userIds: '$companyUserIds' },
+          let: { whopUserIds: '$companyWhopUserIds' },
           pipeline: [
             {
               $match: {
                 $expr: {
-                  $and: [
-                    { $eq: ['$companyId', '$$companyId'] },
-                    { $eq: ['$side', 'BUY'] },
-                    {
-                      $cond: [
-                        { $gt: [{ $size: '$$userIds' }, 0] },
-                        { $in: ['$userId', '$$userIds'] },
-                        false,
-                      ],
-                    },
+                  $cond: [
+                    { $gt: [{ $size: '$$whopUserIds' }, 0] },
+                    { $in: ['$whopUserId', '$$whopUserIds'] },
+                    false,
                   ],
                 },
+                side: 'BUY',
               },
             },
             ...(cutoffDate ? [{ $match: { createdAt: { $gte: cutoffDate } } }] : []),
@@ -293,7 +288,7 @@ export async function GET(request: NextRequest) {
       {
         $project: {
           companyUsers: 0,
-          companyUserIds: 0,
+          companyWhopUserIds: 0,
           closedTrades: 0,
           aliasLower: 0,
         },
@@ -341,35 +336,43 @@ export async function GET(request: NextRequest) {
           url: string;
           isPremium?: boolean;
         };
-        let affiliateLink: string | null = null;
+          let affiliateLink: string | null = null;
         if (typedPlan.url) {
-          try {
+            try {
             const url = new URL(typedPlan.url);
             url.searchParams.set('a', 'woodiee');
-            affiliateLink = url.toString();
-          } catch {
+              affiliateLink = url.toString();
+            } catch {
             affiliateLink = `${typedPlan.url}${typedPlan.url.includes('?') ? '&' : '?'}a=woodiee`;
+            }
           }
-        }
-        return {
+          return {
           ...typedPlan,
-          affiliateLink,
+            affiliateLink,
           isPremium: typedPlan.isPremium ?? false,
-        };
-      });
+          };
+        });
 
       const streaks = aggregationStreakFunction(
         (entry.tradeOutcomes as Array<{ outcome?: string; updatedAt?: Date; createdAt?: Date }> | undefined) || []
       );
 
-      return {
+        return {
         userId: String(entry._id),
         alias: entry.alias,
         whopDisplayName: entry.whopDisplayName,
         whopUsername: entry.whopUsername,
         whopAvatarUrl: entry.whopAvatarUrl,
         companyId: entry.companyId,
-        membershipPlans,
+          membershipPlans,
+        followOffer: entry.followOfferEnabled
+          ? {
+            enabled: entry.followOfferEnabled,
+            priceCents: entry.followOfferPriceCents || 0,
+            numPlays: entry.followOfferNumPlays || 0,
+            checkoutUrl: entry.followOfferCheckoutUrl || null,
+          }
+          : null,
         winRate: Number(entry.winRate ?? 0),
         roi: Number(entry.roi ?? 0),
         netPnl: Number(entry.netPnl ?? 0),

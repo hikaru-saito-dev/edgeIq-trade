@@ -158,7 +158,7 @@ type WhopSdkShape = {
 
 let cachedSdk: WhopSdkShape | null = null;
 
-export function getWhopSdk(companyId?: string): WhopSdkShape {
+export function getWhopSdk(_companyId?: string): WhopSdkShape {
   const apiKey = process.env.WHOP_API_KEY;
   const appId = process.env.NEXT_PUBLIC_WHOP_APP_ID;
   
