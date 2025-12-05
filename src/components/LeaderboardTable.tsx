@@ -75,8 +75,8 @@ interface LeaderboardEntry {
   plays: number;
   winCount: number;
   lossCount: number;
-  currentStreak: number; // Positive for wins, negative for losses
-  longestStreak: number; // Positive for wins, negative for losses
+  currentStreak: number; // Current win streak (0 if no active streak)
+  longestStreak: number; // Longest win streak ever achieved
 }
 
 export default function LeaderboardTable() {
@@ -495,12 +495,6 @@ export default function LeaderboardTable() {
                             },
                           }}
                         />
-                      ) : (entry.currentStreak || 0) < 0 ? (
-                        <Chip
-                          label={Math.abs(entry.currentStreak)}
-                          size="small"
-                          color="error"
-                        />
                       ) : (
                         <Typography variant="body2" sx={{ color: 'var(--text-muted)' }}>-</Typography>
                       )}
@@ -520,12 +514,6 @@ export default function LeaderboardTable() {
                               color: '#f59e0b',
                             },
                           }}
-                        />
-                      ) : (entry.longestStreak || 0) < 0 ? (
-                        <Chip
-                          label={Math.abs(entry.longestStreak)}
-                          size="small"
-                          color="error"
                         />
                       ) : (
                         <Typography variant="body2" sx={{ color: 'var(--text-muted)' }}>-</Typography>

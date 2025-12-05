@@ -21,60 +21,36 @@ export const aggregationStreakFunction = function (trades: Array<{ outcome?: str
 
   let current = 0;
   const mostRecentOutcome = normalized[0].outcome;
-  if (mostRecentOutcome === 'WIN' || mostRecentOutcome === 'LOSS') {
+  if (mostRecentOutcome === 'WIN') {
     let streakCount = 0;
     for (const entry of normalized) {
-      if (entry.outcome === mostRecentOutcome) {
+      if (entry.outcome === 'WIN') {
         streakCount += 1;
-      } else if (entry.outcome === 'BREAKEVEN') {
-        break;
       } else {
+        // LOSS, BREAKEVEN, or undefined breaks the streak
         break;
       }
     }
-    current = mostRecentOutcome === 'WIN' ? streakCount : -streakCount;
+    current = streakCount;
   }
 
-  let maxWin = 0;
-  let maxLoss = 0;
-  let winStreak = 0;
-  let lossStreak = 0;
+  let maxStreak = 0;
+  let streak = 0;
 
   for (let i = normalized.length - 1; i >= 0; i -= 1) {
     const outcome = normalized[i].outcome;
     if (outcome === 'WIN') {
-      winStreak += 1;
-      lossStreak = 0;
-      if (winStreak > maxWin) {
-        maxWin = winStreak;
+      streak += 1;
+      if (streak > maxStreak) {
+        maxStreak = streak;
       }
-    } else if (outcome === 'LOSS') {
-      lossStreak += 1;
-      winStreak = 0;
-      if (lossStreak > maxLoss) {
-        maxLoss = lossStreak;
-      }
-    } else if (outcome === 'BREAKEVEN') {
-      winStreak = 0;
-      lossStreak = 0;
     } else {
-      winStreak = 0;
-      lossStreak = 0;
+      // LOSS, BREAKEVEN, or undefined breaks the streak
+      streak = 0;
     }
   }
 
-  let longest = 0;
-  if (maxWin > maxLoss) {
-    longest = maxWin;
-  } else if (maxLoss > maxWin) {
-    longest = -maxLoss;
-  } else if (maxWin > 0) {
-    longest = maxWin;
-  } else if (maxLoss > 0) {
-    longest = -maxLoss;
-  }
-
-  return { current, longest };
+  return { current, longest: maxStreak };
 };
 
 

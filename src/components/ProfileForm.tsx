@@ -60,8 +60,8 @@ interface UserStats {
   totalBuyNotional: number;
   totalSellNotional: number;
   averagePnl: number;
-  currentStreak: number; // Positive for wins, negative for losses
-  longestStreak: number; // Positive for wins, negative for losses
+  currentStreak: number; // Current win streak (0 if no active streak)
+  longestStreak: number; // Longest win streak ever achieved
 }
 
 interface Trade {
@@ -1484,7 +1484,7 @@ const [followOfferPriceDollars, setFollowOfferPriceDollars] = useState<number>(0
                     alignItems="center" 
                     gap={1} 
                     sx={{ 
-                      color: (personalStats?.currentStreak || 0) > 0 ? '#10b981' : (personalStats?.currentStreak || 0) < 0 ? '#ef4444' : '#ffffff', 
+                      color: (personalStats?.currentStreak || 0) > 0 ? '#10b981' : '#ffffff', 
                       fontWeight: 700 
                     }}
                   >
@@ -1511,7 +1511,7 @@ const [followOfferPriceDollars, setFollowOfferPriceDollars] = useState<number>(0
                     alignItems="center" 
                     gap={1}
                     sx={{ 
-                      color: (personalStats?.longestStreak || 0) > 0 ? '#10b981' : (personalStats?.longestStreak || 0) < 0 ? '#ef4444' : '#ffffff', 
+                      color: (personalStats?.longestStreak || 0) > 0 ? '#10b981' : '#ffffff', 
                       fontWeight: 700 
                     }}
                   >

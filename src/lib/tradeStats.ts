@@ -10,8 +10,8 @@ export interface TradeSummary {
   totalBuyNotional: number;
   totalSellNotional: number;
   averagePnl: number;
-  currentStreak: number; // Current consecutive wins (positive) or losses (negative)
-  longestStreak: number; // Longest consecutive wins (positive) or losses (negative)
+  currentStreak: number; // Current win streak (0 if no active streak)
+  longestStreak: number; // Longest win streak ever achieved
 }
 
 /**
@@ -58,62 +58,44 @@ export function calculateTradeStats(trades: ITrade[]): TradeSummary {
     return dateB - dateA; // Most recent first
   });
 
-  // Calculate current streak (from most recent trade)
+  // Calculate current streak (from most recent trade) - only win streaks
   let currentStreak = 0;
   if (sortedTrades.length > 0) {
     const mostRecentOutcome = sortedTrades[0].outcome;
-    if (mostRecentOutcome === 'WIN' || mostRecentOutcome === 'LOSS') {
+    if (mostRecentOutcome === 'WIN') {
       let streakCount = 0;
       for (const trade of sortedTrades) {
-        if (trade.outcome === mostRecentOutcome) {
+        if (trade.outcome === 'WIN') {
           streakCount++;
-        } else if (trade.outcome === 'BREAKEVEN') {
-          // Breakeven breaks the streak
-          break;
         } else {
-          // Different outcome breaks the streak
+          // LOSS, BREAKEVEN, or undefined breaks the streak
           break;
         }
       }
-      currentStreak = mostRecentOutcome === 'WIN' ? streakCount : -streakCount;
+      currentStreak = streakCount;
     }
   }
 
-  // Calculate longest streak (can be win streak or loss streak)
+  // Calculate longest win streak
   let longestStreak = 0;
   if (sortedTrades.length > 0) {
-    let maxWinStreak = 0;
-    let maxLossStreak = 0;
-    let currentWinStreak = 0;
-    let currentLossStreak = 0;
+    let maxStreak = 0;
+    let currentStreak = 0;
 
     // Go through trades chronologically (oldest to newest)
     const chronologicalTrades = [...sortedTrades].reverse();
     
     for (const trade of chronologicalTrades) {
       if (trade.outcome === 'WIN') {
-        currentWinStreak++;
-        currentLossStreak = 0; // Reset loss streak
-        maxWinStreak = Math.max(maxWinStreak, currentWinStreak);
-      } else if (trade.outcome === 'LOSS') {
-        currentLossStreak++;
-        currentWinStreak = 0; // Reset win streak
-        maxLossStreak = Math.max(maxLossStreak, currentLossStreak);
-      } else if (trade.outcome === 'BREAKEVEN') {
-        // Breakeven breaks both streaks
-        currentWinStreak = 0;
-        currentLossStreak = 0;
+        currentStreak++;
+        maxStreak = Math.max(maxStreak, currentStreak);
+      } else {
+        // LOSS, BREAKEVEN, or undefined breaks the streak
+        currentStreak = 0;
       }
     }
 
-    // Return the longer streak (positive for wins, negative for losses)
-    if (maxWinStreak > maxLossStreak) {
-      longestStreak = maxWinStreak;
-    } else if (maxLossStreak > maxWinStreak) {
-      longestStreak = -maxLossStreak;
-    } else {
-      longestStreak = maxWinStreak > 0 ? maxWinStreak : (maxLossStreak > 0 ? -maxLossStreak : 0);
-    }
+    longestStreak = maxStreak;
   }
 
   return {
