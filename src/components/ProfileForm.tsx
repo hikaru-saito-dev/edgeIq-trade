@@ -556,7 +556,7 @@ export default function ProfileForm() {
       </Box>
 
       {/* Tabs for owners and companyOwners to switch between Personal and Company profiles */}
-      {(role === 'companyOwner') && (
+      {(role === 'companyOwner' || role === 'owner') && (
         <Paper
           sx={{
             mb: 3,
