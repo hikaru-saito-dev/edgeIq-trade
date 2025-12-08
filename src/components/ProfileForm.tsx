@@ -592,7 +592,7 @@ export default function ProfileForm() {
       )}
 
       {/* Personal Profile Tab */}
-      {(activeTab === 'personal' || (role !== 'companyOwner')) && (
+      {(activeTab === 'personal') && (
         <>
           <Paper sx={{ p: 3, mb: 3, background: 'var(--surface-bg)', backdropFilter: 'blur(20px)', border: '1px solid var(--surface-border)', borderRadius: 2 }}>
             <Typography variant="h6" sx={{ color: 'var(--app-text)', mb: 3, fontWeight: 600 }}>
