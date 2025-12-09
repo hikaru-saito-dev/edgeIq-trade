@@ -97,6 +97,9 @@ interface UserData {
   onlyNotifyWinningSettlements?: boolean;
   followingDiscordWebhook?: string | null;
   followingWhopWebhook?: string | null;
+  webullApiKey?: string | null;
+  webullApiSecret?: string | null;
+  webullAccountId?: string | null;
   membershipPlans?: Array<{
     id: string;
     name: string;
@@ -118,6 +121,9 @@ export default function ProfileForm() {
   const [onlyNotifyWinningSettlements, setOnlyNotifyWinningSettlements] = useState(false);
   const [followingDiscordWebhook, setFollowingDiscordWebhook] = useState<string>('');
   const [followingWhopWebhook, setFollowingWhopWebhook] = useState<string>('');
+  const [webullApiKey, setWebullApiKey] = useState<string>('');
+  const [webullApiSecret, setWebullApiSecret] = useState<string>('');
+  const [webullAccountId, setWebullAccountId] = useState<string>('');
   const [membershipPlans, setMembershipPlans] = useState<Array<{
     id: string;
     name: string;
@@ -208,6 +214,9 @@ export default function ProfileForm() {
       setOnlyNotifyWinningSettlements(profileData.user.onlyNotifyWinningSettlements ?? false);
       setFollowingDiscordWebhook(profileData.user.followingDiscordWebhook || '');
       setFollowingWhopWebhook(profileData.user.followingWhopWebhook || '');
+      setWebullApiKey(profileData.user.webullApiKey || '');
+      setWebullApiSecret(profileData.user.webullApiSecret || '');
+      setWebullAccountId(profileData.user.webullAccountId || '');
       setMembershipPlans(profileData.user.membershipPlans || []);
       // Follow offer fields (if available from API)
       setFollowOfferEnabled(profileData.user.followOfferEnabled ?? false);
@@ -333,6 +342,9 @@ export default function ProfileForm() {
         onlyNotifyWinningSettlements?: boolean;
         followingDiscordWebhook?: string | null;
         followingWhopWebhook?: string | null;
+        webullApiKey?: string | null;
+        webullApiSecret?: string | null;
+        webullAccountId?: string | null;
         membershipPlans?: typeof membershipPlans;
       } = {
         alias,
@@ -341,6 +353,9 @@ export default function ProfileForm() {
         onlyNotifyWinningSettlements,
         followingDiscordWebhook: followingDiscordWebhook.trim() || null,
         followingWhopWebhook: followingWhopWebhook.trim() || null,
+        webullApiKey: webullApiKey.trim() || null,
+        webullApiSecret: webullApiSecret.trim() || null,
+        webullAccountId: webullAccountId.trim() || null,
       };
 
       // Only owners and companyOwners can set opt-in and membership plans
@@ -487,7 +502,7 @@ export default function ProfileForm() {
         } else if (trade.outcome === 'LOSS') {
           existing.losses += 1;
         }
-
+        
         existing.netPnl += trade.netPnl || 0;
         existing.totalBuyNotional += trade.contracts * trade.fillPrice * 100;
         existing.total += 1;
@@ -596,27 +611,27 @@ export default function ProfileForm() {
         <>
           <Paper sx={{ p: 3, mb: 3, background: 'var(--surface-bg)', backdropFilter: 'blur(20px)', border: '1px solid var(--surface-border)', borderRadius: 2 }}>
             <Typography variant="h6" sx={{ color: 'var(--app-text)', mb: 3, fontWeight: 600 }}>
-              Personal Profile
-            </Typography>
-            <TextField
-              fullWidth
-              label="Alias"
-              value={alias}
-              onChange={(e) => setAlias(e.target.value)}
-              margin="normal"
+            Personal Profile
+          </Typography>
+          <TextField
+            fullWidth
+            label="Alias"
+            value={alias}
+            onChange={(e) => setAlias(e.target.value)}
+            margin="normal"
               sx={fieldStyles}
-            />
+        />
+        
+        {/* Notification Webhooks - For owners and admins */}
+        {(role === 'companyOwner' || role === 'owner' || role === 'admin') && (
 
-            {/* Notification Webhooks - For owners and admins */}
-            {(role === 'companyOwner' || role === 'owner' || role === 'admin') && (
-
-              <>
+          <>
                 <Typography variant="h6" sx={{ color: 'var(--app-text)', mt: 3, mb: 2, fontWeight: 600 }}>
-                  Notification Webhooks
-                </Typography>
+              Notification Webhooks
+            </Typography>
                 <Typography variant="body2" sx={{ color: 'var(--text-muted)', mb: 2 }}>
-                  Configure webhook URLs to receive trade notifications.
-                </Typography>
+              Configure webhook URLs to receive trade notifications.
+            </Typography>
                 {/* Multiple Webhooks Section */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Button
@@ -669,19 +684,19 @@ export default function ProfileForm() {
                         <DeleteIcon />
                       </IconButton>
                     </Box>
-                    <TextField
-                      fullWidth
+        <TextField
+          fullWidth
                       label="Webhook Name"
                       value={webhook.name}
                       onChange={(e) => handleWebhookChange(webhook.id, 'name', e.target.value)}
                       placeholder="e.g., Parlays Channel, ML Bets"
-                      margin="normal"
+          margin="normal"
                       size="small"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
+          sx={{
+            '& .MuiOutlinedInput-root': {
                           color: 'var(--app-text)',
                           '& fieldset': { borderColor: controlBorder },
-                        },
+              },
                         '& .MuiInputLabel-root': { color: 'var(--text-muted)' },
                       }}
                     />
@@ -700,84 +715,123 @@ export default function ProfileForm() {
                         <MenuItem value="whop">Whop</MenuItem>
                       </Select>
                     </FormControl>
-                    <TextField
-                      fullWidth
+        <TextField
+          fullWidth
                       label="Webhook URL"
                       value={webhook.url}
                       onChange={(e) => handleWebhookChange(webhook.id, 'url', e.target.value)}
                       placeholder={webhook.type === 'discord' ? 'https://discord.com/api/webhooks/...' : 'https://data.whop.com/api/v5/feed/webhooks/...'}
-                      margin="normal"
+          margin="normal"
                       size="small"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
+          sx={{
+            '& .MuiOutlinedInput-root': {
                           color: 'var(--app-text)',
                           '& fieldset': { borderColor: controlBorder },
-                        },
+            },
                         '& .MuiInputLabel-root': { color: 'var(--text-muted)' },
-                      }}
-                    />
+          }}
+        />
                   </Paper>
                 ))}
 
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={notifyOnSettlement}
-                      onChange={(e) => setNotifyOnSettlement(e.target.checked)}
-                      sx={{
-                        '& .MuiSwitch-switchBase.Mui-checked': {
+        <FormControlLabel
+          control={
+            <Switch
+              checked={notifyOnSettlement}
+              onChange={(e) => setNotifyOnSettlement(e.target.checked)}
+              sx={{
+                '& .MuiSwitch-switchBase.Mui-checked': {
                           color: theme.palette.primary.main,
-                        },
-                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                },
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
                           backgroundColor: theme.palette.primary.main,
-                        },
-                      }}
-                    />
-                  }
-                  label={
-                    <Box>
+                },
+              }}
+            />
+          }
+          label={
+            <Box>
                       <Typography variant="body2" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
-                        Notify on Trade Settlement
-                      </Typography>
+                Notify on Trade Settlement
+              </Typography>
                       <Typography variant="caption" sx={{ color: 'var(--text-muted)', display: 'block' }}>
-                        Receive notifications when trades are settled (win/loss, P&L, and trade details)
-                      </Typography>
-                    </Box>
-                  }
+                Receive notifications when trades are settled (win/loss, P&L, and trade details)
+              </Typography>
+            </Box>
+          }
                   sx={{ mt: 2, color: 'var(--app-text)' }}
                 />
 
                 {notifyOnSettlement && (
-                  <FormControlLabel
-                    control={
-                      <Switch
+          <FormControlLabel
+            control={
+              <Switch
                         checked={onlyNotifyWinningSettlements}
                         onChange={(e) => setOnlyNotifyWinningSettlements(e.target.checked)}
-                        sx={{
-                          '& .MuiSwitch-switchBase.Mui-checked': {
+                sx={{
+                  '& .MuiSwitch-switchBase.Mui-checked': {
                             color: theme.palette.primary.main,
-                          },
-                          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                  },
+                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
                             backgroundColor: theme.palette.primary.main,
-                          },
-                        }}
-                      />
-                    }
-                    label={
-                      <Box>
+                  },
+                }}
+              />
+            }
+            label={
+              <Box>
                         <Typography variant="body2" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
                           Only Notify on Winning Trades
-                        </Typography>
+                </Typography>
                         <Typography variant="caption" sx={{ color: 'var(--text-muted)', display: 'block' }}>
                           Only send settlement notifications for winning trades. Losses and breakevens will be silent.
-                        </Typography>
-                      </Box>
-                    }
+                </Typography>
+              </Box>
+            }
                     sx={{ mt: 1, ml: 4, color: 'var(--app-text)' }}
-                  />
+          />
                 )}
               </>
             )}
+
+            <Divider sx={{ my: 4, borderColor: 'var(--surface-border)' }} />
+            <Typography variant="h6" sx={{ color: 'var(--app-text)', mt: 3, mb: 1, fontWeight: 600 }}>
+              Webull OpenAPI
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'var(--text-muted)', mb: 2 }}>
+              Store your personal Webull credentials so trades created/settled here can mirror to your Webull account. Values are saved per user.
+            </Typography>
+            <TextField
+              fullWidth
+              label="Webull API Key"
+              value={webullApiKey}
+              onChange={(e) => setWebullApiKey(e.target.value)}
+              placeholder="Enter your Webull API key"
+              margin="normal"
+                  size="small"
+              sx={fieldStyles}
+            />
+            <TextField
+              fullWidth
+              type="password"
+              label="Webull API Secret"
+              value={webullApiSecret}
+              onChange={(e) => setWebullApiSecret(e.target.value)}
+              placeholder="Enter your Webull API secret"
+              margin="normal"
+              size="small"
+              sx={fieldStyles}
+            />
+            <TextField
+              fullWidth
+              label="Webull Account ID (optional)"
+              value={webullAccountId}
+              onChange={(e) => setWebullAccountId(e.target.value)}
+              placeholder="If applicable, provide your Webull account id"
+              margin="normal"
+              size="small"
+              sx={fieldStyles}
+            />
 
             {/* Following Webhooks - Available to all users */}
             <Divider sx={{ my: 4, borderColor: 'var(--surface-border)' }} />
@@ -798,432 +852,432 @@ export default function ProfileForm() {
                 margin="normal"
                 size="small"
                 sx={fieldStyles}
-              />
+                  />
 
-              <TextField
-                fullWidth
+            <TextField
+              fullWidth
                 label="Whop Webhook URL"
                 value={followingWhopWebhook}
                 onChange={(e) => setFollowingWhopWebhook(e.target.value)}
                 placeholder="https://whop.com/api/webhooks/..."
-                margin="normal"
-                size="small"
+              margin="normal"
+              size="small"
                 sx={fieldStyles}
               />
-            </Box>
+        </Box>
 
-            <Box display="flex" gap={2} flexWrap="wrap" mt={3}>
-              <Button
-                variant="contained"
-                onClick={handleSave}
-                disabled={saving}
-                sx={{
+        <Box display="flex" gap={2} flexWrap="wrap" mt={3}>
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={saving}
+            sx={{
                   background: 'linear-gradient(135deg, #22c55e, #059669)',
-                  color: '#ffffff',
-                  px: 4,
-                  py: 1.5,
-                  fontWeight: 600,
-                  '&:hover': {
+              color: '#ffffff',
+              px: 4,
+              py: 1.5,
+              fontWeight: 600,
+              '&:hover': {
                     background: 'linear-gradient(135deg, #16a34a, #047857)',
-                    transform: 'translateY(-2px)',
+                transform: 'translateY(-2px)',
                     boxShadow: '0 4px 12px rgba(34, 197, 94, 0.4)',
-                  },
-                  '&:disabled': {
+              },
+              '&:disabled': {
                     background: 'rgba(34, 197, 94, 0.3)',
-                    color: 'rgba(255, 255, 255, 0.5)',
-                  },
-                  transition: 'all 0.3s ease',
-                }}
-              >
+                color: 'rgba(255, 255, 255, 0.5)',
+              },
+              transition: 'all 0.3s ease',
+            }}
+          >
                 {saving ? 'Saving...' : 'Save Profile'}
-              </Button>
-            </Box>
-          </Paper>
-          {personalStats && (
-            <Box>
+          </Button>
+        </Box>
+      </Paper>
+      {personalStats && (
+        <Box>
               <Typography variant="h5" component="h2" mb={3} sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
-                Personal Stats
-              </Typography>
+            Personal Stats
+          </Typography>
 
-              {/* Charts Section */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
-                {/* First Row: Pie Chart and Bar Chart */}
-                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 3 }}>
-                  {/* Pie Chart */}
-                  <Paper sx={{
-                    p: 3,
-                    flex: 1,
+          {/* Charts Section */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
+            {/* First Row: Pie Chart and Bar Chart */}
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 3 }}>
+              {/* Pie Chart */}
+              <Paper sx={{
+                p: 3,
+                flex: 1,
                     background: 'var(--surface-bg)',
-                    backdropFilter: 'blur(20px)',
+                backdropFilter: 'blur(20px)',
                     border: '1px solid var(--surface-border)',
-                    borderRadius: 2
-                  }}>
+                borderRadius: 2
+              }}>
                     <Typography variant="h6" mb={2} sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
-                      Trade Results Breakdown
-                    </Typography>
-                    {pieData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                          <Pie
-                            data={pieData}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
-                            outerRadius={100}
-                            fill="#8884d8"
-                            dataKey="value"
-                          >
-                            {pieData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            contentStyle={{
+                  Trade Results Breakdown
+                </Typography>
+                {pieData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
                               backgroundColor: 'rgba(240, 253, 244, 0.95)',
                               border: '1px solid var(--surface-border)',
-                              borderRadius: '8px',
+                          borderRadius: '8px',
                               color: 'var(--app-text)'
-                            }}
-                          />
-                          <Legend
+                        }}
+                      />
+                      <Legend
                             wrapperStyle={{ color: 'var(--app-text)' }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Typography sx={{ color: 'var(--text-muted)', textAlign: 'center' }}>
-                          No trade data available yet.<br />
-                          Create your first trade to see the breakdown!
-                        </Typography>
-                      </Box>
-                    )}
-                  </Paper>
-
-                  {/* Bar Chart */}
-                  <Paper sx={{
-                    p: 3,
-                    flex: 1,
-                    background: 'var(--surface-bg)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid var(--surface-border)',
-                    borderRadius: 2
-                  }}>
-                    <Typography variant="h6" mb={2} sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
-                      Trade Results Comparison
+                      No trade data available yet.<br />
+                      Create your first trade to see the breakdown!
                     </Typography>
-                    {barData.length > 0 && barData.some(d => d.value > 0) ? (
-                      <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={barData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 197, 94, 0.2)" />
-                          <XAxis
-                            dataKey="name"
-                            stroke="#a1a1aa"
-                            tick={{ fill: '#a1a1aa' }}
-                          />
-                          <YAxis
-                            stroke="#a1a1aa"
-                            tick={{ fill: '#a1a1aa' }}
-                          />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: 'rgba(240, 253, 244, 0.95)',
-                              border: '1px solid var(--surface-border)',
-                              borderRadius: '8px',
-                              color: 'var(--app-text)'
-                            }}
-                          />
-                          <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="#22c55e">
-                            {barData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Typography sx={{ color: 'var(--text-muted)', textAlign: 'center' }}>
-                          No trade data available yet.<br />
-                          Create your first trade to see the comparison!
-                        </Typography>
-                      </Box>
-                    )}
-                  </Paper>
-                </Box>
-
-                {/* Second Row: ROI Trend and Units P/L Trend */}
-                {timeSeriesData.length > 0 && (
-                  <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 3 }}>
-                    {/* ROI Trend Line Chart */}
-                    <Paper sx={{
-                      p: 3,
-                      flex: 1,
-                      background: 'var(--surface-bg)',
-                      backdropFilter: 'blur(20px)',
-                      border: '1px solid var(--surface-border)',
-                      borderRadius: 2
-                    }}>
-                      <Typography variant="h6" mb={2} sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
-                        ROI Trend
-                      </Typography>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <AreaChart data={timeSeriesData}>
-                          <defs>
-                            <linearGradient id="roiGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
-                              <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 197, 94, 0.2)" />
-                          <XAxis
-                            dataKey="date"
-                            stroke="#a1a1aa"
-                            tick={{ fill: '#a1a1aa', fontSize: 12 }}
-                          />
-                          <YAxis
-                            stroke="#a1a1aa"
-                            tick={{ fill: '#a1a1aa' }}
-                            label={{ value: 'ROI %', angle: -90, position: 'insideLeft', fill: '#a1a1aa' }}
-                          />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: 'rgba(240, 253, 244, 0.95)',
-                              border: '1px solid var(--surface-border)',
-                              borderRadius: '8px',
-                              color: 'var(--app-text)'
-                            }}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="roi"
-                            stroke="#22c55e"
-                            strokeWidth={3}
-                            fillOpacity={1}
-                            fill="url(#roiGradient)"
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </Paper>
-
-                    {/* Units P/L Trend */}
-                    <Paper sx={{
-                      p: 3,
-                      flex: 1,
-                      background: 'var(--surface-bg)',
-                      backdropFilter: 'blur(20px)',
-                      border: '1px solid var(--surface-border)',
-                      borderRadius: 2
-                    }}>
-                      <Typography variant="h6" mb={2} sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
-                        Units Profit/Loss Trend
-                      </Typography>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <AreaChart data={timeSeriesData}>
-                          <defs>
-                            <linearGradient id="unitsGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                              <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 197, 94, 0.2)" />
-                          <XAxis
-                            dataKey="date"
-                            stroke="#a1a1aa"
-                            tick={{ fill: '#a1a1aa', fontSize: 12 }}
-                          />
-                          <YAxis
-                            stroke="#a1a1aa"
-                            tick={{ fill: '#a1a1aa' }}
-                            label={{ value: 'Units', angle: -90, position: 'insideLeft', fill: '#a1a1aa' }}
-                          />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: 'rgba(240, 253, 244, 0.95)',
-                              border: '1px solid var(--surface-border)',
-                              borderRadius: '8px',
-                              color: 'var(--app-text)'
-                            }}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="netPnl"
-                            stroke="#10b981"
-                            strokeWidth={3}
-                            fillOpacity={1}
-                            fill="url(#unitsGradient)"
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </Paper>
                   </Box>
                 )}
-              </Box>
+              </Paper>
 
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-                  <Card sx={{
+              {/* Bar Chart */}
+              <Paper sx={{
+                p: 3,
+                flex: 1,
                     background: 'var(--surface-bg)',
-                    backdropFilter: 'blur(20px)',
+                backdropFilter: 'blur(20px)',
                     border: '1px solid var(--surface-border)',
-                    borderRadius: 2
-                  }}>
-                    <CardContent>
-                      <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
-                        Total Trades
-                      </Typography>
-                      <Typography variant="h4" sx={{ color: 'var(--app-text)', fontWeight: 700 }}>{personalStats?.totalTrades || 0}</Typography>
-                    </CardContent>
-                  </Card>
-                </Box>
-                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-                  <Card sx={{
-                    background: 'var(--surface-bg)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid var(--surface-border)',
-                    borderRadius: 2
-                  }}>
-                    <CardContent>
-                      <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
-                        Win Rate
-                      </Typography>
-                      <Typography variant="h4" sx={{ color: 'var(--app-text)', fontWeight: 700 }}>{(personalStats?.winRate ?? 0).toFixed(2)}%</Typography>
-                    </CardContent>
-                  </Card>
-                </Box>
-                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-                  <Card sx={{
-                    background: 'var(--surface-bg)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid var(--surface-border)',
-                    borderRadius: 2
-                  }}>
-                    <CardContent>
-                      <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
-                        ROI
-                      </Typography>
-                      <Typography
-                        variant="h4"
-                        sx={{
-                          color: (personalStats?.roi || 0) >= 0 ? '#10b981' : '#ef4444',
-                          fontWeight: 700
+                borderRadius: 2
+              }}>
+                    <Typography variant="h6" mb={2} sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
+                  Trade Results Comparison
+                </Typography>
+                {barData.length > 0 && barData.some(d => d.value > 0) ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={barData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 197, 94, 0.2)" />
+                      <XAxis
+                        dataKey="name"
+                        stroke="#a1a1aa"
+                        tick={{ fill: '#a1a1aa' }}
+                      />
+                      <YAxis
+                        stroke="#a1a1aa"
+                        tick={{ fill: '#a1a1aa' }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                              backgroundColor: 'rgba(240, 253, 244, 0.95)',
+                              border: '1px solid var(--surface-border)',
+                          borderRadius: '8px',
+                              color: 'var(--app-text)'
                         }}
-                      >
-                        {(personalStats?.roi ?? 0) >= 0 ? '+' : ''}{(personalStats?.roi ?? 0).toFixed(2)}%
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Box>
-                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-                  <Card sx={{
-                    background: 'var(--surface-bg)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid var(--surface-border)',
-                    borderRadius: 2
-                  }}>
-                    <CardContent>
-                      <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
-                        Net P&L
-                      </Typography>
-                      <Typography
-                        variant="h4"
-                        sx={{
-                          color: (personalStats?.netPnl || 0) >= 0 ? '#10b981' : '#ef4444',
-                          fontWeight: 700
-                        }}
-                      >
-                        {(personalStats?.netPnl ?? 0) >= 0 ? '+' : ''}${(personalStats?.netPnl ?? 0).toFixed(2)}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Box>
-                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-                  <Card sx={{
-                    background: 'var(--surface-bg)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid var(--surface-border)',
-                    borderRadius: 2
-                  }}>
-                    <CardContent>
-                      <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
-                        Current Streak
-                      </Typography>
-                      <Typography
-                        variant="h4"
-                        display="flex"
-                        alignItems="center"
-                        gap={1}
-                        sx={{
-                          color: (personalStats?.currentStreak || 0) > 0 ? '#10b981' : '#ffffff',
-                          fontWeight: 700
-                        }}
-                      >
-                        {(personalStats?.currentStreak || 0) > 0 && <LocalFireDepartmentIcon sx={{ color: '#f59e0b' }} />}
-                        {personalStats?.currentStreak || 0}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Box>
-                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-                  <Card sx={{
-                    background: 'var(--surface-bg)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid var(--surface-border)',
-                    borderRadius: 2
-                  }}>
-                    <CardContent>
-                      <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
-                        Longest Streak
-                      </Typography>
-                      <Typography
-                        variant="h4"
-                        display="flex"
-                        alignItems="center"
-                        gap={1}
-                        sx={{
-                          color: (personalStats?.longestStreak || 0) > 0 ? '#10b981' : '#ffffff',
-                          fontWeight: 700
-                        }}
-                      >
-                        {(personalStats?.longestStreak || 0) > 0 && <LocalFireDepartmentIcon sx={{ color: '#f59e0b' }} />}
-                        {personalStats?.longestStreak || 0}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Box>
-                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-                  <Card sx={{
-                    background: 'var(--surface-bg)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid var(--surface-border)',
-                    borderRadius: 2
-                  }}>
-                    <CardContent>
-                      <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
-                        Wins
-                      </Typography>
-                      <Typography variant="h4" sx={{ color: '#10b981', fontWeight: 700 }}>{personalStats?.winCount || 0}</Typography>
-                    </CardContent>
-                  </Card>
-                </Box>
-                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-                  <Card sx={{
-                    background: 'var(--surface-bg)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid var(--surface-border)',
-                    borderRadius: 2
-                  }}>
-                    <CardContent>
-                      <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
-                        Losses
-                      </Typography>
-                      <Typography variant="h4" sx={{ color: '#ef4444', fontWeight: 700 }}>{personalStats?.lossCount || 0}</Typography>
-                    </CardContent>
-                  </Card>
-                </Box>
-              </Box>
+                      />
+                          <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="#22c55e">
+                        {barData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Typography sx={{ color: 'var(--text-muted)', textAlign: 'center' }}>
+                      No trade data available yet.<br />
+                      Create your first trade to see the comparison!
+                    </Typography>
+                  </Box>
+                )}
+              </Paper>
             </Box>
-          )}
+
+            {/* Second Row: ROI Trend and Units P/L Trend */}
+            {timeSeriesData.length > 0 && (
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 3 }}>
+                {/* ROI Trend Line Chart */}
+                <Paper sx={{
+                  p: 3,
+                  flex: 1,
+                      background: 'var(--surface-bg)',
+                  backdropFilter: 'blur(20px)',
+                      border: '1px solid var(--surface-border)',
+                  borderRadius: 2
+                }}>
+                      <Typography variant="h6" mb={2} sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
+                    ROI Trend
+                  </Typography>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={timeSeriesData}>
+                      <defs>
+                        <linearGradient id="roiGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 197, 94, 0.2)" />
+                      <XAxis
+                        dataKey="date"
+                        stroke="#a1a1aa"
+                        tick={{ fill: '#a1a1aa', fontSize: 12 }}
+                      />
+                      <YAxis
+                        stroke="#a1a1aa"
+                        tick={{ fill: '#a1a1aa' }}
+                        label={{ value: 'ROI %', angle: -90, position: 'insideLeft', fill: '#a1a1aa' }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                              backgroundColor: 'rgba(240, 253, 244, 0.95)',
+                              border: '1px solid var(--surface-border)',
+                          borderRadius: '8px',
+                              color: 'var(--app-text)'
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="roi"
+                            stroke="#22c55e"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#roiGradient)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </Paper>
+
+                {/* Units P/L Trend */}
+                <Paper sx={{
+                  p: 3,
+                  flex: 1,
+                      background: 'var(--surface-bg)',
+                  backdropFilter: 'blur(20px)',
+                      border: '1px solid var(--surface-border)',
+                  borderRadius: 2
+                }}>
+                      <Typography variant="h6" mb={2} sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
+                    Units Profit/Loss Trend
+                  </Typography>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={timeSeriesData}>
+                      <defs>
+                        <linearGradient id="unitsGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 197, 94, 0.2)" />
+                      <XAxis
+                        dataKey="date"
+                        stroke="#a1a1aa"
+                        tick={{ fill: '#a1a1aa', fontSize: 12 }}
+                      />
+                      <YAxis
+                        stroke="#a1a1aa"
+                        tick={{ fill: '#a1a1aa' }}
+                        label={{ value: 'Units', angle: -90, position: 'insideLeft', fill: '#a1a1aa' }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                              backgroundColor: 'rgba(240, 253, 244, 0.95)',
+                              border: '1px solid var(--surface-border)',
+                          borderRadius: '8px',
+                              color: 'var(--app-text)'
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="netPnl"
+                        stroke="#10b981"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#unitsGradient)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </Paper>
+              </Box>
+            )}
+          </Box>
+
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
+              <Card sx={{
+                    background: 'var(--surface-bg)',
+                backdropFilter: 'blur(20px)',
+                    border: '1px solid var(--surface-border)',
+                borderRadius: 2
+              }}>
+                <CardContent>
+                      <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
+                    Total Trades
+                  </Typography>
+                      <Typography variant="h4" sx={{ color: 'var(--app-text)', fontWeight: 700 }}>{personalStats?.totalTrades || 0}</Typography>
+                </CardContent>
+              </Card>
+            </Box>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
+              <Card sx={{
+                    background: 'var(--surface-bg)',
+                backdropFilter: 'blur(20px)',
+                    border: '1px solid var(--surface-border)',
+                borderRadius: 2
+              }}>
+                <CardContent>
+                      <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
+                    Win Rate
+                  </Typography>
+                      <Typography variant="h4" sx={{ color: 'var(--app-text)', fontWeight: 700 }}>{(personalStats?.winRate ?? 0).toFixed(2)}%</Typography>
+                </CardContent>
+              </Card>
+            </Box>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
+              <Card sx={{
+                    background: 'var(--surface-bg)',
+                backdropFilter: 'blur(20px)',
+                    border: '1px solid var(--surface-border)',
+                borderRadius: 2
+              }}>
+                <CardContent>
+                      <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
+                    ROI
+                  </Typography>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      color: (personalStats?.roi || 0) >= 0 ? '#10b981' : '#ef4444',
+                      fontWeight: 700
+                    }}
+                  >
+                    {(personalStats?.roi ?? 0) >= 0 ? '+' : ''}{(personalStats?.roi ?? 0).toFixed(2)}%
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Box>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
+              <Card sx={{
+                    background: 'var(--surface-bg)',
+                backdropFilter: 'blur(20px)',
+                    border: '1px solid var(--surface-border)',
+                borderRadius: 2
+              }}>
+                <CardContent>
+                      <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
+                    Net P&L
+                  </Typography>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      color: (personalStats?.netPnl || 0) >= 0 ? '#10b981' : '#ef4444',
+                      fontWeight: 700
+                    }}
+                  >
+                    {(personalStats?.netPnl ?? 0) >= 0 ? '+' : ''}${(personalStats?.netPnl ?? 0).toFixed(2)}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Box>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
+              <Card sx={{
+                    background: 'var(--surface-bg)',
+                backdropFilter: 'blur(20px)',
+                    border: '1px solid var(--surface-border)',
+                borderRadius: 2
+              }}>
+                <CardContent>
+                      <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
+                    Current Streak
+                  </Typography>
+                  <Typography 
+                    variant="h4" 
+                    display="flex" 
+                    alignItems="center" 
+                    gap={1} 
+                    sx={{ 
+                          color: (personalStats?.currentStreak || 0) > 0 ? '#10b981' : '#ffffff',
+                      fontWeight: 700 
+                    }}
+                  >
+                    {(personalStats?.currentStreak || 0) > 0 && <LocalFireDepartmentIcon sx={{ color: '#f59e0b' }} />}
+                    {personalStats?.currentStreak || 0}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Box>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
+              <Card sx={{
+                    background: 'var(--surface-bg)',
+                backdropFilter: 'blur(20px)',
+                    border: '1px solid var(--surface-border)',
+                borderRadius: 2
+              }}>
+                <CardContent>
+                      <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
+                    Longest Streak
+                  </Typography>
+                  <Typography 
+                    variant="h4" 
+                    display="flex" 
+                    alignItems="center" 
+                    gap={1}
+                    sx={{ 
+                          color: (personalStats?.longestStreak || 0) > 0 ? '#10b981' : '#ffffff',
+                      fontWeight: 700 
+                    }}
+                  >
+                    {(personalStats?.longestStreak || 0) > 0 && <LocalFireDepartmentIcon sx={{ color: '#f59e0b' }} />}
+                    {personalStats?.longestStreak || 0}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Box>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
+              <Card sx={{
+                    background: 'var(--surface-bg)',
+                backdropFilter: 'blur(20px)',
+                    border: '1px solid var(--surface-border)',
+                borderRadius: 2
+              }}> 
+                <CardContent>
+                      <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
+                    Wins
+                  </Typography>
+                  <Typography variant="h4" sx={{ color: '#10b981', fontWeight: 700 }}>{personalStats?.winCount || 0}</Typography>
+                </CardContent>
+              </Card>
+            </Box>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
+              <Card sx={{
+                    background: 'var(--surface-bg)',
+                backdropFilter: 'blur(20px)',
+                    border: '1px solid var(--surface-border)',
+                borderRadius: 2
+              }}>
+                <CardContent>
+                      <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
+                    Losses
+                  </Typography>
+                  <Typography variant="h4" sx={{ color: '#ef4444', fontWeight: 700 }}>{personalStats?.lossCount || 0}</Typography>
+                </CardContent>
+              </Card>
+            </Box>
+          </Box>
+        </Box>
+      )}
         </>
       )}
 

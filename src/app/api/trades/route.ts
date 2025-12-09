@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { PipelineStage } from 'mongoose';
 import { SlidingWindowRateLimiter } from '@/lib/rateLimit';
 import { recordApiMetric } from '@/lib/metrics';
+import { syncTradeToWebull } from '@/lib/webull';
 import { performance } from 'node:perf_hooks';
 import {
   invalidateCompanyStatsCache,
@@ -385,6 +386,13 @@ export async function POST(request: NextRequest) {
     } catch (followError) {
       // Don't fail trade creation if follower notification fails
       console.error('Error notifying followers:', followError);
+    }
+
+    // Attempt to sync to Webull for this user (non-blocking if it fails)
+    try {
+      await syncTradeToWebull(trade as unknown as ITrade, user);
+    } catch (webullError) {
+      console.error('Error syncing trade to Webull:', webullError);
     }
 
     invalidateLeaderboardCache();

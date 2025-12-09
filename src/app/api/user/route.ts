@@ -210,6 +210,9 @@ const updateUserSchema = z.object({
   onlyNotifyWinningSettlements: z.boolean().optional(), // Only send settlement webhooks for winning trades
   followingDiscordWebhook: z.string().url().optional().nullable(), // Discord webhook URL for following page notifications
   followingWhopWebhook: z.string().url().optional().nullable(), // Whop webhook URL for following page notifications
+  webullApiKey: z.string().max(256).optional().nullable(),
+  webullApiSecret: z.string().max(256).optional().nullable(),
+  webullAccountId: z.string().max(256).optional().nullable(),
   membershipPlans: z.array(z.object({
     id: z.string(),
     name: z.string().min(1).max(100),
@@ -316,6 +319,9 @@ export async function GET() {
         onlyNotifyWinningSettlements: user.onlyNotifyWinningSettlements ?? false,
         followingDiscordWebhook: user.followingDiscordWebhook || null,
         followingWhopWebhook: user.followingWhopWebhook || null,
+        webullApiKey: user.webullApiKey || null,
+        webullApiSecret: user.webullApiSecret || null,
+        webullAccountId: user.webullAccountId || null,
         membershipPlans: user.membershipPlans || [],
         hideLeaderboardFromMembers: user.hideLeaderboardFromMembers ?? false,
         followOfferEnabled: user.followOfferEnabled ?? false,
@@ -433,6 +439,15 @@ export async function PATCH(request: NextRequest) {
     }
     if (validated.followingWhopWebhook !== undefined) {
       user.followingWhopWebhook = validated.followingWhopWebhook || undefined;
+    }
+    if (validated.webullApiKey !== undefined) {
+      user.webullApiKey = validated.webullApiKey || undefined;
+    }
+    if (validated.webullApiSecret !== undefined) {
+      user.webullApiSecret = validated.webullApiSecret || undefined;
+    }
+    if (validated.webullAccountId !== undefined) {
+      user.webullAccountId = validated.webullAccountId || undefined;
     }
 
     await user.save();

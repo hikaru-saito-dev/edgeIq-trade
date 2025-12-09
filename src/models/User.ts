@@ -34,6 +34,9 @@ export interface IUser extends Document {
   onlyNotifyWinningSettlements?: boolean; // If true, only send settlement webhooks for winning trades
   followingDiscordWebhook?: string; // Discord webhook URL for following page notifications
   followingWhopWebhook?: string; // Whop webhook URL for following page notifications
+  webullApiKey?: string; // Webull API key (per user)
+  webullApiSecret?: string; // Webull API secret (per user)
+  webullAccountId?: string; // Webull account identifier (optional)
   membershipPlans?: MembershipPlan[]; // Array of membership plans for this Whop (only for owners)
   membershipUrl?: string; // Legacy: Primary membership URL (deprecated, use membershipPlans)
   optIn: boolean; // Only owners can opt-in to leaderboard
@@ -86,6 +89,9 @@ const UserSchema = new Schema<IUser>({
   onlyNotifyWinningSettlements: { type: Boolean, default: false }, // Only send settlement webhooks for winning trades
   followingDiscordWebhook: { type: String, trim: true }, // Discord webhook URL for following page notifications
   followingWhopWebhook: { type: String, trim: true }, // Whop webhook URL for following page notifications
+  webullApiKey: { type: String, trim: true },
+  webullApiSecret: { type: String, trim: true },
+  webullAccountId: { type: String, trim: true },
   membershipPlans: { type: [MembershipPlanSchema], default: [] }, //only for owners
   membershipUrl: { type: String }, // Legacy field for backward compatibility
   optIn: { type: Boolean, default: false }, // Default false, only owners can opt-in

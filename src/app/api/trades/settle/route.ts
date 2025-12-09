@@ -8,6 +8,7 @@ import { settleTradeSchema } from '@/utils/tradeValidation';
 import { isMarketOpen } from '@/utils/marketHours';
 import { formatExpiryDateForAPI, getContractByTicker, getOptionContractSnapshot, getMarketFillPrice } from '@/lib/polygon';
 import { notifyTradeSettled } from '@/lib/tradeNotifications';
+import { syncSettlementToWebull } from '@/lib/webull';
 import { z } from 'zod';
 
 export const runtime = 'nodejs';
@@ -103,9 +104,9 @@ export async function POST(request: NextRequest) {
 
     if (!snapshot) {
       const { snapshot: fetchedSnapshot, error: snapshotError } = await getOptionContractSnapshot(
-        trade.ticker,
-        trade.strike,
-        expiryDateAPI,
+      trade.ticker,
+      trade.strike,
+      expiryDateAPI,
         contractType
       );
       
@@ -135,7 +136,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        return NextResponse.json({
+      return NextResponse.json({
           error: errorMessage,
         }, { status: 400 });
       }
@@ -220,6 +221,13 @@ export async function POST(request: NextRequest) {
 
     // Send notification
     await notifyTradeSettled(trade, validated.contracts, finalFillPrice, user);
+
+    // Sync settlement to Webull for this user (non-blocking on error)
+    try {
+      await syncSettlementToWebull(trade, user, validated.contracts, finalFillPrice);
+    } catch (webullError) {
+      console.error('Error syncing settlement to Webull:', webullError);
+    }
 
     // Format message
     const expiryFormatted = `${String(trade.expiryDate.getMonth() + 1)}/${String(trade.expiryDate.getDate())}/${trade.expiryDate.getFullYear()}`;
