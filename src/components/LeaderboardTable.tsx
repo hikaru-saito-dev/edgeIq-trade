@@ -96,7 +96,7 @@ export default function LeaderboardTable() {
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
-  
+
   // sorting
   const [sortColumn, setSortColumn] = useState<string | null>('roi');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -205,7 +205,7 @@ export default function LeaderboardTable() {
       hasLoadedOnceRef.current = true;
     }
   };
-  
+
   const handleSort = (column: string) => {
     if (sortColumn === column) {
       // Toggle direction if same column
@@ -217,13 +217,13 @@ export default function LeaderboardTable() {
     }
     setPage(1); // Reset to first page when sorting changes
   };
-  
+
   const SortableHeader = ({ column, label }: { column: string; label: string }) => {
     const isActive = sortColumn === column;
     return (
-      <TableCell 
+      <TableCell
         align="center"
-        sx={{ 
+        sx={{
           cursor: 'pointer',
           userSelect: 'none',
           '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.05) },
@@ -260,12 +260,12 @@ export default function LeaderboardTable() {
 
   return (
     <Box>
-      <Box 
-        display="flex" 
+      <Box
+        display="flex"
         flexDirection={{ xs: 'column', sm: 'row' }}
-        justifyContent="space-between" 
+        justifyContent="space-between"
         alignItems={{ xs: 'flex-start', sm: 'center' }}
-        mb={2} 
+        mb={2}
         gap={2}
       >
         <Tabs
@@ -294,10 +294,10 @@ export default function LeaderboardTable() {
           <Tab label="30d" value="30d" />
           <Tab label="7d" value="7d" />
         </Tabs>
-        <Box 
-          display="flex" 
+        <Box
+          display="flex"
           flexDirection={{ xs: 'column', sm: 'row' }}
-          gap={1} 
+          gap={1}
           alignItems={{ xs: 'stretch', sm: 'center' }}
           sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
@@ -407,171 +407,180 @@ export default function LeaderboardTable() {
             }}
           >
             <Table sx={{ minWidth: 800 }}>
-            <TableHead>
-              <TableRow>
-                <SortableHeader column="rank" label="Rank" />
-                <SortableHeader column="Whop" label="Whop" />
-                <SortableHeader column="winRate" label="Win %" />
-                <SortableHeader column="roi" label="ROI %" />
-                <SortableHeader column="netPnl" label="P/L" />
-                <SortableHeader column="winsLosses" label="W-L" />
-                <SortableHeader column="currentStreak" label="Current Streak" />
-                <SortableHeader column="longestStreak" label="Longest Streak" />
-                <TableCell align="center" sx={{ fontWeight: 600 }}><strong>Membership</strong></TableCell>
-                <TableCell align="center" sx={{ fontWeight: 600 }}><strong>Follow</strong></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {leaderboard.length === 0 ? (
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={10} align="center">
-                    No entries found
-                  </TableCell>
+                  <SortableHeader column="rank" label="Rank" />
+                  <SortableHeader column="Whop" label="Whop" />
+                  <SortableHeader column="winRate" label="Win %" />
+                  <SortableHeader column="roi" label="ROI %" />
+                  <SortableHeader column="netPnl" label="P/L" />
+                  <SortableHeader column="winsLosses" label="W-L" />
+                  <SortableHeader column="currentStreak" label="Current Streak" />
+                  <SortableHeader column="longestStreak" label="Longest Streak" />
+                  <TableCell align="center" sx={{ fontWeight: 600 }}><strong>Membership</strong></TableCell>
+                  {
+                    isAuthorized && (
+                      <TableCell align="center" sx={{ fontWeight: 600 }}><strong>Follow</strong></TableCell>
+                    )
+                  }
                 </TableRow>
-              ) : (
-                leaderboard.map((entry) => (
-                  <TableRow key={entry.userId} hover>
-                    <TableCell align="center">
-                      <Chip
-                        label={`#${entry.rank}`}
-                        color="primary"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Avatar src={entry.whopAvatarUrl} sx={{ width: 32, height: 32 }}>
-                          {(entry.alias || entry.whopDisplayName || '?').charAt(0).toUpperCase()}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
-                            {entry.alias || entry.whopDisplayName}
-                          </Typography>
-                          {entry.whopUsername && (
-                            <Typography variant="caption" sx={{ color: 'var(--text-muted)' }}>
-                              @{entry.whopUsername}
-                            </Typography>
-                          )}
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={`${entry.winRate.toFixed(1)}%`}
-                        color={entry.winRate >= 50 ? 'success' : 'default'}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={`${entry.roi >= 0 ? '+' : ''}${entry.roi.toFixed(2)}%`}
-                        color={getRoiColor(entry.roi)}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={`${entry.netPnl >= 0 ? '+' : ''}$${entry.netPnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                        color={entry.netPnl >= 0 ? 'success' : 'error'}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="center" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
-                      {entry.winCount || 0}-{entry.lossCount || 0}
-                    </TableCell>
-                    <TableCell align="center">
-                      {(entry.currentStreak || 0) > 0 ? (
-                        <Chip
-                          icon={<LocalFireDepartmentIcon sx={{ fontSize: 16, color: '#f59e0b' }} />}
-                          label={entry.currentStreak}
-                          size="small"
-                          sx={{
-                            backgroundColor: streakBg,
-                            color: 'var(--accent-strong)',
-                            border: streakBorder,
-                            fontWeight: 600,
-                            '& .MuiChip-icon': {
-                              color: '#f59e0b',
-                            },
-                          }}
-                        />
-                      ) : (
-                        <Typography variant="body2" sx={{ color: 'var(--text-muted)' }}>-</Typography>
-                      )}
-                    </TableCell>
-                    <TableCell align="center">
-                      {(entry.longestStreak || 0) > 0 ? (
-                        <Chip
-                          icon={<LocalFireDepartmentIcon sx={{ fontSize: 16, color: '#f59e0b' }} />}
-                          label={entry.longestStreak}
-                          size="small"
-                          sx={{
-                            backgroundColor: streakBg,
-                            color: 'var(--accent-strong)',
-                            border: streakBorder,
-                            fontWeight: 600,
-                            '& .MuiChip-icon': {
-                              color: '#f59e0b',
-                            },
-                          }}
-                        />
-                      ) : (
-                        <Typography variant="body2" sx={{ color: 'var(--text-muted)' }}>-</Typography>
-                      )}
-                    </TableCell>
-                    <TableCell align="center">
-                      {entry.membershipPlans && entry.membershipPlans.length > 0 ? (
-                        <Button
-                          variant="contained"
-                          size="small"
-                          onClick={() => handleViewMembership(entry)}
-                          sx={{
-                            background: 'linear-gradient(135deg, #22c55e, #059669)',
-                            color: 'white',
-                            '&:hover': {
-                              background: 'linear-gradient(135deg, #16a34a, #047857)',
-                            },
-                          }}
-                        >
-                          View Membership
-                        </Button>
-                      ) : (
-                        <Typography variant="caption" sx={{ color: 'var(--text-muted)' }}>
-                          No membership
-                        </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell align="center">
-                      {entry.followOffer && entry.followOffer.enabled ? (
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<PersonAddIcon />}
-                          onClick={() => handleFollowClick(entry)}
-                          sx={{
-                            borderColor: theme.palette.primary.main,
-                            color: theme.palette.primary.main,
-                            '&:hover': {
-                              borderColor: theme.palette.primary.dark,
-                              backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                            },
-                          }}
-                        >
-                          Follow
-                        </Button>
-                      ) : (
-                        <Typography variant="caption" sx={{ color: 'var(--text-muted)' }}>
-                          -
-                        </Typography>
-                      )}
+              </TableHead>
+              <TableBody>
+                {leaderboard.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={10} align="center">
+                      No entries found
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <Box display="flex" justifyContent="center" py={2} gap={2} alignItems="center">
+                ) : (
+                  leaderboard.map((entry) => (
+                    <TableRow key={entry.userId} hover>
+                      <TableCell align="center">
+                        <Chip
+                          label={`#${entry.rank}`}
+                          color="primary"
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Avatar src={entry.whopAvatarUrl} sx={{ width: 32, height: 32 }}>
+                            {(entry.alias || entry.whopDisplayName || '?').charAt(0).toUpperCase()}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
+                              {entry.alias || entry.whopDisplayName}
+                            </Typography>
+                            {entry.whopUsername && (
+                              <Typography variant="caption" sx={{ color: 'var(--text-muted)' }}>
+                                @{entry.whopUsername}
+                              </Typography>
+                            )}
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label={`${entry.winRate.toFixed(1)}%`}
+                          color={entry.winRate >= 50 ? 'success' : 'default'}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label={`${entry.roi >= 0 ? '+' : ''}${entry.roi.toFixed(2)}%`}
+                          color={getRoiColor(entry.roi)}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label={`${entry.netPnl >= 0 ? '+' : ''}$${entry.netPnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                          color={entry.netPnl >= 0 ? 'success' : 'error'}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell align="center" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
+                        {entry.winCount || 0}-{entry.lossCount || 0}
+                      </TableCell>
+                      <TableCell align="center">
+                        {(entry.currentStreak || 0) > 0 ? (
+                          <Chip
+                            icon={<LocalFireDepartmentIcon sx={{ fontSize: 16, color: '#f59e0b' }} />}
+                            label={entry.currentStreak}
+                            size="small"
+                            sx={{
+                              backgroundColor: streakBg,
+                              color: 'var(--accent-strong)',
+                              border: streakBorder,
+                              fontWeight: 600,
+                              '& .MuiChip-icon': {
+                                color: '#f59e0b',
+                              },
+                            }}
+                          />
+                        ) : (
+                          <Typography variant="body2" sx={{ color: 'var(--text-muted)' }}>-</Typography>
+                        )}
+                      </TableCell>
+                      <TableCell align="center">
+                        {(entry.longestStreak || 0) > 0 ? (
+                          <Chip
+                            icon={<LocalFireDepartmentIcon sx={{ fontSize: 16, color: '#f59e0b' }} />}
+                            label={entry.longestStreak}
+                            size="small"
+                            sx={{
+                              backgroundColor: streakBg,
+                              color: 'var(--accent-strong)',
+                              border: streakBorder,
+                              fontWeight: 600,
+                              '& .MuiChip-icon': {
+                                color: '#f59e0b',
+                              },
+                            }}
+                          />
+                        ) : (
+                          <Typography variant="body2" sx={{ color: 'var(--text-muted)' }}>-</Typography>
+                        )}
+                      </TableCell>
+                      <TableCell align="center">
+                        {entry.membershipPlans && entry.membershipPlans.length > 0 ? (
+                          <Button
+                            variant="contained"
+                            size="small"
+                            onClick={() => handleViewMembership(entry)}
+                            sx={{
+                              background: 'linear-gradient(135deg, #22c55e, #059669)',
+                              color: 'white',
+                              '&:hover': {
+                                background: 'linear-gradient(135deg, #16a34a, #047857)',
+                              },
+                            }}
+                          >
+                            View Membership
+                          </Button>
+                        ) : (
+                          <Typography variant="caption" sx={{ color: 'var(--text-muted)' }}>
+                            No membership
+                          </Typography>
+                        )}
+                      </TableCell>
+                      {
+                        isAuthorized && (
+
+                          <TableCell align="center">
+                            {entry.followOffer && entry.followOffer.enabled ? (
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<PersonAddIcon />}
+                                onClick={() => handleFollowClick(entry)}
+                                sx={{
+                                  borderColor: theme.palette.primary.main,
+                                  color: theme.palette.primary.main,
+                                  '&:hover': {
+                                    borderColor: theme.palette.primary.dark,
+                                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                                  },
+                                }}
+                              >
+                                Follow
+                              </Button>
+                            ) : (
+                              <Typography variant="caption" sx={{ color: 'var(--text-muted)' }}>
+                                -
+                              </Typography>
+                            )}
+                          </TableCell>
+                        )
+                      }
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Box display="flex" justifyContent="center" py={2} gap={2} alignItems="center">
             <Button
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
