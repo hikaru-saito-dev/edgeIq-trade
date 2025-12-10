@@ -6,12 +6,14 @@ type WebullCredentials = {
   appKey: string;
   appSecret: string;
   accountId?: string;
+  accessToken?: string; // Optional access token for options trading
 };
 
 type WebullRequestOptions = {
   method: 'GET' | 'POST';
   path: string; // e.g. "/app/subscriptions/list"
   body?: Record<string, unknown> | null;
+  headers?: Record<string, string>; // Optional custom headers
 };
 
 type WebullResponse<T = unknown> = {
@@ -23,6 +25,7 @@ type WebullResponse<T = unknown> = {
 
 const WEBULL_HOST = 'api.webull.com';
 const WEBULL_BASE = `https://${WEBULL_HOST}`;
+// Test environment (for options testing): us-openapi-alb.uat.webullbroker.com
 
 function getCredentials(user: IUser): WebullCredentials | null {
   if (!user.webullApiKey || !user.webullApiSecret) return null;
@@ -30,6 +33,7 @@ function getCredentials(user: IUser): WebullCredentials | null {
     appKey: user.webullApiKey,
     appSecret: user.webullApiSecret,
     accountId: user.webullAccountId || undefined,
+    accessToken: (user as any).webullAccessToken || undefined, // Optional access token
   };
 }
 
@@ -140,8 +144,9 @@ async function doRequest<T>(
     queries: Object.keys(queries).length > 0 ? queries : undefined,
   });
 
+  // Default to v1, but allow override via options.headers (options endpoint uses v2)
   const headers: Record<string, string> = {
-    'x-version': 'v1',
+    'x-version': options.headers?.['x-version'] || 'v1',
     'x-app-key': creds.appKey,
     'x-timestamp': timestamp,
     'x-signature-version': '1.0',
@@ -149,6 +154,11 @@ async function doRequest<T>(
     'x-signature-nonce': nonce,
     'x-signature': signature,
   };
+  
+  // Merge custom headers (x-version, x-access-token, etc.) after setting defaults
+  if (options.headers) {
+    Object.assign(headers, options.headers);
+  }
 
   let bodyString: string | undefined;
   if (body && options.method === 'POST') {
@@ -212,38 +222,89 @@ async function getInstrumentId(creds: WebullCredentials, ticker: string): Promis
   return null;
 }
 
-async function placeWebullOrder(
+async function placeWebullOptionOrder(
   creds: WebullCredentials,
   accountId: string,
-  instrumentId: string,
+  trade: ITrade,
   side: 'BUY' | 'SELL',
-  qty: number
+  quantity: number
 ): Promise<{ ok: boolean; client_order_id?: string; error?: string }> {
   const clientOrderId = crypto.randomUUID().replace(/-/g, '').substring(0, 40);
   
-  const stockOrder = {
-    client_order_id: clientOrderId,
-    side,
-    tif: 'DAY',
-    extended_hours_trading: false,
-    instrument_id: instrumentId,
-    order_type: 'MARKET',
-    qty: String(Math.max(1, Math.min(5, qty))), // Clamp 1-5
+  // Format expiry date as YYYY-MM-DD
+  const expiryDateStr = `${trade.expiryDate.getFullYear()}-${String(trade.expiryDate.getMonth() + 1).padStart(2, '0')}-${String(trade.expiryDate.getDate()).padStart(2, '0')}`;
+  
+  // Convert optionType: 'C' -> 'CALL', 'P' -> 'PUT'
+  const optionType = trade.optionType === 'C' ? 'CALL' : 'PUT';
+  
+  // Clamp quantity to 1-5
+  const qty = Math.max(1, Math.min(5, quantity));
+  
+  // Use fillPrice as limit_price (options require LIMIT orders)
+  const limitPrice = String(trade.fillPrice);
+  
+  // Generate combo order ID (format: alphanumeric, 32 chars)
+  const comboOrderId = crypto.randomUUID().replace(/-/g, '').substring(0, 32).toUpperCase();
+  
+  const optionOrder = {
+    account_id: accountId, // account_id in body (not query param)
+    client_combo_order_id: comboOrderId,
+    new_orders: [
+      {
+        client_order_id: clientOrderId,
+        combo_type: 'NORMAL',
+        option_strategy: 'SINGLE',
+        side,
+        order_type: 'LIMIT',
+        time_in_force: 'DAY',
+        limit_price: limitPrice,
+        quantity: String(qty),
+        entrust_type: 'QTY',
+        legs: [
+          {
+            side,
+            quantity: String(qty),
+            market: 'US',
+            instrument_type: 'OPTION',
+            symbol: trade.ticker,
+            strike_price: String(trade.strike),
+            option_expire_date: expiryDateStr,
+            option_type: optionType,
+          },
+        ],
+      },
+    ],
   };
   
+  // Options endpoint: /openapi/trade/option/order/place (from official API docs)
+  // Uses x-version: v2 and account_id in body
   const resp = await doRequest<{ client_order_id?: string }>(
     creds,
     {
       method: 'POST',
-      path: '/trade/order/place',
-      body: {
-        account_id: accountId,
-        stock_order: stockOrder,
+      path: '/openapi/trade/option/order/place', // No query params
+      body: optionOrder,
+      headers: {
+        'x-version': 'v2', // Use v2 as per example
+        ...(creds.accessToken ? { 'x-access-token': creds.accessToken } : {}), // Add access token if available
       },
     }
   );
   
   if (!resp.ok) {
+    // Handle different error cases
+    if (resp.status === 401) {
+      return { 
+        ok: false, 
+        error: 'Authentication failed. An access token may be required for options trading. Please check your Webull API credentials.' 
+      };
+    }
+    if (resp.status === 404) {
+      return { 
+        ok: false, 
+        error: 'Options trading endpoint not found. This feature may not be available for your account yet.' 
+      };
+    }
     return { ok: false, error: resp.error || `HTTP ${resp.status}` };
   }
   
@@ -270,21 +331,15 @@ export async function syncTradeToWebull(trade: ITrade, user: IUser) {
     return;
   }
   
-  // Get instrument_id for the underlying ticker (Webull only supports stocks/ETFs)
-  const instrumentId = await getInstrumentId(creds, trade.ticker);
-  if (!instrumentId) {
-    console.error(`[webull] Could not get instrument_id for ${trade.ticker}`);
-    return;
-  }
-  
-  // Place BUY order: qty = contracts capped at 5
+  // Place BUY options order: qty = contracts capped at 5
   const qty = Math.max(1, Math.min(5, trade.contracts));
-  const result = await placeWebullOrder(creds, accountId, instrumentId, 'BUY', qty);
+  const result = await placeWebullOptionOrder(creds, accountId, trade, 'BUY', qty);
   
   if (!result.ok) {
-    console.error(`[webull] Failed to place BUY order: ${result.error}`);
+    console.error(`[webull] Failed to place BUY options order: ${result.error}`);
   } else {
-    console.log(`[webull] Placed BUY order: ${result.client_order_id} for ${qty} shares of ${trade.ticker}`);
+    const optionLabel = `${trade.ticker} ${trade.strike}${trade.optionType === 'C' ? 'C' : 'P'}`;
+    console.log(`[webull] Placed BUY options order: ${result.client_order_id} for ${qty} contracts of ${optionLabel}`);
   }
 }
 
@@ -313,21 +368,15 @@ export async function syncSettlementToWebull(
     return;
   }
   
-  // Get instrument_id for the underlying ticker
-  const instrumentId = await getInstrumentId(creds, trade.ticker);
-  if (!instrumentId) {
-    console.error(`[webull] Could not get instrument_id for ${trade.ticker}`);
-    return;
-  }
-  
-  // Place SELL order: qty = sellContracts capped at 5
+  // Place SELL options order: qty = sellContracts capped at 5
   const qty = Math.max(1, Math.min(5, sellContracts));
-  const result = await placeWebullOrder(creds, accountId, instrumentId, 'SELL', qty);
+  const result = await placeWebullOptionOrder(creds, accountId, trade, 'SELL', qty);
   
   if (!result.ok) {
-    console.error(`[webull] Failed to place SELL order: ${result.error}`);
+    console.error(`[webull] Failed to place SELL options order: ${result.error}`);
   } else {
-    console.log(`[webull] Placed SELL order: ${result.client_order_id} for ${qty} shares of ${trade.ticker}`);
+    const optionLabel = `${trade.ticker} ${trade.strike}${trade.optionType === 'C' ? 'C' : 'P'}`;
+    console.log(`[webull] Placed SELL options order: ${result.client_order_id} for ${qty} contracts of ${optionLabel}`);
   }
 }
 
