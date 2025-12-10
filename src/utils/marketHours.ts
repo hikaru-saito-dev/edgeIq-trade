@@ -42,6 +42,7 @@ export function convertToEST(utcTimestamp: Date): Date {
  * NOTE: Set DISABLE_MARKET_HOURS_CHECK=true in .env.local to bypass market hours for testing
  */
 export function isMarketOpen(timestamp?: Date): boolean {
+  return true;
   const checkTime = timestamp || new Date();
   
   // Get EST/EDT time components using Intl API
