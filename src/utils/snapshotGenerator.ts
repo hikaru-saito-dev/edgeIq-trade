@@ -12,12 +12,12 @@ export interface TradeSnapshotData {
 
 export interface StatsSnapshotData {
   type: 'personal' | 'company';
-  winRate: number;
-  roi: number;
-  netPnl: number;
-  totalTrades: number;
-  wins: number;
-  losses: number;
+  winRate?: number;
+  roi?: number;
+  netPnl?: number;
+  totalTrades?: number;
+  wins?: number;
+  losses?: number;
   breakevens?: number;
   currentStreak?: number;
   longestStreak?: number;
@@ -28,13 +28,23 @@ export interface StatsSnapshotData {
 /**
  * Load an image and return a Promise that resolves when loaded
  */
+function resolveAssetUrl(src: string): string {
+  // If absolute URL already, return as-is
+  if (/^https?:\/\//i.test(src)) return src;
+  // Prefer current origin so assets still load inside embeds/iframes
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return `${window.location.origin}${src.startsWith('/') ? src : `/${src}`}`;
+  }
+  return src;
+}
+
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
     img.onerror = reject;
-    img.src = src;
+    img.src = resolveAssetUrl(src);
   });
 }
 
@@ -182,6 +192,13 @@ export async function generateTradeSnapshot(trade: TradeSnapshotData): Promise<B
   const whiteColor = '#ffffff';
   const darkGrayColor = '#1a1a1a';
 
+  // Normalize numbers
+  const pnl = Number.isFinite(trade.pnl) ? (trade.pnl as number) : 0;
+  const contracts = Number.isFinite(trade.contracts) ? (trade.contracts as number) : 0;
+  const entryPrice = Number.isFinite(trade.entryPrice) ? (trade.entryPrice as number) : 0;
+  const strike = Number.isFinite(trade.strike) ? (trade.strike as number) : 0;
+  const notional = Number.isFinite(trade.notional) ? (trade.notional as number) : contracts * entryPrice * 100;
+
   // Result badge text
   const resultText = trade.result === 'WIN' ? 'WON'
     : trade.result === 'LOSS' ? 'LOST'
@@ -196,7 +213,7 @@ export async function generateTradeSnapshot(trade: TradeSnapshotData): Promise<B
   ctx.fillStyle = greenColor;
   ctx.font = 'bold 304px Poppins';
   ctx.textAlign = 'center';
-  const pnlText = `${trade.pnl >= 0 ? '+' : ''}$${trade.pnl.toFixed(2)}`;
+  const pnlText = `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`;
   ctx.fillText(pnlText, 960, 520);
 
   // Option/Trade details card positions
@@ -209,8 +226,7 @@ export async function generateTradeSnapshot(trade: TradeSnapshotData): Promise<B
 
   const expiry = new Date(trade.expiryDate);
   const expiryStr = `${expiry.getMonth() + 1}/${expiry.getDate()}/${expiry.getFullYear()}`;
-  const optionLabel = `${trade.ticker} ${trade.strike}${trade.optionType}`;
-  const notional = trade.notional ?? trade.contracts * trade.entryPrice * 100;
+  const optionLabel = `${trade.ticker} ${strike}${trade.optionType}`;
 
   // Left top: Ticker/Strike
   ctx.fillStyle = greenColor;
@@ -263,8 +279,20 @@ export async function generateTradeSnapshot(trade: TradeSnapshotData): Promise<B
     canvas.toBlob((blob) => {
       if (blob) {
         resolve(blob);
-      } else {
-        reject(new Error('Failed to create blob'));
+        return;
+      }
+      // Fallback: use data URL if toBlob fails/returns null
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        const byteString = atob(dataUrl.split(',')[1]);
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i += 1) {
+          ia[i] = byteString.charCodeAt(i);
+        }
+        resolve(new Blob([ab], { type: 'image/png' }));
+      } catch (err) {
+        reject(err instanceof Error ? err : new Error('Failed to create blob'));
       }
     }, 'image/png');
   });
@@ -296,25 +324,36 @@ export async function generateStatsSnapshot(stats: StatsSnapshotData): Promise<B
   const greenColor = '#22c55e';
   const whiteColor = '#ffffff';
 
+  // Normalize numbers to avoid undefined/NaN
+  const netPnl = Number.isFinite(stats.netPnl) ? (stats.netPnl as number) : 0;
+  const roi = Number.isFinite(stats.roi) ? (stats.roi as number) : 0;
+  const winRate = Number.isFinite(stats.winRate) ? (stats.winRate as number) : 0;
+  const totalTrades = Number.isFinite(stats.totalTrades) ? (stats.totalTrades as number) : 0;
+  const wins = Number.isFinite(stats.wins) ? (stats.wins as number) : 0;
+  const losses = Number.isFinite(stats.losses) ? (stats.losses as number) : 0;
+  const breakevens = Number.isFinite(stats.breakevens) ? (stats.breakevens as number) : 0;
+  const currentStreak = Number.isFinite(stats.currentStreak) ? (stats.currentStreak as number) : 0;
+  const longestStreak = Number.isFinite(stats.longestStreak) ? (stats.longestStreak as number) : 0;
+
   // Header: WON/LOST badge text based on net P&L
   ctx.fillStyle = whiteColor;
   ctx.font = 'bold 32px Poppins';
   ctx.textAlign = 'center';
-  ctx.fillText(stats.netPnl >= 0 ? 'WON' : 'LOST', 960, 110);
+  ctx.fillText(netPnl >= 0 ? 'WON' : 'LOST', 960, 110);
 
   // PnL value (large, centered)
   ctx.fillStyle = greenColor;
   ctx.font = 'bold 304px Poppins';
   ctx.textAlign = 'center';
-  const pnlText = `${stats.netPnl >= 0 ? '+' : ''}$${stats.netPnl.toFixed(2)}`;
+  const pnlText = `${netPnl >= 0 ? '+' : ''}$${netPnl.toFixed(2)}`;
   ctx.fillText(pnlText, 960, 520);
 
   // Main stats cards (2x2 grid)
   const statsPositions = [
-    { label: 'Win Rate', value: `${stats.winRate.toFixed(1)}%`, x: 600, labelY: 640, valueY: 710, color: greenColor },
-    { label: 'ROI', value: `${stats.roi >= 0 ? '+' : ''}${stats.roi.toFixed(2)}%`, x: 970, labelY: 640, valueY: 710, color: stats.roi >= 0 ? greenColor : '#ef4444' },
-    { label: 'Wins', value: `${stats.wins ?? 0}`, x: 600, labelY: 815, valueY: 885, color: stats.netPnl >= 0 ? greenColor : '#ef4444' },
-    { label: 'Total Trades', value: `${stats.totalTrades}`, x: 970, labelY: 815, valueY: 885, color: greenColor },
+    { label: 'Win Rate', value: `${winRate.toFixed(1)}%`, x: 600, labelY: 640, valueY: 710, color: greenColor },
+    { label: 'ROI', value: `${roi >= 0 ? '+' : ''}${roi.toFixed(2)}%`, x: 970, labelY: 640, valueY: 710, color: roi >= 0 ? greenColor : '#ef4444' },
+    { label: 'Wins', value: `${wins}`, x: 600, labelY: 815, valueY: 885, color: netPnl >= 0 ? greenColor : '#ef4444' },
+    { label: 'Total Trades', value: `${totalTrades}`, x: 970, labelY: 815, valueY: 885, color: greenColor },
   ];
 
   statsPositions.forEach((stat) => {
@@ -339,8 +378,20 @@ export async function generateStatsSnapshot(stats: StatsSnapshotData): Promise<B
     canvas.toBlob((blob) => {
       if (blob) {
         resolve(blob);
-      } else {
-        reject(new Error('Failed to create blob'));
+        return;
+      }
+      // Fallback: use data URL if toBlob fails/returns null
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        const byteString = atob(dataUrl.split(',')[1]);
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i += 1) {
+          ia[i] = byteString.charCodeAt(i);
+        }
+        resolve(new Blob([ab], { type: 'image/png' }));
+      } catch (err) {
+        reject(err instanceof Error ? err : new Error('Failed to create blob'));
       }
     }, 'image/png');
   });

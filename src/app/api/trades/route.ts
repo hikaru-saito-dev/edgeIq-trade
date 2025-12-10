@@ -318,7 +318,7 @@ export async function POST(request: NextRequest) {
         contracts: validated.contracts,
         fillPrice: finalFillPrice,
       } as ITrade;
-      
+
       await syncTradeToWebull(tempTrade, user);
     } catch (webullError) {
       const errorMessage = webullError instanceof Error ? webullError.message : 'Webull sync failed';

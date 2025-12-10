@@ -901,8 +901,8 @@ export default function ProfileForm() {
         <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} gap={2} flexWrap="wrap">
             <Typography variant="h5" component="h2" sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
-              Personal Stats
-            </Typography>
+            Personal Stats
+          </Typography>
             <Button
               variant="outlined"
               color="primary"
@@ -1658,7 +1658,7 @@ export default function ProfileForm() {
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} gap={2} flexWrap="wrap">
             <Typography variant="h5" component="h2" sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
               Company Stats
-            </Typography>
+          </Typography>
             <Button
               variant="outlined"
               color="primary"
