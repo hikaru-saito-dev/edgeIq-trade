@@ -216,7 +216,7 @@ export async function generateTradeSnapshot(trade: TradeSnapshotData): Promise<B
 
   // PnL value (center, large)
   const pnlText = `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`;
-  drawFittedText(ctx, pnlText, 960, 520, 1800, greenColor, 'bold 304px Poppins', 'bold 150px Poppins','');
+  drawFittedText(ctx, pnlText, 960, 520, 1800, greenColor, 'bold 304px Poppins', 'bold 150px Poppins','center');
 
   // Option/Trade details card positions
   const leftColX = 600;   // Left column X
