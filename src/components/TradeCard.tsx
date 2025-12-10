@@ -26,11 +26,13 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
+import DownloadIcon from '@mui/icons-material/Download';
 import { apiRequest } from '@/lib/apiClient';
 import { useAccess } from './AccessProvider';
 import { useToast } from './ToastProvider';
 import { alpha, useTheme } from '@mui/material/styles';
 import { formatExpiryDate } from '@/utils/tradeValidation';
+import { downloadBlob, generateTradeSnapshot, type TradeSnapshotData } from '@/utils/snapshotGenerator';
 
 interface TradeFill {
   _id: string;
@@ -74,6 +76,7 @@ export default function TradeCard({ trade, onUpdate, disableDelete, onAction }: 
   const [settleOpen, setSettleOpen] = useState(false);
   const [settleContracts, setSettleContracts] = useState<number>(1);
   const [fillsExpanded, setFillsExpanded] = useState(false);
+  const [downloadingSnapshot, setDownloadingSnapshot] = useState(false);
   const { userId, companyId } = useAccess();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -114,6 +117,43 @@ export default function TradeCard({ trade, onUpdate, disableDelete, onAction }: 
 
   const formatNotional = (notional: number) => {
     return `$${notional.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  const calculateCurrentPnl = () => {
+    if (trade.status === 'CLOSED' && typeof trade.netPnl === 'number') {
+      return trade.netPnl;
+    }
+    const buy = trade.totalBuyNotional ?? trade.contracts * trade.fillPrice * 100;
+    const sell = trade.totalSellNotional ?? 0;
+    return sell - buy;
+  };
+
+  const handleDownloadSnapshot = async () => {
+    setDownloadingSnapshot(true);
+    try {
+      const buy = trade.totalBuyNotional ?? trade.contracts * trade.fillPrice * 100;
+      const snapshotData: TradeSnapshotData = {
+        result: trade.outcome ?? (trade.status === 'OPEN' ? 'OPEN' : 'PENDING'),
+        pnl: calculateCurrentPnl(),
+        ticker: trade.ticker,
+        strike: trade.strike,
+        optionType: trade.optionType,
+        expiryDate: trade.expiryDate,
+        contracts: trade.contracts,
+        entryPrice: trade.fillPrice,
+        notional: buy,
+      };
+
+      const blob = await generateTradeSnapshot(snapshotData);
+      const filename = `trade-${trade._id}-${snapshotData.result.toLowerCase()}.png`;
+      downloadBlob(blob, filename);
+      toast.showSuccess('Snapshot downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating trade snapshot:', error);
+      toast.showError('Failed to generate snapshot');
+    } finally {
+      setDownloadingSnapshot(false);
+    }
   };
 
   const handleSettle = async () => {
@@ -513,6 +553,17 @@ export default function TradeCard({ trade, onUpdate, disableDelete, onAction }: 
                 )}
               </>
             )}
+            <Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              disabled={downloadingSnapshot}
+              onClick={handleDownloadSnapshot}
+              startIcon={<DownloadIcon />}
+              sx={{ width: { xs: '100%', sm: 'auto' }, textTransform: 'none' }}
+            >
+              {downloadingSnapshot ? 'Generating...' : 'Download Snapshot'}
+            </Button>
             {!disableDelete && trade.status === 'OPEN' && (
               <Button
                 variant="contained"

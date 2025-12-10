@@ -48,6 +48,8 @@ import {
   Area
 } from 'recharts';
 import { useAccess } from './AccessProvider';
+import DownloadIcon from '@mui/icons-material/Download';
+import { downloadBlob, generateStatsSnapshot, type StatsSnapshotData } from '@/utils/snapshotGenerator';
 
 interface UserStats {
   totalTrades: number;
@@ -144,6 +146,8 @@ export default function ProfileForm() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'personal' | 'company'>('personal');
+  const [downloadingPersonalSnapshot, setDownloadingPersonalSnapshot] = useState(false);
+  const [downloadingCompanySnapshot, setDownloadingCompanySnapshot] = useState(false);
   const { isAuthorized, loading: accessLoading, userId, companyId } = useAccess();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -895,9 +899,47 @@ export default function ProfileForm() {
       </Paper>
       {personalStats && (
         <Box>
-              <Typography variant="h5" component="h2" mb={3} sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
-            Personal Stats
-          </Typography>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} gap={2} flexWrap="wrap">
+            <Typography variant="h5" component="h2" sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
+              Personal Stats
+            </Typography>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              disabled={downloadingPersonalSnapshot}
+              startIcon={<DownloadIcon />}
+              sx={{ textTransform: 'none' }}
+              onClick={async () => {
+                setDownloadingPersonalSnapshot(true);
+                try {
+                  const snapshotData: StatsSnapshotData = {
+                    type: 'personal',
+                    winRate: personalStats.winRate,
+                    roi: personalStats.roi,
+                    netPnl: personalStats.netPnl,
+                    totalTrades: personalStats.totalTrades,
+                    wins: personalStats.winCount,
+                    losses: personalStats.lossCount,
+                    breakevens: personalStats.breakevenCount,
+                    currentStreak: personalStats.currentStreak,
+                    longestStreak: personalStats.longestStreak,
+                    userName: userData?.alias || userData?.whopDisplayName || userData?.whopUsername,
+                  };
+                  const blob = await generateStatsSnapshot(snapshotData);
+                  downloadBlob(blob, `personal-stats-${Date.now()}.png`);
+                  toast.showSuccess('Personal stats snapshot downloaded!');
+                } catch (error) {
+                  console.error('Error generating snapshot:', error);
+                  toast.showError('Failed to generate snapshot');
+                } finally {
+                  setDownloadingPersonalSnapshot(false);
+                }
+              }}
+            >
+              {downloadingPersonalSnapshot ? 'Generating...' : 'Download Snapshot'}
+            </Button>
+          </Box>
 
           {/* Charts Section */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
@@ -1613,9 +1655,47 @@ export default function ProfileForm() {
       {/* Company Stats - Only for owners and companyOwners */}
       {(role === 'owner' || role === 'companyOwner') && (activeTab === 'company') && companyStats && (
         <Box mt={4}>
-          <Typography variant="h5" component="h2" mb={3} sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
-            Company Stats
-          </Typography>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} gap={2} flexWrap="wrap">
+            <Typography variant="h5" component="h2" sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
+              Company Stats
+            </Typography>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              disabled={downloadingCompanySnapshot}
+              startIcon={<DownloadIcon />}
+              sx={{ textTransform: 'none' }}
+              onClick={async () => {
+                setDownloadingCompanySnapshot(true);
+                try {
+                  const snapshotData: StatsSnapshotData = {
+                    type: 'company',
+                    winRate: companyStats.winRate,
+                    roi: companyStats.roi,
+                    netPnl: companyStats.netPnl,
+                    totalTrades: companyStats.totalTrades,
+                    wins: companyStats.winCount,
+                    losses: companyStats.lossCount,
+                    breakevens: companyStats.breakevenCount,
+                    currentStreak: companyStats.currentStreak,
+                    longestStreak: companyStats.longestStreak,
+                    companyName: userData?.companyName || userData?.whopDisplayName,
+                  };
+                  const blob = await generateStatsSnapshot(snapshotData);
+                  downloadBlob(blob, `company-stats-${Date.now()}.png`);
+                  toast.showSuccess('Company stats snapshot downloaded!');
+                } catch (error) {
+                  console.error('Error generating snapshot:', error);
+                  toast.showError('Failed to generate snapshot');
+                } finally {
+                  setDownloadingCompanySnapshot(false);
+                }
+              }}
+            >
+              {downloadingCompanySnapshot ? 'Generating...' : 'Download Snapshot'}
+            </Button>
+          </Box>
           <Typography variant="body2" sx={{ color: 'var(--text-muted)', mb: 3 }}>
             These stats include all trades from all users (companyOwners, owners and admins) in your company.
           </Typography>
