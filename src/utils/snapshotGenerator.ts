@@ -130,11 +130,16 @@ function drawFittedText(
   maxWidth: number,
   color: string,
   preferredFont: string,
-  fallbackFont: string
+  fallbackFont: string,
+  center: string
 ): number {
   ctx.save();
   ctx.fillStyle = color;
-  ctx.textAlign = 'left';
+  if(center === "center") {
+    ctx.textAlign = 'center'
+  } else {
+      ctx.textAlign = 'left';
+  }
 
   // Try preferred font (e.g., 42px)
   ctx.font = preferredFont;
@@ -211,7 +216,7 @@ export async function generateTradeSnapshot(trade: TradeSnapshotData): Promise<B
 
   // PnL value (center, large)
   const pnlText = `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`;
-  drawFittedText(ctx, pnlText, 960, 520, 1800, greenColor, 'bold 304px Poppins', 'bold 150px Poppins');
+  drawFittedText(ctx, pnlText, 960, 520, 1800, greenColor, 'bold 304px Poppins', 'bold 150px Poppins','');
 
   // Option/Trade details card positions
   const leftColX = 600;   // Left column X
@@ -268,8 +273,8 @@ export async function generateTradeSnapshot(trade: TradeSnapshotData): Promise<B
   // Subtitle with ticker for context (left side, below BET text in bg)
   const primaryFont = '400 42px Poppins';
   const fallbackFont = '400 36px Poppins';
-  drawFittedText(ctx, `${trade.ticker} ${trade.strike}${trade.optionType}`, 118, 730, 400, greenColor, primaryFont, fallbackFont);
-  drawFittedText(ctx, `Expires ${expiryStr}`, 118, 780, 400, greenColor, primaryFont, fallbackFont);
+  drawFittedText(ctx, `${trade.ticker} ${trade.strike}${trade.optionType}`, 118, 730, 400, greenColor, primaryFont, fallbackFont,'');
+  drawFittedText(ctx, `Expires ${expiryStr}`, 118, 780, 400, greenColor, primaryFont, fallbackFont, '');
 
   // Convert to blob
   return new Promise((resolve, reject) => {
@@ -336,7 +341,7 @@ export async function generateStatsSnapshot(stats: StatsSnapshotData): Promise<B
 
  
   const pnlText = `${netPnl >= 0 ? '+' : ''}$${netPnl.toFixed(2)}`;
-  drawFittedText(ctx, pnlText, 960, 520, 1800, greenColor, 'bold 304px Poppins', 'bold 150px Poppins');
+  drawFittedText(ctx, pnlText, 960, 520, 1800, greenColor, 'bold 304px Poppins', 'bold 150px Poppins', 'center');
 
   // Main stats cards (2x2 grid)
   const statsPositions = [
@@ -361,7 +366,7 @@ export async function generateStatsSnapshot(stats: StatsSnapshotData): Promise<B
   const title = stats.type === 'personal'
     ? (stats.userName ? `${stats.userName} • Personal Stats` : 'Personal Stats')
     : (stats.companyName ? `${stats.companyName} • Company Stats` : 'Company Stats');
-  drawFittedText(ctx, title, 118, 730, 400, greenColor, '400 42px Poppins', '400 36px Poppins');
+  drawFittedText(ctx, title, 118, 730, 400, greenColor, '400 42px Poppins', '400 36px Poppins','');
 
   // Convert to blob
   return new Promise((resolve, reject) => {
