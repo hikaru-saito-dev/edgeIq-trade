@@ -311,24 +311,22 @@ async function placeWebullOptionOrder(
   return { ok: true, client_order_id: resp.data?.client_order_id || clientOrderId };
 }
 
-export async function syncTradeToWebull(trade: ITrade, user: IUser) {
+export async function syncTradeToWebull(trade: ITrade, user: IUser): Promise<void> {
   const creds = getCredentials(user);
   if (!creds) {
-    console.error('[webull] Missing credentials');
+    // If user doesn't have Webull credentials, skip sync (optional feature)
     return;
   }
   
   // Get account_id from subscriptions
   const subs = await getWebullSubscriptions(user);
   if (!subs.ok || !subs.data || subs.data.length === 0) {
-    console.error('[webull] No subscriptions found');
-    return;
+    throw new Error('Webull sync failed: No subscriptions found');
   }
   
   const accountId = creds.accountId || subs.data[0].account_id;
   if (!accountId) {
-    console.error('[webull] No account_id available');
-    return;
+    throw new Error('Webull sync failed: No account_id available');
   }
   
   // Place BUY options order: qty = contracts capped at 5
@@ -336,11 +334,11 @@ export async function syncTradeToWebull(trade: ITrade, user: IUser) {
   const result = await placeWebullOptionOrder(creds, accountId, trade, 'BUY', qty);
   
   if (!result.ok) {
-    console.error(`[webull] Failed to place BUY options order: ${result.error}`);
-  } else {
-    const optionLabel = `${trade.ticker} ${trade.strike}${trade.optionType === 'C' ? 'C' : 'P'}`;
-    console.log(`[webull] Placed BUY options order: ${result.client_order_id} for ${qty} contracts of ${optionLabel}`);
+    throw new Error(`Webull sync failed: ${result.error}`);
   }
+  
+  const optionLabel = `${trade.ticker} ${trade.strike}${trade.optionType === 'C' ? 'C' : 'P'}`;
+  console.log(`[webull] Placed BUY options order: ${result.client_order_id} for ${qty} contracts of ${optionLabel}`);
 }
 
 export async function syncSettlementToWebull(
@@ -348,24 +346,22 @@ export async function syncSettlementToWebull(
   user: IUser,
   sellContracts: number,
   _sellPrice: number
-) {
+): Promise<void> {
   const creds = getCredentials(user);
   if (!creds) {
-    console.error('[webull] Missing credentials');
+    // If user doesn't have Webull credentials, skip sync (optional feature)
     return;
   }
   
   // Get account_id from subscriptions
   const subs = await getWebullSubscriptions(user);
   if (!subs.ok || !subs.data || subs.data.length === 0) {
-    console.error('[webull] No subscriptions found');
-    return;
+    throw new Error('Webull sync failed: No subscriptions found');
   }
   
   const accountId = creds.accountId || subs.data[0].account_id;
   if (!accountId) {
-    console.error('[webull] No account_id available');
-    return;
+    throw new Error('Webull sync failed: No account_id available');
   }
   
   // Place SELL options order: qty = sellContracts capped at 5
@@ -373,10 +369,10 @@ export async function syncSettlementToWebull(
   const result = await placeWebullOptionOrder(creds, accountId, trade, 'SELL', qty);
   
   if (!result.ok) {
-    console.error(`[webull] Failed to place SELL options order: ${result.error}`);
-  } else {
-    const optionLabel = `${trade.ticker} ${trade.strike}${trade.optionType === 'C' ? 'C' : 'P'}`;
-    console.log(`[webull] Placed SELL options order: ${result.client_order_id} for ${qty} contracts of ${optionLabel}`);
+    throw new Error(`Webull sync failed: ${result.error}`);
   }
+  
+  const optionLabel = `${trade.ticker} ${trade.strike}${trade.optionType === 'C' ? 'C' : 'P'}`;
+  console.log(`[webull] Placed SELL options order: ${result.client_order_id} for ${qty} contracts of ${optionLabel}`);
 }
 

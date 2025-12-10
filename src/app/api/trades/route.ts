@@ -306,6 +306,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Sync to Webull BEFORE creating trade in database
+    // If Webull sync fails, the trade will not be created
+    try {
+      // Create a temporary trade object for Webull sync
+      const tempTrade = {
+        ticker: validated.ticker,
+        strike: validated.strike,
+        optionType: validated.optionType,
+        expiryDate: expiryDate,
+        contracts: validated.contracts,
+        fillPrice: finalFillPrice,
+      } as ITrade;
+      
+      await syncTradeToWebull(tempTrade, user);
+    } catch (webullError) {
+      const errorMessage = webullError instanceof Error ? webullError.message : 'Webull sync failed';
+      console.error('Error syncing trade to Webull:', webullError);
+      return NextResponse.json({
+        error: errorMessage,
+      }, { status: 400 });
+    }
+
     // Create trade
     const trade = await Trade.create({
       userId: user._id,
@@ -386,13 +408,6 @@ export async function POST(request: NextRequest) {
     } catch (followError) {
       // Don't fail trade creation if follower notification fails
       console.error('Error notifying followers:', followError);
-    }
-
-    // Attempt to sync to Webull for this user (non-blocking if it fails)
-    try {
-      await syncTradeToWebull(trade as unknown as ITrade, user);
-    } catch (webullError) {
-      console.error('Error syncing trade to Webull:', webullError);
     }
 
     invalidateLeaderboardCache();

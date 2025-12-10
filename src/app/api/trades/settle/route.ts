@@ -163,6 +163,18 @@ export async function POST(request: NextRequest) {
     // Calculate notional for this SELL fill
     const sellNotional = validated.contracts * finalFillPrice * 100;
 
+    // Sync settlement to Webull BEFORE updating database
+    // If Webull sync fails, the settlement will not be saved
+    try {
+      await syncSettlementToWebull(trade, user, validated.contracts, finalFillPrice);
+    } catch (webullError) {
+      const errorMessage = webullError instanceof Error ? webullError.message : 'Webull sync failed';
+      console.error('Error syncing settlement to Webull:', webullError);
+      return NextResponse.json({
+        error: errorMessage,
+      }, { status: 400 });
+    }
+
     // Create SELL fill
     const fill = await TradeFill.create({
       tradeId: trade._id,
@@ -221,13 +233,6 @@ export async function POST(request: NextRequest) {
 
     // Send notification
     await notifyTradeSettled(trade, validated.contracts, finalFillPrice, user);
-
-    // Sync settlement to Webull for this user (non-blocking on error)
-    try {
-      await syncSettlementToWebull(trade, user, validated.contracts, finalFillPrice);
-    } catch (webullError) {
-      console.error('Error syncing settlement to Webull:', webullError);
-    }
 
     // Format message
     const expiryFormatted = `${String(trade.expiryDate.getMonth() + 1)}/${String(trade.expiryDate.getDate())}/${trade.expiryDate.getFullYear()}`;
