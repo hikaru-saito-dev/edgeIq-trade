@@ -210,11 +210,8 @@ export async function generateTradeSnapshot(trade: TradeSnapshotData): Promise<B
   ctx.fillText(resultText, 960, 110);
 
   // PnL value (center, large)
-  ctx.fillStyle = greenColor;
-  ctx.font = 'bold 304px Poppins';
-  ctx.textAlign = 'center';
   const pnlText = `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`;
-  ctx.fillText(pnlText, 960, 520);
+  drawFittedText(ctx, pnlText, 960, 520, 1800, greenColor, 'bold 304px Poppins', 'bold 150px Poppins');
 
   // Option/Trade details card positions
   const leftColX = 600;   // Left column X
@@ -330,10 +327,6 @@ export async function generateStatsSnapshot(stats: StatsSnapshotData): Promise<B
   const winRate = Number.isFinite(stats.winRate) ? (stats.winRate as number) : 0;
   const totalTrades = Number.isFinite(stats.totalTrades) ? (stats.totalTrades as number) : 0;
   const wins = Number.isFinite(stats.wins) ? (stats.wins as number) : 0;
-  const losses = Number.isFinite(stats.losses) ? (stats.losses as number) : 0;
-  const breakevens = Number.isFinite(stats.breakevens) ? (stats.breakevens as number) : 0;
-  const currentStreak = Number.isFinite(stats.currentStreak) ? (stats.currentStreak as number) : 0;
-  const longestStreak = Number.isFinite(stats.longestStreak) ? (stats.longestStreak as number) : 0;
 
   // Header: WON/LOST badge text based on net P&L
   ctx.fillStyle = whiteColor;
@@ -341,12 +334,9 @@ export async function generateStatsSnapshot(stats: StatsSnapshotData): Promise<B
   ctx.textAlign = 'center';
   ctx.fillText(netPnl >= 0 ? 'WON' : 'LOST', 960, 110);
 
-  // PnL value (large, centered)
-  ctx.fillStyle = greenColor;
-  ctx.font = 'bold 304px Poppins';
-  ctx.textAlign = 'center';
+ 
   const pnlText = `${netPnl >= 0 ? '+' : ''}$${netPnl.toFixed(2)}`;
-  ctx.fillText(pnlText, 960, 520);
+  drawFittedText(ctx, pnlText, 960, 520, 1800, greenColor, 'bold 304px Poppins', 'bold 150px Poppins');
 
   // Main stats cards (2x2 grid)
   const statsPositions = [
