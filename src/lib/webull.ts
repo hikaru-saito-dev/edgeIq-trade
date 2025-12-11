@@ -2,6 +2,8 @@ import crypto from 'node:crypto';
 import { IUser } from '@/models/User';
 import { ITrade } from '@/models/Trade';
 
+const WEBULL_ENABLED = process.env.WEBULL_ENABLED === 'true';
+
 type WebullCredentials = {
   appKey: string;
   appSecret: string;
@@ -312,6 +314,8 @@ async function placeWebullOptionOrder(
 }
 
 export async function syncTradeToWebull(trade: ITrade, user: IUser): Promise<void> {
+    // Webull integration is currently disabled via env flag
+    return;
   const creds = getCredentials(user);
   if (!creds) {
     // If user doesn't have Webull credentials, skip sync (optional feature)
@@ -320,18 +324,18 @@ export async function syncTradeToWebull(trade: ITrade, user: IUser): Promise<voi
   
   // Get account_id from subscriptions
   const subs = await getWebullSubscriptions(user);
-  if (!subs.ok || !subs.data || subs.data.length === 0) {
+  if (!subs.ok || !subs.data || subs.data?.length === 0) {
     throw new Error('Webull sync failed: No subscriptions found');
   }
   
-  const accountId = creds.accountId || subs.data[0].account_id;
+  const accountId = creds?.accountId || subs.data?.[0]?.account_id;
   if (!accountId) {
     throw new Error('Webull sync failed: No account_id available');
   }
   
   // Place BUY options order: qty = contracts capped at 5
   const qty = Math.max(1, Math.min(5, trade.contracts));
-  const result = await placeWebullOptionOrder(creds, accountId, trade, 'BUY', qty);
+  const result = await placeWebullOptionOrder(creds!, accountId as string, trade, 'BUY', qty);
   
   if (!result.ok) {
     throw new Error(`Webull sync failed: ${result.error}`);
@@ -347,6 +351,8 @@ export async function syncSettlementToWebull(
   sellContracts: number,
   _sellPrice: number
 ): Promise<void> {
+    // Webull integration is currently disabled via env flag
+    return;
   const creds = getCredentials(user);
   if (!creds) {
     // If user doesn't have Webull credentials, skip sync (optional feature)
@@ -355,18 +361,18 @@ export async function syncSettlementToWebull(
   
   // Get account_id from subscriptions
   const subs = await getWebullSubscriptions(user);
-  if (!subs.ok || !subs.data || subs.data.length === 0) {
+  if (!subs.ok || !subs.data || subs.data?.length === 0) {
     throw new Error('Webull sync failed: No subscriptions found');
   }
   
-  const accountId = creds.accountId || subs.data[0].account_id;
+  const accountId = creds?.accountId || subs.data?.[0]?.account_id;
   if (!accountId) {
     throw new Error('Webull sync failed: No account_id available');
   }
   
   // Place SELL options order: qty = sellContracts capped at 5
   const qty = Math.max(1, Math.min(5, sellContracts));
-  const result = await placeWebullOptionOrder(creds, accountId, trade, 'SELL', qty);
+  const result = await placeWebullOptionOrder(creds!, accountId!, trade, 'SELL', qty);
   
   if (!result.ok) {
     throw new Error(`Webull sync failed: ${result.error}`);
