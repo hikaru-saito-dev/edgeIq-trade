@@ -183,7 +183,7 @@ export default function StatsCalendarPage() {
           )}
           {!loading && !error && weeks.length > 0 && (
             <Box display="grid" gridTemplateColumns="repeat(7, minmax(0, 1fr))" gap={1}>
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
                 <Typography key={d} variant="caption" textAlign="center" sx={{ color: 'text.secondary' }}>
                   {d}
                 </Typography>
