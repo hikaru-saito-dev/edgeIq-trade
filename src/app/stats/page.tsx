@@ -338,8 +338,7 @@ export default function StatsCalendarPage() {
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 0.2,
+                            gap: 0.7,
                             width: '100%',
                           }}
                         >
