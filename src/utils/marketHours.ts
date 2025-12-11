@@ -42,7 +42,6 @@ export function convertToEST(utcTimestamp: Date): Date {
  * NOTE: Set DISABLE_MARKET_HOURS_CHECK=true in .env.local to bypass market hours for testing
  */
 export function isMarketOpen(timestamp?: Date): boolean {
-  return true;
   const checkTime = timestamp || new Date();
   
   // Get EST/EDT time components using Intl API
@@ -55,11 +54,14 @@ export function isMarketOpen(timestamp?: Date): boolean {
   });
 
   const parts = formatter.formatToParts(checkTime);
-  // const weekday = parts.find(p => p.type === 'weekday')?.value || '';
+  const weekday = parts.find(p => p.type === 'weekday')?.value || '';
   const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0');
   const minute = parseInt(parts.find(p => p.type === 'minute')?.value || '0');
   
-  
+  if (weekday === 'Sat' || weekday === 'Sun') {
+    return false;
+  }
+
   // Market hours: 09:30 - 16:30 EST
   const marketOpenHour = 9;
   const marketOpenMinute = 30;
