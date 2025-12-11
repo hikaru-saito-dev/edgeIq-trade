@@ -298,24 +298,30 @@ export default function StatsCalendarPage() {
                    return (
                      <Box
                        key={d.date}
-                       sx={{
-                         p: { xs: 0.6, md: 0.75 },
-                         borderRadius: 0,
-                         minHeight: { xs: 92, md: 110 },
-                         border: `1px solid ${
-                           isToday
-                             ? alpha(theme.palette.primary.main, 0.8)
-                             : alpha(theme.palette.divider, 0.35)
-                         }`,
-                         backgroundColor: alpha(theme.palette.background.default, isDark ? 0.55 : 0.9),
+                      sx={{
+                        p: { xs: 0.6, md: 0.75 },
+                        borderRadius: 0,
+                        minHeight: { xs: 92, md: 110 },
+                        border: `1px solid ${
+                          isToday
+                            ? alpha(theme.palette.primary.main, 0.8)
+                            : alpha(theme.palette.divider, 0.35)
+                        }`,
+                        backgroundColor: isEmpty
+                          ? alpha(theme.palette.background.default, isDark ? 0.55 : 0.9)
+                          : pnl > 0
+                            ? alpha(theme.palette.success.main, 0.2)
+                            : pnl < 0
+                              ? alpha(theme.palette.error.main, 0.25)
+                              : alpha(theme.palette.background.default, isDark ? 0.55 : 0.9),
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         textAlign: 'center',
                         gap: 0.35,
-                         opacity: muted ? 0.45 : 1,
-                         boxShadow: 'none',
-                       }}
+                        opacity: muted ? 0.45 : 1,
+                        boxShadow: 'none',
+                      }}
                      >
                       <Typography
                         variant="body2"
