@@ -131,6 +131,23 @@ export default function TradeCard({ trade, onUpdate, disableDelete, onAction }: 
   const handleDownloadSnapshot = async () => {
     setDownloadingSnapshot(true);
     try {
+      // Fetch current user data to get profile picture and alias
+      let profilePictureUrl: string | undefined;
+      let alias: string | undefined;
+      
+      try {
+        const userResponse = await apiRequest('/api/user', { userId, companyId, method: 'GET' });
+        if (userResponse.ok) {
+          const userData = await userResponse.json() as { user?: { whopAvatarUrl?: string; alias?: string } };
+          if (userData.user) {
+            profilePictureUrl = userData.user.whopAvatarUrl?.trim() || undefined;
+            alias = userData.user.alias?.trim() || undefined;
+          }
+        }
+      } catch (error) {
+        // Continue without profile picture/alias if fetch fails
+      }
+
       const buy = trade.totalBuyNotional ?? trade.contracts * trade.fillPrice * 100;
       const snapshotData: TradeSnapshotData = {
         result: trade.outcome ?? (trade.status === 'OPEN' ? 'OPEN' : 'PENDING'),
@@ -142,6 +159,8 @@ export default function TradeCard({ trade, onUpdate, disableDelete, onAction }: 
         contracts: trade.contracts,
         entryPrice: trade.fillPrice,
         notional: buy,
+        profilePictureUrl,
+        alias,
       };
 
       const blob = await generateTradeSnapshot(snapshotData);

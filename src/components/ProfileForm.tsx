@@ -925,6 +925,8 @@ export default function ProfileForm() {
                     currentStreak: personalStats.currentStreak,
                     longestStreak: personalStats.longestStreak,
                     userName: userData?.alias || userData?.whopDisplayName || userData?.whopUsername,
+                    profilePictureUrl: userData?.whopAvatarUrl?.trim() || undefined,
+                    alias: userData?.alias?.trim() || undefined,
                   };
                   const blob = await generateStatsSnapshot(snapshotData);
                   downloadBlob(blob, `personal-stats-${Date.now()}.png`);
@@ -1669,6 +1671,25 @@ export default function ProfileForm() {
               onClick={async () => {
                 setDownloadingCompanySnapshot(true);
                 try {
+                  // Get company owner from users list
+                  let companyOwnerProfilePictureUrl: string | undefined;
+                  let companyOwnerAlias: string | undefined;
+                  
+                  try {
+                    const usersResponse = await apiRequest('/api/users?page=1&pageSize=100', { userId, companyId, method: 'GET' });
+                    if (usersResponse.ok) {
+                      const usersData = await usersResponse.json() as { users?: Array<{ role: string; whopAvatarUrl?: string; alias?: string }> };
+                      const companyOwner = usersData.users?.find(u => u.role === 'companyOwner');
+                      if (companyOwner) {
+                        companyOwnerProfilePictureUrl = companyOwner.whopAvatarUrl?.trim() || undefined;
+                        companyOwnerAlias = companyOwner.alias?.trim() || undefined;
+                      }
+                    }
+                  } catch (error) {
+                    console.warn('Failed to fetch company owner data for snapshot:', error);
+                    // Continue without profile picture/alias if fetch fails
+                  }
+
                   const snapshotData: StatsSnapshotData = {
                     type: 'company',
                     winRate: companyStats.winRate,
@@ -1681,6 +1702,8 @@ export default function ProfileForm() {
                     currentStreak: companyStats.currentStreak,
                     longestStreak: companyStats.longestStreak,
                     companyName: userData?.companyName || userData?.whopDisplayName,
+                    profilePictureUrl: companyOwnerProfilePictureUrl,
+                    alias: companyOwnerAlias,
                   };
                   const blob = await generateStatsSnapshot(snapshotData);
                   downloadBlob(blob, `company-stats-${Date.now()}.png`);

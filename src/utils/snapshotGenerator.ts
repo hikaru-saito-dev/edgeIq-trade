@@ -8,6 +8,8 @@ export interface TradeSnapshotData {
   contracts: number;
   entryPrice: number; // Entry price per contract
   notional?: number; // Optional override for notional (defaults to contracts * entryPrice * 100)
+  profilePictureUrl?: string; // Creator's profile picture URL
+  alias?: string; // Creator's alias
 }
 
 export interface StatsSnapshotData {
@@ -23,6 +25,8 @@ export interface StatsSnapshotData {
   longestStreak?: number;
   userName?: string;
   companyName?: string;
+  profilePictureUrl?: string; // User's or company owner's profile picture URL
+  alias?: string; // User's or company owner's alias
 }
 
 /**
@@ -39,13 +43,58 @@ function resolveAssetUrl(src: string): string {
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = resolveAssetUrl(src);
-  });
+  // Check if it's a cross-origin URL
+  const isCrossOrigin = src.startsWith('http://') || src.startsWith('https://');
+  
+  if (isCrossOrigin) {
+    // Fetch as blob to avoid CORS issues
+    try {
+      return fetch(src)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`Failed to fetch image: ${response.statusText}`);
+          }
+          return response.blob();
+        })
+        .then((blob) => {
+          const blobUrl = URL.createObjectURL(blob);
+          
+          return new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+              URL.revokeObjectURL(blobUrl); // Clean up blob URL
+              if (img.complete && img.naturalWidth > 0) {
+                resolve(img);
+              } else {
+                reject(new Error('Image failed to load'));
+              }
+            };
+            img.onerror = () => {
+              URL.revokeObjectURL(blobUrl); // Clean up on error
+              reject(new Error('Image load error'));
+            };
+            img.src = blobUrl;
+          });
+        });
+    } catch (error) {
+      return Promise.reject(new Error(`Failed to load image: ${error}`));
+    }
+  } else {
+    // Same-origin image, load directly
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        if (img.complete && img.naturalWidth > 0) {
+          resolve(img);
+        } else {
+          reject(new Error('Image failed to load'));
+        }
+      };
+      img.onerror = () => reject(new Error('Image load error'));
+      img.src = resolveAssetUrl(src);
+    });
+  }
 }
 
 /**
@@ -276,6 +325,55 @@ export async function generateTradeSnapshot(trade: TradeSnapshotData): Promise<B
   drawFittedText(ctx, `${trade.ticker} ${trade.strike}${trade.optionType}`, 118, 730, 400, greenColor, primaryFont, fallbackFont,'');
   drawFittedText(ctx, `Expires ${expiryStr}`, 118, 780, 400, greenColor, primaryFont, fallbackFont, '');
 
+  // Draw profile picture and alias (bottom left area)
+  if (trade.profilePictureUrl || trade.alias) {
+    const profileX = 96;
+    const profileY = 960; // Bottom left area
+    const profileSize = 80; // Profile picture size
+    let profileImageLoaded = false;
+
+    // Draw profile picture if available
+    const profileUrl = trade.profilePictureUrl?.trim();
+    if (profileUrl && profileUrl.length > 0 && (profileUrl.startsWith('http://') || profileUrl.startsWith('https://'))) {
+      try {
+        const profileImg = await loadImage(profileUrl);
+        if (profileImg && profileImg.complete && profileImg.naturalWidth > 0) {
+          // Draw circular profile picture
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(profileX + profileSize / 2, profileY + profileSize / 2, profileSize / 2, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(profileImg, profileX, profileY, profileSize, profileSize);
+          ctx.restore();
+          profileImageLoaded = true;
+        }
+      } catch (error) {
+        // Image failed to load, will use placeholder
+      }
+    }
+
+    // Draw placeholder profile picture if image didn't load or no URL provided
+    if (!profileImageLoaded) {
+      // Create a placeholder circular profile picture
+      ctx.save();
+      ctx.fillStyle = greenColor;
+      ctx.beginPath();
+      ctx.arc(profileX + profileSize / 2, profileY + profileSize / 2, profileSize / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Draw alias next to profile picture
+    if (trade.alias) {
+      ctx.fillStyle = greenColor;
+      ctx.font = 'bold 32px Poppins';
+      ctx.textAlign = 'left';
+      const aliasX = profileX + profileSize + 15; // 15px gap from profile picture
+      const aliasY = profileY + profileSize / 2 + 10; // Vertically centered with profile picture
+      drawFittedText(ctx, trade.alias, aliasX, aliasY, 350, greenColor, 'bold 32px Poppins', 'bold 28px Poppins', '');
+    }
+  }
+
   // Convert to blob
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -347,7 +445,7 @@ export async function generateStatsSnapshot(stats: StatsSnapshotData): Promise<B
   const statsPositions = [
     { label: 'Win Rate', value: `${winRate.toFixed(1)}%`, x: 600, labelY: 640, valueY: 710, color: greenColor },
     { label: 'ROI', value: `${roi >= 0 ? '+' : ''}${roi.toFixed(2)}%`, x: 970, labelY: 640, valueY: 710, color: roi >= 0 ? greenColor : '#ef4444' },
-    { label: 'Wins', value: `${wins}`, x: 600, labelY: 815, valueY: 885, color: netPnl >= 0 ? greenColor : '#ef4444' },
+    { label: 'Wins', value: `${wins}`, x: 600, labelY: 815, valueY: 885, color: greenColor },
     { label: 'Total Trades', value: `${totalTrades}`, x: 970, labelY: 815, valueY: 885, color: greenColor },
   ];
 
@@ -367,6 +465,55 @@ export async function generateStatsSnapshot(stats: StatsSnapshotData): Promise<B
     ? (stats.userName ? `${stats.userName} • Personal Stats` : 'Personal Stats')
     : (stats.companyName ? `${stats.companyName} • Company Stats` : 'Company Stats');
   drawFittedText(ctx, title, 118, 730, 400, greenColor, '400 42px Poppins', '400 36px Poppins','');
+
+  // Draw profile picture and alias (bottom left area)
+  if (stats.profilePictureUrl || stats.alias) {
+    const profileX = 96;
+    const profileY = 960; // Bottom left area
+    const profileSize = 80; // Profile picture size
+    let profileImageLoaded = false;
+
+    // Draw profile picture if available
+    const profileUrl = stats.profilePictureUrl?.trim();
+    if (profileUrl && profileUrl.length > 0 && (profileUrl.startsWith('http://') || profileUrl.startsWith('https://'))) {
+      try {
+        const profileImg = await loadImage(profileUrl);
+        if (profileImg && profileImg.complete && profileImg.naturalWidth > 0) {
+          // Draw circular profile picture
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(profileX + profileSize / 2, profileY + profileSize / 2, profileSize / 2, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(profileImg, profileX, profileY, profileSize, profileSize);
+          ctx.restore();
+          profileImageLoaded = true;
+        }
+      } catch (error) {
+        // Image failed to load, will use placeholder
+      }
+    }
+
+    // Draw placeholder profile picture if image didn't load or no URL provided
+    if (!profileImageLoaded) {
+      // Create a placeholder circular profile picture
+      ctx.save();
+      ctx.fillStyle = greenColor;
+      ctx.beginPath();
+      ctx.arc(profileX + profileSize / 2, profileY + profileSize / 2, profileSize / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Draw alias next to profile picture
+    if (stats.alias) {
+      ctx.fillStyle = greenColor;
+      ctx.font = 'bold 32px Poppins';
+      ctx.textAlign = 'left';
+      const aliasX = profileX + profileSize + 15; // 15px gap from profile picture
+      const aliasY = profileY + profileSize / 2 + 10; // Vertically centered with profile picture
+      drawFittedText(ctx, stats.alias, aliasX, aliasY, 350, greenColor, 'bold 32px Poppins', 'bold 28px Poppins', '');
+    }
+  }
 
   // Convert to blob
   return new Promise((resolve, reject) => {
