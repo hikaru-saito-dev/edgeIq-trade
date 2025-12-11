@@ -86,6 +86,7 @@ interface UserData {
   role: 'companyOwner' | 'owner' | 'admin' | 'member';
   optIn: boolean;
   hideLeaderboardFromMembers?: boolean;
+  hideCompanyStatsFromMembers?: boolean;
   whopUserId: string;
   companyId?: string;
   companyName?: string;
@@ -118,6 +119,7 @@ export default function ProfileForm() {
   const [role, setRole] = useState<'companyOwner' | 'owner' | 'admin' | 'member'>('member');
   const [optIn, setOptIn] = useState(false);
   const [hideLeaderboardFromMembers, setHideLeaderboardFromMembers] = useState(false);
+  const [hideCompanyStatsFromMembers, setHideCompanyStatsFromMembers] = useState(false);
   const [webhooks, setWebhooks] = useState<Array<{ id: string; name: string; url: string; type: 'whop' | 'discord' }>>([]);
   const [notifyOnSettlement, setNotifyOnSettlement] = useState(false);
   const [onlyNotifyWinningSettlements, setOnlyNotifyWinningSettlements] = useState(false);
@@ -222,6 +224,7 @@ export default function ProfileForm() {
       // Company ID, name, and description are auto-set from Whop, no need to set state
       setOptIn(profileData.user.optIn || false);
       setHideLeaderboardFromMembers(profileData.user.hideLeaderboardFromMembers ?? false);
+      setHideCompanyStatsFromMembers(profileData.user.hideCompanyStatsFromMembers ?? false);
       setWebhooks(profileData.user.webhooks || []);
       setNotifyOnSettlement(profileData.user.notifyOnSettlement ?? false);
       setOnlyNotifyWinningSettlements(profileData.user.onlyNotifyWinningSettlements ?? false);
@@ -397,6 +400,7 @@ export default function ProfileForm() {
         alias: string;
         optIn?: boolean;
         hideLeaderboardFromMembers?: boolean;
+        hideCompanyStatsFromMembers?: boolean;
         webhooks?: typeof webhooks;
         notifyOnSettlement?: boolean;
         onlyNotifyWinningSettlements?: boolean;
@@ -419,11 +423,12 @@ export default function ProfileForm() {
       };
 
       // Only owners and companyOwners can set opt-in and membership plans
-      // Only companyOwners can set hideLeaderboardFromMembers
+      // Only companyOwners can set hideLeaderboardFromMembers and hideCompanyStatsFromMembers
       // Company ID, name, and description are auto-set from Whop
       if (role === 'companyOwner') {
         updateData.optIn = optIn;
         updateData.hideLeaderboardFromMembers = hideLeaderboardFromMembers;
+        updateData.hideCompanyStatsFromMembers = hideCompanyStatsFromMembers;
         updateData.membershipPlans = validPlans;
       }
 
@@ -1462,6 +1467,37 @@ export default function ProfileForm() {
                   </Typography>
                   <Typography variant="caption" sx={{ color: 'var(--text-muted)', display: 'block' }}>
                     When enabled, users with the member role will not be able to see the leaderboard tab. They will only see their Profile and Trades tabs.
+                  </Typography>
+                </Box>
+              }
+              sx={{ mt: 2 }}
+            />
+          )}
+
+          {/* Hide Company Stats from Members and Admins */}
+          {role === 'companyOwner' && (
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={hideCompanyStatsFromMembers}
+                  onChange={(e) => setHideCompanyStatsFromMembers(e.target.checked)}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: '#22c55e',
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: '#22c55e',
+                    },
+                  }}
+                />
+              }
+              label={
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
+                    Hide Company Stats from Members and Admins
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'var(--text-muted)', display: 'block' }}>
+                    When enabled, users with the member or admin role will not be able to see the company stats toggle on the Performance Calendar page. They will only see their personal stats.
                   </Typography>
                 </Box>
               }

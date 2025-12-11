@@ -133,13 +133,15 @@ export async function GET(request: NextRequest) {
 
     // Get hideLeaderboardFromMembers setting from company owner
     let hideLeaderboardFromMembers = false;
-    if (user?.companyId && role === 'member') {
+    let hideCompanyStatsFromMembers = false;
+    if (user?.companyId && (role === 'member' || role === 'admin')) {
       const companyOwner = await User.findOne({ 
         companyId: user.companyId, 
         role: 'companyOwner' 
       }).lean();
       if (companyOwner) {
         hideLeaderboardFromMembers = (companyOwner as unknown as IUser).hideLeaderboardFromMembers ?? false;
+        hideCompanyStatsFromMembers = (companyOwner as unknown as IUser).hideCompanyStatsFromMembers ?? false;
       }
     }
 
@@ -148,7 +150,8 @@ export async function GET(request: NextRequest) {
       userId,
       companyId: user?.companyId || companyId || null,
       isAuthorized,
-      hideLeaderboardFromMembers: role === 'member' ? hideLeaderboardFromMembers : undefined
+      hideLeaderboardFromMembers: role === 'member' ? hideLeaderboardFromMembers : undefined,
+      hideCompanyStatsFromMembers: (role === 'member' || role === 'admin') ? hideCompanyStatsFromMembers : undefined
     });
   } catch {
     return NextResponse.json({ role: 'none', isAuthorized: false }, { status: 500 });

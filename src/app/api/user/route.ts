@@ -228,6 +228,7 @@ const updateUserSchema = z.object({
   companyDescription: z.string().max(500).optional(), // Only companyOwners can set
   optIn: z.boolean().optional(), // Only owners and companyOwners can opt-in
   hideLeaderboardFromMembers: z.boolean().optional(), // Only companyOwners can set
+  hideCompanyStatsFromMembers: z.boolean().optional(), // Only companyOwners can set
   webhooks: z.array(webhookSchema).optional(), // Array of webhooks with names
   notifyOnSettlement: z.boolean().optional(),
   onlyNotifyWinningSettlements: z.boolean().optional(), // Only send settlement webhooks for winning trades
@@ -347,6 +348,7 @@ export async function GET() {
         webullAccountId: user.webullAccountId || null,
         membershipPlans: user.membershipPlans || [],
         hideLeaderboardFromMembers: user.hideLeaderboardFromMembers ?? false,
+        hideCompanyStatsFromMembers: user.hideCompanyStatsFromMembers ?? false,
         followOfferEnabled: user.followOfferEnabled ?? false,
         followOfferPriceCents: user.followOfferPriceCents ?? 0,
         followOfferNumPlays: user.followOfferNumPlays ?? 0,
@@ -431,6 +433,11 @@ export async function PATCH(request: NextRequest) {
       // Only companyOwners can set hideLeaderboardFromMembers
       if (validated.hideLeaderboardFromMembers !== undefined) {
         user.hideLeaderboardFromMembers = validated.hideLeaderboardFromMembers;
+      }
+      
+      // Only companyOwners can set hideCompanyStatsFromMembers
+      if (validated.hideCompanyStatsFromMembers !== undefined) {
+        user.hideCompanyStatsFromMembers = validated.hideCompanyStatsFromMembers;
       }
     } else {
       // Admins cannot opt-in or manage membership plans

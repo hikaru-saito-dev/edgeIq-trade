@@ -70,7 +70,7 @@ function buildCalendar(days: CalendarDay[], monthAnchor: Date) {
 }
 
 export default function StatsCalendarPage() {
-  const { userId, companyId, role } = useAccess();
+  const { userId, companyId, role, hideCompanyStatsFromMembers } = useAccess();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -141,8 +141,13 @@ export default function StatsCalendarPage() {
           <Typography variant="h5" fontWeight={700}>
             Performance Calendar
           </Typography>
-          {
-            role === 'companyOwner' || role === 'owner' && (
+          {(() => {
+            const showScopeToggle =
+              role === 'companyOwner' ||
+              role === 'owner' ||
+              (!hideCompanyStatsFromMembers && (role === 'admin' || role === 'member'));
+            if (!showScopeToggle) return null;
+            return (
               <ToggleButtonGroup
                 size="small"
                 exclusive
@@ -152,8 +157,8 @@ export default function StatsCalendarPage() {
                 <ToggleButton value="personal">Personal</ToggleButton>
                 <ToggleButton value="company">Company</ToggleButton>
               </ToggleButtonGroup>
-            )
-          }
+            );
+          })()}
           <Box
             display="flex"
             alignItems="center"
