@@ -62,7 +62,7 @@ async function fetchAccessRole(experienceId?: string | null): Promise<{
     if (experienceId) {
       url += `?experience=${encodeURIComponent(experienceId)}`;
     } else {
-      return { role: 'none', isAuthorized: false, userId: null, companyId: null, hideLeaderboardFromMembers: false };
+      return { role: 'none', isAuthorized: false, userId: null, companyId: null, hideLeaderboardFromMembers: false, hideCompanyStatsFromMembers: false };
     }
 
     const response = await fetch(url, {
@@ -71,7 +71,7 @@ async function fetchAccessRole(experienceId?: string | null): Promise<{
     });
 
     if (!response.ok) {
-      return { role: 'none', isAuthorized: false, userId: null, companyId: null, hideLeaderboardFromMembers: false };
+      return { role: 'none', isAuthorized: false, userId: null, companyId: null, hideLeaderboardFromMembers: false, hideCompanyStatsFromMembers: false };
     }
 
     const data = await response.json();
@@ -80,15 +80,16 @@ async function fetchAccessRole(experienceId?: string | null): Promise<{
     const userId = data.userId || null;
     const companyId = data.companyId || null;
     const hideLeaderboardFromMembers = data.hideLeaderboardFromMembers ?? false;
+    const hideCompanyStatsFromMembers = data.hideCompanyStatsFromMembers ?? false;
     
     if (role === 'companyOwner' || role === 'owner' || role === 'admin' || role === 'member' || role === 'none') {
-      return { role, isAuthorized, userId, companyId, hideLeaderboardFromMembers };
+      return { role, isAuthorized, userId, companyId, hideLeaderboardFromMembers, hideCompanyStatsFromMembers };
     }
 
-    return { role: 'none', isAuthorized: false, userId: null, companyId: null, hideLeaderboardFromMembers: false };
+    return { role: 'none', isAuthorized: false, userId: null, companyId: null, hideLeaderboardFromMembers: false, hideCompanyStatsFromMembers: false };
   } catch (error) {
     console.error('Failed to load access role', error);
-    return { role: 'none', isAuthorized: false, userId: null, companyId: null, hideLeaderboardFromMembers: false };
+    return { role: 'none', isAuthorized: false, userId: null, companyId: null, hideLeaderboardFromMembers: false, hideCompanyStatsFromMembers: false };
   }
 }
 
