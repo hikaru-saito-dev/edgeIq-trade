@@ -144,9 +144,6 @@ export default function StatsCalendarPage() {
           {(() => {
             const showScopeToggle =
               role === 'companyOwner' || role === 'owner' || (!hideCompanyStatsFromMembers && (role === 'admin' || role === 'member'));
-            console.log('role', role);
-            console.log('hideCompanyStatsFromMembers', hideCompanyStatsFromMembers);
-            console.log('showScopeToggle', showScopeToggle);
             if (!showScopeToggle) return null;
             return (
               <ToggleButtonGroup
