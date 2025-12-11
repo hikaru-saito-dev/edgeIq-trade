@@ -114,6 +114,28 @@ async function aggregateTradeStats(match: Record<string, unknown>): Promise<Aggr
             2,
           ],
         },
+        roi: {
+          $round: [
+            {
+              $cond: [
+                { $gt: [{ $ifNull: ['$metricsDoc.totalBuyNotional', 0] }, 0] },
+                {
+                  $multiply: [
+                    {
+                      $divide: [
+                        { $ifNull: ['$metricsDoc.netPnl', 0] },
+                        { $ifNull: ['$metricsDoc.totalBuyNotional', 0] },
+                      ],
+                    },
+                    100,
+                  ],
+                },
+                0,
+              ],
+            },
+            2,
+          ],
+        },
         averagePnl: {
           $round: [
             {
@@ -143,6 +165,7 @@ async function aggregateTradeStats(match: Record<string, unknown>): Promise<Aggr
         netPnl: { $round: [{ $ifNull: ['$metricsDoc.netPnl', 0] }, 2] },
         totalBuyNotional: { $round: [{ $ifNull: ['$metricsDoc.totalBuyNotional', 0] }, 2] },
         totalSellNotional: { $round: [{ $ifNull: ['$metricsDoc.totalSellNotional', 0] }, 2] },
+        roi: { $ifNull: ['$roi', 0] },
         averagePnl: { $ifNull: ['$averagePnl', 0] },
         tradeOutcomes: '$tradeOutcomes',
       },
