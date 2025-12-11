@@ -70,7 +70,7 @@ function buildCalendar(days: CalendarDay[], monthAnchor: Date) {
 }
 
 export default function StatsCalendarPage() {
-  const { userId, companyId } = useAccess();
+  const { userId, companyId, role } = useAccess();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -141,25 +141,27 @@ export default function StatsCalendarPage() {
           <Typography variant="h5" fontWeight={700}>
             Performance Calendar
           </Typography>
-          <ToggleButtonGroup
-            size="small"
-            exclusive
-            value={scope}
-            onChange={(_, val) => val && setScope(val)}
-          >
-            <ToggleButton value="personal">Personal</ToggleButton>
-            <ToggleButton value="company">Company</ToggleButton>
-          </ToggleButtonGroup>
+          {
+            role === 'companyOwner' || role === 'owner' && (
+              <ToggleButtonGroup
+                size="small"
+                exclusive
+                value={scope}
+                onChange={(_, val) => val && setScope(val)}
+              >
+                <ToggleButton value="personal">Personal</ToggleButton>
+                <ToggleButton value="company">Company</ToggleButton>
+              </ToggleButtonGroup>
+            )
+          }
           <Box
             display="flex"
             alignItems="center"
             gap={0.5}
             flexWrap="wrap"
             sx={{
-
               px: 1,
               py: 0.25,
-              boxShadow: isDark ? '0 8px 20px rgba(0,0,0,0.35)' : '0 6px 18px rgba(0,0,0,0.12)',
             }}
           >
             <IconButton
