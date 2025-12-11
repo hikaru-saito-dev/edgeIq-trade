@@ -301,7 +301,7 @@ export default function StatsCalendarPage() {
                        sx={{
                          p: { xs: 0.6, md: 0.75 },
                          borderRadius: 0,
-                         minHeight: { xs: 92, md: 120 },
+                         minHeight: { xs: 92, md: 110 },
                          border: `1px solid ${
                            isToday
                              ? alpha(theme.palette.primary.main, 0.8)
