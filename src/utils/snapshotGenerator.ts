@@ -45,7 +45,7 @@ function resolveAssetUrl(src: string): string {
 function loadImage(src: string): Promise<HTMLImageElement> {
   // Check if it's a cross-origin URL
   const isCrossOrigin = src.startsWith('http://') || src.startsWith('https://');
-  
+
   if (isCrossOrigin) {
     // Fetch as blob to avoid CORS issues
     try {
@@ -58,7 +58,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
         })
         .then((blob) => {
           const blobUrl = URL.createObjectURL(blob);
-          
+
           return new Promise<HTMLImageElement>((resolve, reject) => {
             const img = new Image();
             img.onload = () => {
@@ -115,7 +115,11 @@ async function loadPoppinsFont(): Promise<void> {
     const font = new FontFace('Poppins', 'url(https://fonts.gstatic.com/s/poppins/v20/pxiEyp8kv8JHgFVrJJfecg.woff2)');
     font.load().then(() => {
       document.fonts.add(font);
-      resolve();
+      // Wait for fonts to be ready before resolving
+      document.fonts.ready.then(() => {
+        // Small delay to ensure font is fully available
+        setTimeout(() => resolve(), 100);
+      }).catch(() => resolve());
     }).catch(() => {
       // Fallback if font fails to load
       resolve();
@@ -184,10 +188,10 @@ function drawFittedText(
 ): number {
   ctx.save();
   ctx.fillStyle = color;
-  if(center === "center") {
+  if (center === "center") {
     ctx.textAlign = 'center'
   } else {
-      ctx.textAlign = 'left';
+    ctx.textAlign = 'left';
   }
 
   // Try preferred font (e.g., 42px)
@@ -265,7 +269,7 @@ export async function generateTradeSnapshot(trade: TradeSnapshotData): Promise<B
 
   // PnL value (center, large)
   const pnlText = `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`;
-  drawFittedText(ctx, pnlText, 960, 520, 1800, greenColor, 'bold 304px Poppins', 'bold 150px Poppins','center');
+  drawFittedText(ctx, pnlText, 960, 520, 1800, greenColor, 'bold 304px Poppins', 'bold 150px Poppins', 'center');
 
   // Option/Trade details card positions
   const leftColX = 600;   // Left column X
@@ -322,7 +326,7 @@ export async function generateTradeSnapshot(trade: TradeSnapshotData): Promise<B
   // Subtitle with ticker for context (left side, below BET text in bg)
   const primaryFont = '400 42px Poppins';
   const fallbackFont = '400 36px Poppins';
-  drawFittedText(ctx, `${trade.ticker} ${trade.strike}${trade.optionType}`, 118, 730, 400, greenColor, primaryFont, fallbackFont,'');
+  drawFittedText(ctx, `${trade.ticker} ${trade.strike}${trade.optionType}`, 118, 730, 400, greenColor, primaryFont, fallbackFont, '');
   drawFittedText(ctx, `Expires ${expiryStr}`, 118, 780, 400, greenColor, primaryFont, fallbackFont, '');
 
   // Draw profile picture and alias (bottom left area)
@@ -437,7 +441,7 @@ export async function generateStatsSnapshot(stats: StatsSnapshotData): Promise<B
   ctx.textAlign = 'center';
   ctx.fillText(netPnl >= 0 ? 'WON' : 'LOST', 960, 110);
 
- 
+
   const pnlText = `${netPnl >= 0 ? '+' : ''}$${netPnl.toFixed(2)}`;
   drawFittedText(ctx, pnlText, 960, 520, 1800, greenColor, 'bold 304px Poppins', 'bold 150px Poppins', 'center');
 
@@ -464,7 +468,7 @@ export async function generateStatsSnapshot(stats: StatsSnapshotData): Promise<B
   const title = stats.type === 'personal'
     ? (stats.userName ? `${stats.userName} • Personal Stats` : 'Personal Stats')
     : (stats.companyName ? `${stats.companyName} • Company Stats` : 'Company Stats');
-  drawFittedText(ctx, title, 118, 730, 400, greenColor, '400 42px Poppins', '400 36px Poppins','');
+  drawFittedText(ctx, title, 118, 730, 400, greenColor, '400 42px Poppins', '400 36px Poppins', '');
 
   // Draw profile picture and alias (bottom left area)
   if (stats.profilePictureUrl || stats.alias) {
