@@ -43,6 +43,7 @@ export default function Navigation() {
 
   const navItems = [
     ...(isAuthorized && !loading ? [{ label: 'Trades', href: '/trades' }] : []),
+    ...(isAuthorized && !loading ? [{ label: 'Stats', href: '/stats' }] : []),
     ...(isAuthorized && !loading ? [{ label: 'Following', href: '/following' }] : []),
     // Hide leaderboard from members if company owner has enabled the setting
     ...(!loading && isAuthorized && !(role === 'member' && hideLeaderboardFromMembers)
@@ -148,6 +149,28 @@ export default function Navigation() {
               }}
             >
               Trades
+            </Button>
+          )}
+          {!loading && isAuthorized && (
+            <Button 
+              component={Link} 
+              href="/stats"
+              sx={{
+                  color: navTextColor,
+                  fontWeight: 500,
+                  textTransform: 'none',
+                  fontSize: '0.95rem',
+                  px: 2,
+                  borderRadius: 1,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    color: navTextColor,
+                    background: navHoverBg,
+                    transform: 'translateY(-1px)',
+                  },
+                }}
+            >
+              Stats
             </Button>
           )}
             {!loading && isAuthorized && (

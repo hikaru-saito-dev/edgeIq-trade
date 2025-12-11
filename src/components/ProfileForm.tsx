@@ -142,6 +142,8 @@ export default function ProfileForm() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [personalStats, setPersonalStats] = useState<UserStats | null>(null);
   const [companyStats, setCompanyStats] = useState<UserStats | null>(null);
+  const [statsRange, setStatsRange] = useState<'7d' | '30d' | '90d' | 'ytd' | 'all'>('all');
+  const [loadingStatsRange, setLoadingStatsRange] = useState(false);
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -192,6 +194,13 @@ export default function ProfileForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthorized]);
 
+  useEffect(() => {
+    if (isAuthorized && userId) {
+      loadStatsForRange(statsRange);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statsRange, isAuthorized, userId, companyId]);
+
   const fetchProfile = async (userId: string | null, companyId: string | null) => {
     if (!isAuthorized) return;
     setLoading(true);
@@ -239,6 +248,53 @@ export default function ProfileForm() {
       setTrades([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadStatsForRange = async (range: '7d' | '30d' | '90d' | 'ytd' | 'all') => {
+    setLoadingStatsRange(true);
+    try {
+      const res = await apiRequest(`/api/stats/summary?range=${range}&scope=both`, { userId, companyId });
+      const json = await res.json();
+      if (res.ok) {
+        if (json.personalStats) {
+          setPersonalStats({
+            totalTrades: json.personalStats.totalTrades ?? 0,
+            winCount: json.personalStats.winCount ?? 0,
+            lossCount: json.personalStats.lossCount ?? 0,
+            breakevenCount: json.personalStats.breakevenCount ?? 0,
+            winRate: json.personalStats.winRate ?? 0,
+            roi: json.personalStats.roi ?? 0,
+            netPnl: json.personalStats.netPnl ?? 0,
+            totalBuyNotional: json.personalStats.totalBuyNotional ?? 0,
+            totalSellNotional: json.personalStats.totalSellNotional ?? 0,
+            averagePnl: json.personalStats.averagePnl ?? 0,
+            currentStreak: json.personalStats.currentStreak ?? 0,
+            longestStreak: json.personalStats.longestStreak ?? 0,
+          });
+        }
+        if (json.companyStats) {
+          setCompanyStats({
+            totalTrades: json.companyStats.totalTrades ?? 0,
+            winCount: json.companyStats.winCount ?? 0,
+            lossCount: json.companyStats.lossCount ?? 0,
+            breakevenCount: json.companyStats.breakevenCount ?? 0,
+            winRate: json.companyStats.winRate ?? 0,
+            roi: json.companyStats.roi ?? 0,
+            netPnl: json.companyStats.netPnl ?? 0,
+            totalBuyNotional: json.companyStats.totalBuyNotional ?? 0,
+            totalSellNotional: json.companyStats.totalSellNotional ?? 0,
+            averagePnl: json.companyStats.averagePnl ?? 0,
+            currentStreak: json.companyStats.currentStreak ?? 0,
+            longestStreak: json.companyStats.longestStreak ?? 0,
+          });
+        }
+        setStatsRange(range);
+      }
+    } catch (err) {
+      console.error('Failed to load stats range', err);
+    } finally {
+      setLoadingStatsRange(false);
     }
   };
 
@@ -903,6 +959,24 @@ export default function ProfileForm() {
             <Typography variant="h5" component="h2" sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
             Personal Stats
           </Typography>
+            <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <InputLabel id="personal-stats-range-label">Range</InputLabel>
+                <Select
+                  labelId="personal-stats-range-label"
+                  label="Range"
+                  value={statsRange}
+                  onChange={(e) => setStatsRange(e.target.value as any)}
+                >
+                  <MenuItem value="7d">Last 7 days</MenuItem>
+                  <MenuItem value="30d">Last 30 days</MenuItem>
+                  <MenuItem value="90d">Last 90 days</MenuItem>
+                  <MenuItem value="ytd">Year to date</MenuItem>
+                  <MenuItem value="all">All time</MenuItem>
+                </Select>
+              </FormControl>
+              {loadingStatsRange && <CircularProgress size={18} />}
+            </Box>
             <Button
               variant="outlined"
               color="primary"
@@ -1661,6 +1735,24 @@ export default function ProfileForm() {
             <Typography variant="h5" component="h2" sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
               Company Stats
           </Typography>
+            <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <InputLabel id="company-stats-range-label">Range</InputLabel>
+                <Select
+                  labelId="company-stats-range-label"
+                  label="Range"
+                  value={statsRange}
+                  onChange={(e) => setStatsRange(e.target.value as any)}
+                >
+                  <MenuItem value="7d">Last 7 days</MenuItem>
+                  <MenuItem value="30d">Last 30 days</MenuItem>
+                  <MenuItem value="90d">Last 90 days</MenuItem>
+                  <MenuItem value="ytd">Year to date</MenuItem>
+                  <MenuItem value="all">All time</MenuItem>
+                </Select>
+              </FormControl>
+              {loadingStatsRange && <CircularProgress size={18} />}
+            </Box>
             <Button
               variant="outlined"
               color="primary"
