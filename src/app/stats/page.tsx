@@ -270,7 +270,6 @@ export default function StatsCalendarPage() {
                  sm: 'repeat(4, minmax(0, 1fr))',
                  md: 'repeat(7, minmax(0, 1fr))',
                }}
-               gap={{ xs: 0.5, md: 0.75 }}
              >
                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
                  <Typography
