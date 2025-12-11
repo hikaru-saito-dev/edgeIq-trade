@@ -141,9 +141,6 @@ export default function StatsCalendarPage() {
           <Typography variant="h5" fontWeight={700}>
             Performance Calendar
           </Typography>
-          {
-            
-          }
           <ToggleButtonGroup
             size="small"
             exclusive
@@ -153,7 +150,20 @@ export default function StatsCalendarPage() {
             <ToggleButton value="personal">Personal</ToggleButton>
             <ToggleButton value="company">Company</ToggleButton>
           </ToggleButtonGroup>
-          <Box display="flex" alignItems="center" gap={0.75} flexWrap="wrap">
+          <Box
+            display="flex"
+            alignItems="center"
+            gap={0.5}
+            flexWrap="wrap"
+            sx={{
+              background: alpha(theme.palette.primary.main, isDark ? 0.12 : 0.08),
+              border: `1px solid ${alpha(theme.palette.primary.main, isDark ? 0.35 : 0.25)}`,
+              borderRadius: 999,
+              px: 1,
+              py: 0.25,
+              boxShadow: isDark ? '0 8px 20px rgba(0,0,0,0.35)' : '0 6px 18px rgba(0,0,0,0.12)',
+            }}
+          >
             <IconButton
               size="small"
               onClick={() => {
@@ -161,6 +171,7 @@ export default function StatsCalendarPage() {
                 next.setFullYear(next.getFullYear() - 1);
                 setCurrentMonth(next);
               }}
+              sx={{ color: 'inherit' }}
             >
               <ArrowBackIosNewIcon fontSize="small" />
             </IconButton>
@@ -171,10 +182,15 @@ export default function StatsCalendarPage() {
                 next.setMonth(next.getMonth() - 1);
                 setCurrentMonth(next);
               }}
+              sx={{ color: 'inherit' }}
             >
               <ArrowBackIosNewIcon fontSize="small" />
             </IconButton>
-            <Typography variant="subtitle1" fontWeight={700} sx={{ minWidth: 140, textAlign: 'center' }}>
+            <Typography
+              variant="subtitle1"
+              fontWeight={700}
+              sx={{ minWidth: 140, textAlign: 'center', px: 0.75 }}
+            >
               {currentMonth.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
             </Typography>
             <IconButton
@@ -184,6 +200,7 @@ export default function StatsCalendarPage() {
                 next.setMonth(next.getMonth() + 1);
                 setCurrentMonth(next);
               }}
+              sx={{ color: 'inherit' }}
             >
               <ArrowForwardIosIcon fontSize="small" />
             </IconButton>
@@ -194,18 +211,21 @@ export default function StatsCalendarPage() {
                 next.setFullYear(next.getFullYear() + 1);
                 setCurrentMonth(next);
               }}
+              sx={{ color: 'inherit' }}
             >
               <ArrowForwardIosIcon fontSize="small" />
             </IconButton>
             <Button
               size="small"
-              variant="outlined"
+              variant="contained"
+              color="primary"
               onClick={() => {
                 const today = new Date();
                 today.setDate(1);
                 today.setHours(0, 0, 0, 0);
                 setCurrentMonth(today);
               }}
+              sx={{ borderRadius: 999, textTransform: 'none', px: 1.5, py: 0.5 }}
             >
               Today
             </Button>
