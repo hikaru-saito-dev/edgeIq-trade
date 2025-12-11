@@ -309,13 +309,19 @@ export default function StatsCalendarPage() {
                          }`,
                          backgroundColor: alpha(theme.palette.background.default, isDark ? 0.55 : 0.9),
                          display: 'flex',
-                         flexDirection: 'column',
-                         gap: 0.35,
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                        gap: 0.4,
                          opacity: muted ? 0.45 : 1,
                          boxShadow: 'none',
                        }}
                      >
-                       <Typography variant="caption" sx={{ color: muted ? 'text.disabled' : 'text.secondary' }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: muted ? 'text.disabled' : 'text.secondary', fontWeight: 700, fontSize: 13 }}
+                      >
                          {dateObj.toLocaleDateString(undefined, {
                            month: 'short',
                            day: 'numeric',
@@ -324,18 +330,21 @@ export default function StatsCalendarPage() {
                        {!isEmpty ? (
                          <>
                            <Typography
-                             variant="subtitle2"
-                             sx={{ color: pnlColor(pnl), fontWeight: 700, lineHeight: 1.2 }}
+                            variant="subtitle2"
+                            sx={{ color: pnlColor(pnl), fontWeight: 800, lineHeight: 1.2, fontSize: 15 }}
                            >
                              {pnl >= 0 ? '+' : '-'}${Math.abs(pnl).toFixed(2)}
                            </Typography>
-                           <Typography variant="caption" sx={{ color: muted ? 'text.disabled' : 'text.secondary' }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: muted ? 'text.disabled' : 'text.secondary', fontSize: 12 }}
+                          >
                              {trades} trade{trades === 1 ? '' : 's'}
                            </Typography>
                          </>
                        ) : (
-                         <Typography variant="caption" sx={{ color: muted ? 'text.disabled' : 'text.disabled' }}>
-                           {' '}
+                        <Typography variant="body2" sx={{ color: muted ? 'text.disabled' : 'text.disabled' }}>
+                          &nbsp;
                          </Typography>
                        )}
                      </Box>
