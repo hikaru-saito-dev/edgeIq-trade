@@ -135,6 +135,9 @@ export default function StatsCalendarPage() {
           <Typography variant="h5" fontWeight={700}>
             Performance Calendar
           </Typography>
+          {
+            
+          }
           <ToggleButtonGroup
             size="small"
             exclusive
@@ -247,6 +250,10 @@ export default function StatsCalendarPage() {
                   const pnl = d.data?.netPnl ?? 0;
                   const trades = d.data?.trades ?? 0;
                   const isEmpty = !d.data;
+                  const dateObj = new Date(d.date + 'T00:00:00');
+                  const isCurrentMonth = dateObj.getMonth() === currentMonth.getMonth() && dateObj.getFullYear() === currentMonth.getFullYear();
+                  const muted = !isCurrentMonth;
+
                   return (
                     <Box
                       key={d.date}
@@ -257,14 +264,15 @@ export default function StatsCalendarPage() {
                         border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
                         backgroundColor: isEmpty
                           ? alpha(theme.palette.background.default, isDark ? 0.4 : 0.9)
-                          : alpha(pnlColor(pnl), 0.15),
+                          : alpha(pnlColor(pnl), muted ? 0.08 : 0.15),
                         display: 'flex',
                         flexDirection: 'column',
                         gap: 0.5,
+                        opacity: muted ? 0.5 : 1,
                       }}
                     >
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        {new Date(d.date + 'T00:00:00').toLocaleDateString(undefined, {
+                      <Typography variant="caption" sx={{ color: muted ? 'text.disabled' : 'text.secondary' }}>
+                        {dateObj.toLocaleDateString(undefined, {
                           month: 'short',
                           day: 'numeric',
                         })}
@@ -277,12 +285,12 @@ export default function StatsCalendarPage() {
                           >
                             {pnl >= 0 ? '+' : '-'}${Math.abs(pnl).toFixed(2)}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                          <Typography variant="caption" sx={{ color: muted ? 'text.disabled' : 'text.secondary' }}>
                             {trades} trade{trades === 1 ? '' : 's'}
                           </Typography>
                         </>
                       ) : (
-                        <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                        <Typography variant="caption" sx={{ color: muted ? 'text.disabled' : 'text.disabled' }}>
                           –
                         </Typography>
                       )}
