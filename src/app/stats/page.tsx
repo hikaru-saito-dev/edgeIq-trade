@@ -11,12 +11,14 @@ import {
   CircularProgress,
   Chip,
   Divider,
+  IconButton,
+  Button,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { apiRequest } from '@/lib/apiClient';
 import { useAccess } from '@/components/AccessProvider';
-
-type RangeKey = '7d' | '30d' | '90d' | 'ytd' | 'all';
 
 type CalendarDay = {
   date: string;
@@ -30,39 +32,31 @@ type CalendarResponse = {
   days: CalendarDay[];
   totalPnl: number;
   totalTrades: number;
-  range: RangeKey;
   scope: 'personal' | 'company';
 };
 
-const ranges: { label: string; value: RangeKey }[] = [
-  { label: '7D', value: '7d' },
-  { label: '30D', value: '30d' },
-  { label: '90D', value: '90d' },
-  { label: 'YTD', value: 'ytd' },
-  { label: 'All', value: 'all' },
-];
-
-function buildCalendar(days: CalendarDay[]) {
+function buildCalendar(days: CalendarDay[], monthAnchor: Date) {
   const byDate = new Map<string, CalendarDay>();
   days.forEach((d) => byDate.set(d.date, d));
 
-  const dateObjs = days.map((d) => new Date(`${d.date}T00:00:00`));
-  if (!dateObjs.length) return [];
+  const startOfMonth = new Date(monthAnchor);
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
 
-  const minDate = new Date(Math.min(...dateObjs.map((d) => d.getTime())));
-  const maxDate = new Date(Math.max(...dateObjs.map((d) => d.getTime())));
+  const endOfMonth = new Date(monthAnchor);
+  endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+  endOfMonth.setDate(0);
+  endOfMonth.setHours(0, 0, 0, 0);
 
-  const startOfWeek = new Date(minDate);
-  startOfWeek.setDate(startOfWeek.getDate() - ((startOfWeek.getDay() + 6) % 7)); // start on Monday
-  startOfWeek.setHours(0, 0, 0, 0);
-
-  const endOfWeek = new Date(maxDate);
-  endOfWeek.setDate(endOfWeek.getDate() + (6 - ((endOfWeek.getDay() + 6) % 7)));
-  endOfWeek.setHours(0, 0, 0, 0);
+  // Grid starts Monday
+  const startOfGrid = new Date(startOfMonth);
+  startOfGrid.setDate(startOfGrid.getDate() - ((startOfGrid.getDay() + 6) % 7));
+  const endOfGrid = new Date(endOfMonth);
+  endOfGrid.setDate(endOfGrid.getDate() + (6 - ((endOfGrid.getDay() + 6) % 7)));
 
   const weeks: { weekOf: string; days: Array<{ date: string; data?: CalendarDay }> }[] = [];
-  const cursor = new Date(startOfWeek);
-  while (cursor.getTime() <= endOfWeek.getTime()) {
+  const cursor = new Date(startOfGrid);
+  while (cursor.getTime() <= endOfGrid.getTime()) {
     const weekDays: Array<{ date: string; data?: CalendarDay }> = [];
     for (let i = 0; i < 7; i += 1) {
       const key = cursor.toISOString().slice(0, 10);
@@ -80,18 +74,33 @@ export default function StatsCalendarPage() {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const [range, setRange] = useState<RangeKey>('30d');
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const d = new Date();
+    d.setDate(1);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
   const [scope, setScope] = useState<'personal' | 'company'>('personal');
   const [data, setData] = useState<CalendarResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async (nextRange: RangeKey, nextScope: 'personal' | 'company') => {
+  const fetchData = async (monthAnchor: Date, nextScope: 'personal' | 'company') => {
     setLoading(true);
     setError(null);
     try {
+      const start = new Date(monthAnchor);
+      start.setDate(1);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(monthAnchor);
+      end.setMonth(end.getMonth() + 1);
+      end.setDate(0);
+      end.setHours(23, 59, 59, 999);
+      const startStr = start.toISOString().slice(0, 10);
+      const endStr = end.toISOString().slice(0, 10);
+
       const res = await apiRequest(
-        `/api/stats/calendar?range=${nextRange}&scope=${nextScope}`,
+        `/api/stats/calendar?scope=${nextScope}&start=${startStr}&end=${endStr}`,
         { userId, companyId }
       );
       const json = await res.json();
@@ -110,11 +119,11 @@ export default function StatsCalendarPage() {
   };
 
   useEffect(() => {
-    fetchData(range, scope);
+    fetchData(currentMonth, scope);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [range, scope, userId, companyId]);
+  }, [currentMonth, scope, userId, companyId]);
 
-  const weeks = useMemo(() => buildCalendar(data?.days || []), [data]);
+  const weeks = useMemo(() => buildCalendar(data?.days || [], currentMonth), [data, currentMonth]);
 
   const pnlColor = (val: number) =>
     val >= 0 ? theme.palette.success.main : theme.palette.error.main;
@@ -135,18 +144,63 @@ export default function StatsCalendarPage() {
             <ToggleButton value="personal">Personal</ToggleButton>
             <ToggleButton value="company">Company</ToggleButton>
           </ToggleButtonGroup>
-          <ToggleButtonGroup
-            size="small"
-            exclusive
-            value={range}
-            onChange={(_, val) => val && setRange(val)}
-          >
-            {ranges.map((r) => (
-              <ToggleButton key={r.value} value={r.value}>
-                {r.label}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
+          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+            <IconButton
+              size="small"
+              onClick={() => {
+                const next = new Date(currentMonth);
+                next.setFullYear(next.getFullYear() - 1);
+                setCurrentMonth(next);
+              }}
+            >
+              <ArrowBackIosNewIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => {
+                const next = new Date(currentMonth);
+                next.setMonth(next.getMonth() - 1);
+                setCurrentMonth(next);
+              }}
+            >
+              <ArrowBackIosNewIcon fontSize="small" />
+            </IconButton>
+            <Typography variant="subtitle1" fontWeight={700} sx={{ minWidth: 140, textAlign: 'center' }}>
+              {currentMonth.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
+            </Typography>
+            <IconButton
+              size="small"
+              onClick={() => {
+                const next = new Date(currentMonth);
+                next.setMonth(next.getMonth() + 1);
+                setCurrentMonth(next);
+              }}
+            >
+              <ArrowForwardIosIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => {
+                const next = new Date(currentMonth);
+                next.setFullYear(next.getFullYear() + 1);
+                setCurrentMonth(next);
+              }}
+            >
+              <ArrowForwardIosIcon fontSize="small" />
+            </IconButton>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => {
+                const today = new Date();
+                today.setDate(1);
+                today.setHours(0, 0, 0, 0);
+                setCurrentMonth(today);
+              }}
+            >
+              Today
+            </Button>
+          </Box>
         </Box>
         {data && (
           <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
@@ -240,10 +294,6 @@ export default function StatsCalendarPage() {
           )}
         </CardContent>
       </Card>
-      <Divider />
-      <Typography variant="body2" color="text.secondary">
-        Closed trades are grouped by close date (updatedAt) in ET. Filters apply to calendar and summary.
-      </Typography>
     </Box>
   );
 }

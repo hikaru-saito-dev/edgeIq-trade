@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const range = (searchParams.get('range') as RangeKey) || '30d';
     const scope = (searchParams.get('scope') as ScopeKey) || 'personal';
+    const startParam = searchParams.get('start'); // YYYY-MM-DD
+    const endParam = searchParams.get('end'); // YYYY-MM-DD
 
     const user = await User.findOne({ whopUserId: verifiedUserId, companyId: companyId });
     if (!user) {
@@ -57,7 +59,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ days: [], totalPnl: 0, totalTrades: 0 });
     }
 
-    const startDate = getStartDate(range);
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
+
+    if (startParam && endParam) {
+      // Use explicit start/end if provided
+      startDate = new Date(`${startParam}T00:00:00.000Z`);
+      endDate = new Date(`${endParam}T23:59:59.999Z`);
+    } else {
+      startDate = getStartDate(range);
+    }
 
     const pipeline: any[] = [
       {
@@ -67,6 +78,7 @@ export async function GET(request: NextRequest) {
           status: 'CLOSED',
           priceVerified: true,
           ...(startDate ? { updatedAt: { $gte: startDate } } : {}),
+          ...(endDate ? { updatedAt: { ...(startDate ? { $gte: startDate } : {}), $lte: endDate } } : {}),
         },
       },
       {
