@@ -129,9 +129,15 @@ export default function StatsCalendarPage() {
     val >= 0 ? theme.palette.success.main : theme.palette.error.main;
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+    <Box sx={{ p: { xs: 1.25, md: 3 }, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        flexWrap="wrap"
+        gap={1.5}
+      >
+        <Box display="flex" alignItems="center" gap={1.25} flexWrap="wrap">
           <Typography variant="h5" fontWeight={700}>
             Performance Calendar
           </Typography>
@@ -147,7 +153,7 @@ export default function StatsCalendarPage() {
             <ToggleButton value="personal">Personal</ToggleButton>
             <ToggleButton value="company">Company</ToggleButton>
           </ToggleButtonGroup>
-          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+          <Box display="flex" alignItems="center" gap={0.75} flexWrap="wrap">
             <IconButton
               size="small"
               onClick={() => {
@@ -239,9 +245,22 @@ export default function StatsCalendarPage() {
             </Typography>
           )}
           {!loading && !error && weeks.length > 0 && (
-            <Box display="grid" gridTemplateColumns="repeat(7, minmax(0, 1fr))" gap={1}>
+            <Box
+              display="grid"
+              gridTemplateColumns={{
+                xs: 'repeat(2, minmax(0, 1fr))',
+                sm: 'repeat(4, minmax(0, 1fr))',
+                md: 'repeat(7, minmax(0, 1fr))',
+              }}
+              gap={{ xs: 0.75, md: 1 }}
+            >
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-                <Typography key={d} variant="caption" textAlign="center" sx={{ color: 'text.secondary' }}>
+                <Typography
+                  key={d}
+                  variant="caption"
+                  textAlign="center"
+                  sx={{ color: 'text.secondary', display: { xs: 'none', md: 'block' } }}
+                >
                   {d}
                 </Typography>
               ))}
@@ -251,16 +270,18 @@ export default function StatsCalendarPage() {
                   const trades = d.data?.trades ?? 0;
                   const isEmpty = !d.data;
                   const dateObj = new Date(d.date + 'T00:00:00');
-                  const isCurrentMonth = dateObj.getMonth() === currentMonth.getMonth() && dateObj.getFullYear() === currentMonth.getFullYear();
+                  const isCurrentMonth =
+                    dateObj.getMonth() === currentMonth.getMonth() &&
+                    dateObj.getFullYear() === currentMonth.getFullYear();
                   const muted = !isCurrentMonth;
 
                   return (
                     <Box
                       key={d.date}
                       sx={{
-                        p: 1,
+                        p: { xs: 0.75, md: 1 },
                         borderRadius: 1.5,
-                        minHeight: 82,
+                        minHeight: { xs: 96, md: 82 },
                         border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
                         backgroundColor: isEmpty
                           ? alpha(theme.palette.background.default, isDark ? 0.4 : 0.9)
@@ -291,7 +312,7 @@ export default function StatsCalendarPage() {
                         </>
                       ) : (
                         <Typography variant="caption" sx={{ color: muted ? 'text.disabled' : 'text.disabled' }}>
-                          –
+                          {' '}
                         </Typography>
                       )}
                     </Box>
