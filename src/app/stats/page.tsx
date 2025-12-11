@@ -156,25 +156,12 @@ export default function StatsCalendarPage() {
             gap={0.5}
             flexWrap="wrap"
             sx={{
-              background: alpha(theme.palette.primary.main, isDark ? 0.12 : 0.08),
-              border: `1px solid ${alpha(theme.palette.primary.main, isDark ? 0.35 : 0.25)}`,
-              borderRadius: 999,
+
               px: 1,
               py: 0.25,
               boxShadow: isDark ? '0 8px 20px rgba(0,0,0,0.35)' : '0 6px 18px rgba(0,0,0,0.12)',
             }}
           >
-            <IconButton
-              size="small"
-              onClick={() => {
-                const next = new Date(currentMonth);
-                next.setFullYear(next.getFullYear() - 1);
-                setCurrentMonth(next);
-              }}
-              sx={{ color: 'inherit' }}
-            >
-              <ArrowBackIosNewIcon fontSize="small" />
-            </IconButton>
             <IconButton
               size="small"
               onClick={() => {
@@ -198,17 +185,6 @@ export default function StatsCalendarPage() {
               onClick={() => {
                 const next = new Date(currentMonth);
                 next.setMonth(next.getMonth() + 1);
-                setCurrentMonth(next);
-              }}
-              sx={{ color: 'inherit' }}
-            >
-              <ArrowForwardIosIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => {
-                const next = new Date(currentMonth);
-                next.setFullYear(next.getFullYear() + 1);
                 setCurrentMonth(next);
               }}
               sx={{ color: 'inherit' }}
