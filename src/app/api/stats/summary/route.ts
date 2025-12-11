@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import { User } from '@/models/User';
+import { IUser, User } from '@/models/User';
 import { Trade } from '@/models/Trade';
 
 type RangeKey = '7d' | '30d' | '90d' | 'ytd' | 'all';
@@ -101,16 +101,34 @@ export async function GET(request: NextRequest) {
       personalStats = await aggregateStats([user.whopUserId], startDate);
     }
 
-    if ((scope === 'company' || scope === 'both') && user.companyId && (user.role === 'owner' || user.role === 'companyOwner')) {
-      const companyUsers = await User.find({
-        companyId: user.companyId,
-        role: { $in: ['companyOwner', 'owner', 'admin'] },
-      }).select('whopUserId');
-      const whopIds = companyUsers.map(u => u.whopUserId).filter((id): id is string => Boolean(id));
-      if (whopIds.length) {
-        companyStats = await aggregateStats(whopIds, startDate);
-      } else {
-        companyStats = null;
+    if ((scope === 'company' || scope === 'both') && user.companyId) {
+      // Check if user has permission to view company stats
+      const isOwnerOrCompanyOwner = user.role === 'owner' || user.role === 'companyOwner';
+      const isAdminOrMember = user.role === 'admin' || user.role === 'member';
+      
+      let hasPermission = isOwnerOrCompanyOwner;
+      
+      if (!hasPermission && isAdminOrMember) {
+        // For admins and members, check if company owner has hidden company stats
+        const companyOwner = await User.findOne({
+          companyId: user.companyId,
+          role: 'companyOwner',
+        }).lean();
+        
+        hasPermission = !(companyOwner as unknown as IUser)?.hideCompanyStatsFromMembers;
+      }
+      
+      if (hasPermission) {
+        const companyUsers = await User.find({
+          companyId: user.companyId,
+          role: { $in: ['companyOwner', 'owner', 'admin'] },
+        }).select('whopUserId');
+        const whopIds = companyUsers.map(u => u.whopUserId).filter((id): id is string => Boolean(id));
+        if (whopIds.length) {
+          companyStats = await aggregateStats(whopIds, startDate);
+        } else {
+          companyStats = null;
+        }
       }
     }
 

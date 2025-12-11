@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import { Trade } from '@/models/Trade';
-import { User } from '@/models/User';
+import { User, IUser } from '@/models/User';
 
 type RangeKey = '7d' | '30d' | '90d' | 'ytd' | 'all';
 type ScopeKey = 'personal' | 'company';
@@ -43,9 +43,29 @@ export async function GET(request: NextRequest) {
     if (scope === 'personal') {
       whopUserIds = [user.whopUserId];
     } else {
-      if (!(user.role === 'owner' || user.role === 'companyOwner') || !user.companyId) {
+      if (!user.companyId) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
+      
+      // Check if user has permission to view company stats
+      const isOwnerOrCompanyOwner = user.role === 'owner' || user.role === 'companyOwner';
+      const isAdminOrMember = user.role === 'admin' || user.role === 'member';
+      
+      if (!isOwnerOrCompanyOwner && isAdminOrMember) {
+        // For admins and members, check if company owner has hidden company stats
+        const companyOwner = await User.findOne({
+          companyId: user.companyId,
+          role: 'companyOwner',
+        }).lean();
+        
+        if ((companyOwner as unknown as IUser)?.hideCompanyStatsFromMembers) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      } else if (!isOwnerOrCompanyOwner && !isAdminOrMember) {
+        // User doesn't have any valid role
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      
       const companyUsers = await User.find({
         companyId: user.companyId,
         role: { $in: ['companyOwner', 'owner', 'admin'] },
