@@ -274,6 +274,9 @@ export default function StatsCalendarPage() {
                     dateObj.getMonth() === currentMonth.getMonth() &&
                     dateObj.getFullYear() === currentMonth.getFullYear();
                   const muted = !isCurrentMonth;
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const isToday = dateObj.getTime() === today.getTime();
 
                   return (
                     <Box
@@ -282,7 +285,11 @@ export default function StatsCalendarPage() {
                         p: { xs: 0.75, md: 1 },
                         borderRadius: 1.5,
                         minHeight: { xs: 96, md: 82 },
-                        border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+                        border: `1px solid ${
+                          isToday
+                            ? alpha(theme.palette.primary.main, 0.9)
+                            : alpha(theme.palette.divider, 0.6)
+                        }`,
                         backgroundColor: isEmpty
                           ? alpha(theme.palette.background.default, isDark ? 0.4 : 0.9)
                           : alpha(pnlColor(pnl), muted ? 0.08 : 0.15),
@@ -290,6 +297,9 @@ export default function StatsCalendarPage() {
                         flexDirection: 'column',
                         gap: 0.5,
                         opacity: muted ? 0.5 : 1,
+                        boxShadow: isToday
+                          ? `0 0 0 2px ${alpha(theme.palette.primary.main, 0.35)}`
+                          : 'none',
                       }}
                     >
                       <Typography variant="caption" sx={{ color: muted ? 'text.disabled' : 'text.secondary' }}>
