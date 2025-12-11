@@ -129,7 +129,7 @@ export default function StatsCalendarPage() {
     val >= 0 ? theme.palette.success.main : theme.palette.error.main;
 
   return (
-    <Box sx={{ p: { xs: 1.25, md: 3 }, display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box sx={{ p: { xs: 1, md: 2 }, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
       <Box
         display="flex"
         justifyContent="space-between"
@@ -242,12 +242,14 @@ export default function StatsCalendarPage() {
         )}
       </Box>
 
-      <Card
-        sx={{
-          border: `1px solid ${alpha(theme.palette.primary.main, isDark ? 0.3 : 0.15)}`,
-          background: alpha(theme.palette.background.paper, isDark ? 0.8 : 1),
-        }}
-      >
+       <Card
+         sx={{
+           border: `1px solid ${alpha(theme.palette.primary.main, isDark ? 0.12 : 0.1)}`,
+           background: alpha(theme.palette.background.default, isDark ? 0.5 : 0.9),
+           borderRadius: 1,
+           boxShadow: 'none',
+         }}
+       >
         <CardContent>
           {loading && (
             <Box display="flex" justifyContent="center" py={6}>
@@ -259,98 +261,90 @@ export default function StatsCalendarPage() {
               {error}
             </Typography>
           )}
-          {!loading && !error && (!weeks.length || !(data?.days?.length ?? 0)) && (
-            <Typography textAlign="center" color="text.secondary">
-              No closed trades in this range.
-            </Typography>
-          )}
-          {!loading && !error && weeks.length > 0 && (
-            <Box
-              display="grid"
-              gridTemplateColumns={{
-                xs: 'repeat(2, minmax(0, 1fr))',
-                sm: 'repeat(4, minmax(0, 1fr))',
-                md: 'repeat(7, minmax(0, 1fr))',
-              }}
-              gap={{ xs: 0.75, md: 1 }}
-            >
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-                <Typography
-                  key={d}
-                  variant="caption"
-                  textAlign="center"
-                  sx={{ color: 'text.secondary', display: { xs: 'none', md: 'block' } }}
-                >
-                  {d}
-                </Typography>
-              ))}
-              {weeks.map((week) =>
-                week.days.map((d) => {
-                  const pnl = d.data?.netPnl ?? 0;
-                  const trades = d.data?.trades ?? 0;
-                  const isEmpty = !d.data;
-                  const dateObj = new Date(d.date + 'T00:00:00');
-                  const isCurrentMonth =
-                    dateObj.getMonth() === currentMonth.getMonth() &&
-                    dateObj.getFullYear() === currentMonth.getFullYear();
-                  const muted = !isCurrentMonth;
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  const isToday = dateObj.getTime() === today.getTime();
+          
+           {!loading && !error && weeks.length > 0 && (
+             <Box
+               display="grid"
+               gridTemplateColumns={{
+                 xs: 'repeat(2, minmax(0, 1fr))',
+                 sm: 'repeat(4, minmax(0, 1fr))',
+                 md: 'repeat(7, minmax(0, 1fr))',
+               }}
+               gap={{ xs: 0.5, md: 0.75 }}
+             >
+               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+                 <Typography
+                   key={d}
+                   variant="caption"
+                   textAlign="center"
+                   sx={{ color: 'text.secondary', display: { xs: 'none', md: 'block' } }}
+                 >
+                   {d}
+                 </Typography>
+               ))}
+               {weeks.map((week) =>
+                 week.days.map((d) => {
+                   const pnl = d.data?.netPnl ?? 0;
+                   const trades = d.data?.trades ?? 0;
+                   const isEmpty = !d.data;
+                   const dateObj = new Date(d.date + 'T00:00:00');
+                   const isCurrentMonth =
+                     dateObj.getMonth() === currentMonth.getMonth() &&
+                     dateObj.getFullYear() === currentMonth.getFullYear();
+                   const muted = !isCurrentMonth;
+                   const today = new Date();
+                   today.setHours(0, 0, 0, 0);
+                   const isToday = dateObj.getTime() === today.getTime();
 
-                  return (
-                    <Box
-                      key={d.date}
-                      sx={{
-                        p: { xs: 0.75, md: 1 },
-                        borderRadius: 1.5,
-                        minHeight: { xs: 96, md: 82 },
-                        border: `1px solid ${
-                          isToday
-                            ? alpha(theme.palette.primary.main, 0.9)
-                            : alpha(theme.palette.divider, 0.6)
-                        }`,
-                        backgroundColor: isEmpty
-                          ? alpha(theme.palette.background.default, isDark ? 0.4 : 0.9)
-                          : alpha(pnlColor(pnl), muted ? 0.08 : 0.15),
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 0.5,
-                        opacity: muted ? 0.5 : 1,
-                        boxShadow: isToday
-                          ? `0 0 0 2px ${alpha(theme.palette.primary.main, 0.35)}`
-                          : 'none',
-                      }}
-                    >
-                      <Typography variant="caption" sx={{ color: muted ? 'text.disabled' : 'text.secondary' }}>
-                        {dateObj.toLocaleDateString(undefined, {
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </Typography>
-                      {!isEmpty ? (
-                        <>
-                          <Typography
-                            variant="subtitle2"
-                            sx={{ color: pnlColor(pnl), fontWeight: 700, lineHeight: 1.2 }}
-                          >
-                            {pnl >= 0 ? '+' : '-'}${Math.abs(pnl).toFixed(2)}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: muted ? 'text.disabled' : 'text.secondary' }}>
-                            {trades} trade{trades === 1 ? '' : 's'}
-                          </Typography>
-                        </>
-                      ) : (
-                        <Typography variant="caption" sx={{ color: muted ? 'text.disabled' : 'text.disabled' }}>
-                          {' '}
-                        </Typography>
-                      )}
-                    </Box>
-                  );
-                })
-              )}
-            </Box>
-          )}
+                   return (
+                     <Box
+                       key={d.date}
+                       sx={{
+                         p: { xs: 0.6, md: 0.75 },
+                         borderRadius: 0,
+                         minHeight: { xs: 92, md: 78 },
+                         border: `1px solid ${
+                           isToday
+                             ? alpha(theme.palette.primary.main, 0.8)
+                             : alpha(theme.palette.divider, 0.35)
+                         }`,
+                         backgroundColor: alpha(theme.palette.background.default, isDark ? 0.55 : 0.9),
+                         display: 'flex',
+                         flexDirection: 'column',
+                         gap: 0.35,
+                         opacity: muted ? 0.45 : 1,
+                         boxShadow: 'none',
+                       }}
+                     >
+                       <Typography variant="caption" sx={{ color: muted ? 'text.disabled' : 'text.secondary' }}>
+                         {dateObj.toLocaleDateString(undefined, {
+                           month: 'short',
+                           day: 'numeric',
+                         })}
+                       </Typography>
+                       {!isEmpty ? (
+                         <>
+                           <Typography
+                             variant="subtitle2"
+                             sx={{ color: pnlColor(pnl), fontWeight: 700, lineHeight: 1.2 }}
+                           >
+                             {pnl >= 0 ? '+' : '-'}${Math.abs(pnl).toFixed(2)}
+                           </Typography>
+                           <Typography variant="caption" sx={{ color: muted ? 'text.disabled' : 'text.secondary' }}>
+                             {trades} trade{trades === 1 ? '' : 's'}
+                           </Typography>
+                         </>
+                       ) : (
+                         <Typography variant="caption" sx={{ color: muted ? 'text.disabled' : 'text.disabled' }}>
+                           {' '}
+                         </Typography>
+                       )}
+                     </Box>
+                   );
+                 })
+               )}
+             </Box>
+           )}
         </CardContent>
       </Card>
     </Box>
