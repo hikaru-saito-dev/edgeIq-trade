@@ -308,45 +308,61 @@ export default function StatsCalendarPage() {
                              : alpha(theme.palette.divider, 0.35)
                          }`,
                          backgroundColor: alpha(theme.palette.background.default, isDark ? 0.55 : 0.9),
-                         display: 'flex',
+                        display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        justifyContent: 'center',
                         textAlign: 'center',
-                        gap: 0.4,
+                        gap: 0.35,
                          opacity: muted ? 0.45 : 1,
                          boxShadow: 'none',
                        }}
                      >
                       <Typography
                         variant="body2"
-                        sx={{ color: muted ? 'text.disabled' : 'text.secondary', fontWeight: 700, fontSize: 13 }}
+                        sx={{
+                          color: muted ? 'text.disabled' : 'text.secondary',
+                          fontWeight: 700,
+                          fontSize: 12,
+                          alignSelf: 'center',
+                        }}
                       >
-                         {dateObj.toLocaleDateString(undefined, {
-                           month: 'short',
-                           day: 'numeric',
-                         })}
-                       </Typography>
-                       {!isEmpty ? (
-                         <>
-                           <Typography
+                        {dateObj.toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </Typography>
+                      {!isEmpty ? (
+                        <Box
+                          sx={{
+                            flexGrow: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 0.2,
+                            width: '100%',
+                          }}
+                        >
+                          <Typography
                             variant="subtitle2"
-                            sx={{ color: pnlColor(pnl), fontWeight: 800, lineHeight: 1.2, fontSize: 15 }}
-                           >
-                             {pnl >= 0 ? '+' : '-'}${Math.abs(pnl).toFixed(2)}
-                           </Typography>
+                            sx={{ color: pnlColor(pnl), fontWeight: 900, lineHeight: 1.15, fontSize: 20 }}
+                          >
+                            {pnl >= 0 ? '+' : '-'}${Math.abs(pnl).toFixed(2)}
+                          </Typography>
                           <Typography
                             variant="body2"
-                            sx={{ color: muted ? 'text.disabled' : 'text.secondary', fontSize: 12 }}
+                            sx={{ color: muted ? 'text.disabled' : 'text.secondary', fontSize: 12, fontWeight: 600 }}
                           >
-                             {trades} trade{trades === 1 ? '' : 's'}
-                           </Typography>
-                         </>
-                       ) : (
-                        <Typography variant="body2" sx={{ color: muted ? 'text.disabled' : 'text.disabled' }}>
-                          &nbsp;
-                         </Typography>
-                       )}
+                            {trades} trade{trades === 1 ? '' : 's'}
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Typography variant="body2" sx={{ color: muted ? 'text.disabled' : 'text.disabled' }}>
+                            &nbsp;
+                          </Typography>
+                        </Box>
+                      )}
                      </Box>
                    );
                  })
