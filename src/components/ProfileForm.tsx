@@ -1761,7 +1761,7 @@ export default function ProfileForm() {
         </Paper>
       )}
       {/* Company Stats - Only for owners and companyOwners */}
-      {(role === 'owner' || role === 'companyOwner') && (activeTab === 'company') && companyStats && (
+      {((role === 'owner' || role === 'companyOwner') || ((role === 'member' || role === 'admin') && !hideCompanyStats)) && (activeTab === 'company') && companyStats && (
         <Box mt={4}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} gap={2} flexWrap="wrap">
             <Typography variant="h5" component="h2" sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
