@@ -117,7 +117,7 @@ export default function ProfileForm() {
   const toast = useToast();
   const [alias, setAlias] = useState('');
   const [role, setRole] = useState<'companyOwner' | 'owner' | 'admin' | 'member'>('member');
-  const [optIn, setOptIn] = useState(false);
+  const [optIn, setOptIn] = useState(true); // Default to true (opted in)
   const [hideLeaderboardFromMembers, setHideLeaderboardFromMembers] = useState(false);
   const [hideCompanyStatsFromMembers, setHideCompanyStatsFromMembers] = useState(false);
   const [webhooks, setWebhooks] = useState<Array<{ id: string; name: string; url: string; type: 'whop' | 'discord' }>>([]);
@@ -222,7 +222,8 @@ export default function ProfileForm() {
       setAlias(profileData.user.alias || profileData.user.whopDisplayName || profileData.user.whopUsername || '');
       setRole(profileData.user.role || 'member');
       // Company ID, name, and description are auto-set from Whop, no need to set state
-      setOptIn(profileData.user.optIn || false);
+      // Default to true (opted in) if not set, since everyone is opted in by default
+      setOptIn(profileData.user.optIn !== undefined ? profileData.user.optIn : true);
       setHideLeaderboardFromMembers(profileData.user.hideLeaderboardFromMembers ?? false);
       setHideCompanyStatsFromMembers(profileData.user.hideCompanyStatsFromMembers ?? false);
       setWebhooks(profileData.user.webhooks || []);
@@ -567,7 +568,7 @@ export default function ProfileForm() {
         } else if (trade.outcome === 'LOSS') {
           existing.losses += 1;
         }
-        
+
         existing.netPnl += trade.netPnl || 0;
         existing.totalBuyNotional += trade.contracts * trade.fillPrice * 100;
         existing.total += 1;
@@ -676,27 +677,27 @@ export default function ProfileForm() {
         <>
           <Paper sx={{ p: 3, mb: 3, background: 'var(--surface-bg)', backdropFilter: 'blur(20px)', border: '1px solid var(--surface-border)', borderRadius: 2 }}>
             <Typography variant="h6" sx={{ color: 'var(--app-text)', mb: 3, fontWeight: 600 }}>
-            Personal Profile
-          </Typography>
-          <TextField
-            fullWidth
-            label="Alias"
-            value={alias}
-            onChange={(e) => setAlias(e.target.value)}
-            margin="normal"
+              Personal Profile
+            </Typography>
+            <TextField
+              fullWidth
+              label="Alias"
+              value={alias}
+              onChange={(e) => setAlias(e.target.value)}
+              margin="normal"
               sx={fieldStyles}
-        />
-        
-        {/* Notification Webhooks - For owners and admins */}
-        {(role === 'companyOwner' || role === 'owner' || role === 'admin') && (
+            />
 
-          <>
+            {/* Notification Webhooks - For owners and admins */}
+            {(role === 'companyOwner' || role === 'owner' || role === 'admin') && (
+
+              <>
                 <Typography variant="h6" sx={{ color: 'var(--app-text)', mt: 3, mb: 2, fontWeight: 600 }}>
-              Notification Webhooks
-            </Typography>
+                  Notification Webhooks
+                </Typography>
                 <Typography variant="body2" sx={{ color: 'var(--text-muted)', mb: 2 }}>
-              Configure webhook URLs to receive trade notifications.
-            </Typography>
+                  Configure webhook URLs to receive trade notifications.
+                </Typography>
                 {/* Multiple Webhooks Section */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Button
@@ -749,19 +750,19 @@ export default function ProfileForm() {
                         <DeleteIcon />
                       </IconButton>
                     </Box>
-        <TextField
-          fullWidth
+                    <TextField
+                      fullWidth
                       label="Webhook Name"
                       value={webhook.name}
                       onChange={(e) => handleWebhookChange(webhook.id, 'name', e.target.value)}
                       placeholder="e.g., Parlays Channel, ML Bets"
-          margin="normal"
+                      margin="normal"
                       size="small"
-          sx={{
-            '& .MuiOutlinedInput-root': {
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
                           color: 'var(--app-text)',
                           '& fieldset': { borderColor: controlBorder },
-              },
+                        },
                         '& .MuiInputLabel-root': { color: 'var(--text-muted)' },
                       }}
                     />
@@ -780,81 +781,81 @@ export default function ProfileForm() {
                         <MenuItem value="whop">Whop</MenuItem>
                       </Select>
                     </FormControl>
-        <TextField
-          fullWidth
+                    <TextField
+                      fullWidth
                       label="Webhook URL"
                       value={webhook.url}
                       onChange={(e) => handleWebhookChange(webhook.id, 'url', e.target.value)}
                       placeholder={webhook.type === 'discord' ? 'https://discord.com/api/webhooks/...' : 'https://data.whop.com/api/v5/feed/webhooks/...'}
-          margin="normal"
+                      margin="normal"
                       size="small"
-          sx={{
-            '& .MuiOutlinedInput-root': {
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
                           color: 'var(--app-text)',
                           '& fieldset': { borderColor: controlBorder },
-            },
+                        },
                         '& .MuiInputLabel-root': { color: 'var(--text-muted)' },
-          }}
-        />
+                      }}
+                    />
                   </Paper>
                 ))}
 
-        <FormControlLabel
-          control={
-            <Switch
-              checked={notifyOnSettlement}
-              onChange={(e) => setNotifyOnSettlement(e.target.checked)}
-              sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': {
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={notifyOnSettlement}
+                      onChange={(e) => setNotifyOnSettlement(e.target.checked)}
+                      sx={{
+                        '& .MuiSwitch-switchBase.Mui-checked': {
                           color: theme.palette.primary.main,
-                },
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                        },
+                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
                           backgroundColor: theme.palette.primary.main,
-                },
-              }}
-            />
-          }
-          label={
-            <Box>
+                        },
+                      }}
+                    />
+                  }
+                  label={
+                    <Box>
                       <Typography variant="body2" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
-                Notify on Trade Settlement
-              </Typography>
+                        Notify on Trade Settlement
+                      </Typography>
                       <Typography variant="caption" sx={{ color: 'var(--text-muted)', display: 'block' }}>
-                Receive notifications when trades are settled (win/loss, P&L, and trade details)
-              </Typography>
-            </Box>
-          }
+                        Receive notifications when trades are settled (win/loss, P&L, and trade details)
+                      </Typography>
+                    </Box>
+                  }
                   sx={{ mt: 2, color: 'var(--app-text)' }}
                 />
 
                 {notifyOnSettlement && (
-          <FormControlLabel
-            control={
-              <Switch
+                  <FormControlLabel
+                    control={
+                      <Switch
                         checked={onlyNotifyWinningSettlements}
                         onChange={(e) => setOnlyNotifyWinningSettlements(e.target.checked)}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
+                        sx={{
+                          '& .MuiSwitch-switchBase.Mui-checked': {
                             color: theme.palette.primary.main,
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                          },
+                          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
                             backgroundColor: theme.palette.primary.main,
-                  },
-                }}
-              />
-            }
-            label={
-              <Box>
+                          },
+                        }}
+                      />
+                    }
+                    label={
+                      <Box>
                         <Typography variant="body2" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
                           Only Notify on Winning Trades
-                </Typography>
+                        </Typography>
                         <Typography variant="caption" sx={{ color: 'var(--text-muted)', display: 'block' }}>
                           Only send settlement notifications for winning trades. Losses and breakevens will be silent.
-                </Typography>
-              </Box>
-            }
+                        </Typography>
+                      </Box>
+                    }
                     sx={{ mt: 1, ml: 4, color: 'var(--app-text)' }}
-          />
+                  />
                 )}
               </>
             )}
@@ -873,7 +874,7 @@ export default function ProfileForm() {
               onChange={(e) => setWebullApiKey(e.target.value)}
               placeholder="Enter your Webull API key"
               margin="normal"
-                  size="small"
+              size="small"
               sx={fieldStyles}
             />
             <TextField
@@ -917,490 +918,490 @@ export default function ProfileForm() {
                 margin="normal"
                 size="small"
                 sx={fieldStyles}
-                  />
+              />
 
-            <TextField
-              fullWidth
+              <TextField
+                fullWidth
                 label="Whop Webhook URL"
                 value={followingWhopWebhook}
                 onChange={(e) => setFollowingWhopWebhook(e.target.value)}
                 placeholder="https://whop.com/api/webhooks/..."
-              margin="normal"
-              size="small"
+                margin="normal"
+                size="small"
                 sx={fieldStyles}
               />
-        </Box>
+            </Box>
 
-        <Box display="flex" gap={2} flexWrap="wrap" mt={3}>
-          <Button
-            variant="contained"
-            onClick={handleSave}
-            disabled={saving}
-            sx={{
+            <Box display="flex" gap={2} flexWrap="wrap" mt={3}>
+              <Button
+                variant="contained"
+                onClick={handleSave}
+                disabled={saving}
+                sx={{
                   background: 'linear-gradient(135deg, #22c55e, #059669)',
-              color: '#ffffff',
-              px: 4,
-              py: 1.5,
-              fontWeight: 600,
-              '&:hover': {
+                  color: '#ffffff',
+                  px: 4,
+                  py: 1.5,
+                  fontWeight: 600,
+                  '&:hover': {
                     background: 'linear-gradient(135deg, #16a34a, #047857)',
-                transform: 'translateY(-2px)',
+                    transform: 'translateY(-2px)',
                     boxShadow: '0 4px 12px rgba(34, 197, 94, 0.4)',
-              },
-              '&:disabled': {
+                  },
+                  '&:disabled': {
                     background: 'rgba(34, 197, 94, 0.3)',
-                color: 'rgba(255, 255, 255, 0.5)',
-              },
-              transition: 'all 0.3s ease',
-            }}
-          >
+                    color: 'rgba(255, 255, 255, 0.5)',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
+              >
                 {saving ? 'Saving...' : 'Save Profile'}
-          </Button>
-        </Box>
-      </Paper>
-      {personalStats && (
-        <Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} gap={2} flexWrap="wrap">
-            <Typography variant="h5" component="h2" sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
-            Personal Stats
-          </Typography>
-            <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
-              <FormControl size="small" sx={{ minWidth: 140 }}>
-                <InputLabel id="personal-stats-range-label">Range</InputLabel>
-                <Select
-                  labelId="personal-stats-range-label"
-                  label="Range"
-                  value={statsRange}
-                  onChange={(e) => setStatsRange(e.target.value as any)}
+              </Button>
+            </Box>
+          </Paper>
+          {personalStats && (
+            <Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} gap={2} flexWrap="wrap">
+                <Typography variant="h5" component="h2" sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
+                  Personal Stats
+                </Typography>
+                <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
+                  <FormControl size="small" sx={{ minWidth: 140 }}>
+                    <InputLabel id="personal-stats-range-label">Range</InputLabel>
+                    <Select
+                      labelId="personal-stats-range-label"
+                      label="Range"
+                      value={statsRange}
+                      onChange={(e) => setStatsRange(e.target.value as string as '7d' | '30d' | '90d' | 'ytd' | 'all')}
+                    >
+                      <MenuItem value="7d">Last 7 days</MenuItem>
+                      <MenuItem value="30d">Last 30 days</MenuItem>
+                      <MenuItem value="90d">Last 90 days</MenuItem>
+                      <MenuItem value="ytd">Year to date</MenuItem>
+                      <MenuItem value="all">All time</MenuItem>
+                    </Select>
+                  </FormControl>
+                  {loadingStatsRange && <CircularProgress size={18} />}
+                </Box>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  size="small"
+                  disabled={downloadingPersonalSnapshot}
+                  startIcon={<DownloadIcon />}
+                  sx={{ textTransform: 'none' }}
+                  onClick={async () => {
+                    setDownloadingPersonalSnapshot(true);
+                    try {
+                      const snapshotData: StatsSnapshotData = {
+                        type: 'personal',
+                        winRate: personalStats.winRate,
+                        roi: personalStats.roi,
+                        netPnl: personalStats.netPnl,
+                        totalTrades: personalStats.totalTrades,
+                        wins: personalStats.winCount,
+                        losses: personalStats.lossCount,
+                        breakevens: personalStats.breakevenCount,
+                        currentStreak: personalStats.currentStreak,
+                        longestStreak: personalStats.longestStreak,
+                        userName: userData?.alias || userData?.whopDisplayName || userData?.whopUsername,
+                        profilePictureUrl: userData?.whopAvatarUrl?.trim() || undefined,
+                        alias: userData?.alias?.trim() || undefined,
+                      };
+                      const blob = await generateStatsSnapshot(snapshotData);
+                      downloadBlob(blob, `personal-stats-${Date.now()}.png`);
+                      toast.showSuccess('Personal stats snapshot downloaded!');
+                    } catch (error) {
+                      console.error('Error generating snapshot:', error);
+                      toast.showError('Failed to generate snapshot');
+                    } finally {
+                      setDownloadingPersonalSnapshot(false);
+                    }
+                  }}
                 >
-                  <MenuItem value="7d">Last 7 days</MenuItem>
-                  <MenuItem value="30d">Last 30 days</MenuItem>
-                  <MenuItem value="90d">Last 90 days</MenuItem>
-                  <MenuItem value="ytd">Year to date</MenuItem>
-                  <MenuItem value="all">All time</MenuItem>
-                </Select>
-              </FormControl>
-              {loadingStatsRange && <CircularProgress size={18} />}
-            </Box>
-            <Button
-              variant="outlined"
-              color="primary"
-              size="small"
-              disabled={downloadingPersonalSnapshot}
-              startIcon={<DownloadIcon />}
-              sx={{ textTransform: 'none' }}
-              onClick={async () => {
-                setDownloadingPersonalSnapshot(true);
-                try {
-                  const snapshotData: StatsSnapshotData = {
-                    type: 'personal',
-                    winRate: personalStats.winRate,
-                    roi: personalStats.roi,
-                    netPnl: personalStats.netPnl,
-                    totalTrades: personalStats.totalTrades,
-                    wins: personalStats.winCount,
-                    losses: personalStats.lossCount,
-                    breakevens: personalStats.breakevenCount,
-                    currentStreak: personalStats.currentStreak,
-                    longestStreak: personalStats.longestStreak,
-                    userName: userData?.alias || userData?.whopDisplayName || userData?.whopUsername,
-                    profilePictureUrl: userData?.whopAvatarUrl?.trim() || undefined,
-                    alias: userData?.alias?.trim() || undefined,
-                  };
-                  const blob = await generateStatsSnapshot(snapshotData);
-                  downloadBlob(blob, `personal-stats-${Date.now()}.png`);
-                  toast.showSuccess('Personal stats snapshot downloaded!');
-                } catch (error) {
-                  console.error('Error generating snapshot:', error);
-                  toast.showError('Failed to generate snapshot');
-                } finally {
-                  setDownloadingPersonalSnapshot(false);
-                }
-              }}
-            >
-              {downloadingPersonalSnapshot ? 'Generating...' : 'Download Snapshot'}
-            </Button>
-          </Box>
+                  {downloadingPersonalSnapshot ? 'Generating...' : 'Download Snapshot'}
+                </Button>
+              </Box>
 
-          {/* Charts Section */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
-            {/* First Row: Pie Chart and Bar Chart */}
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 3 }}>
-              {/* Pie Chart */}
-              <Paper sx={{
-                p: 3,
-                flex: 1,
+              {/* Charts Section */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
+                {/* First Row: Pie Chart and Bar Chart */}
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 3 }}>
+                  {/* Pie Chart */}
+                  <Paper sx={{
+                    p: 3,
+                    flex: 1,
                     background: 'var(--surface-bg)',
-                backdropFilter: 'blur(20px)',
+                    backdropFilter: 'blur(20px)',
                     border: '1px solid var(--surface-border)',
-                borderRadius: 2
-              }}>
+                    borderRadius: 2
+                  }}>
                     <Typography variant="h6" mb={2} sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
-                  Trade Results Breakdown
-                </Typography>
-                {pieData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
+                      Trade Results Breakdown
+                    </Typography>
+                    {pieData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                            outerRadius={100}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {pieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
                               backgroundColor: 'rgba(240, 253, 244, 0.95)',
                               border: '1px solid var(--surface-border)',
-                          borderRadius: '8px',
+                              borderRadius: '8px',
                               color: 'var(--app-text)'
-                        }}
-                      />
-                      <Legend
+                            }}
+                          />
+                          <Legend
                             wrapperStyle={{ color: 'var(--app-text)' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Typography sx={{ color: 'var(--text-muted)', textAlign: 'center' }}>
-                      No trade data available yet.<br />
-                      Create your first trade to see the breakdown!
-                    </Typography>
-                  </Box>
-                )}
-              </Paper>
+                          No trade data available yet.<br />
+                          Create your first trade to see the breakdown!
+                        </Typography>
+                      </Box>
+                    )}
+                  </Paper>
 
-              {/* Bar Chart */}
-              <Paper sx={{
-                p: 3,
-                flex: 1,
+                  {/* Bar Chart */}
+                  <Paper sx={{
+                    p: 3,
+                    flex: 1,
                     background: 'var(--surface-bg)',
-                backdropFilter: 'blur(20px)',
+                    backdropFilter: 'blur(20px)',
                     border: '1px solid var(--surface-border)',
-                borderRadius: 2
-              }}>
+                    borderRadius: 2
+                  }}>
                     <Typography variant="h6" mb={2} sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
-                  Trade Results Comparison
-                </Typography>
-                {barData.length > 0 && barData.some(d => d.value > 0) ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={barData}>
+                      Trade Results Comparison
+                    </Typography>
+                    {barData.length > 0 && barData.some(d => d.value > 0) ? (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={barData}>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 197, 94, 0.2)" />
-                      <XAxis
-                        dataKey="name"
-                        stroke="#a1a1aa"
-                        tick={{ fill: '#a1a1aa' }}
-                      />
-                      <YAxis
-                        stroke="#a1a1aa"
-                        tick={{ fill: '#a1a1aa' }}
-                      />
-                      <Tooltip
-                        contentStyle={{
+                          <XAxis
+                            dataKey="name"
+                            stroke="#a1a1aa"
+                            tick={{ fill: '#a1a1aa' }}
+                          />
+                          <YAxis
+                            stroke="#a1a1aa"
+                            tick={{ fill: '#a1a1aa' }}
+                          />
+                          <Tooltip
+                            contentStyle={{
                               backgroundColor: 'rgba(240, 253, 244, 0.95)',
                               border: '1px solid var(--surface-border)',
-                          borderRadius: '8px',
+                              borderRadius: '8px',
                               color: 'var(--app-text)'
-                        }}
-                      />
+                            }}
+                          />
                           <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="#22c55e">
-                        {barData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {barData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Typography sx={{ color: 'var(--text-muted)', textAlign: 'center' }}>
-                      No trade data available yet.<br />
-                      Create your first trade to see the comparison!
-                    </Typography>
-                  </Box>
-                )}
-              </Paper>
-            </Box>
+                          No trade data available yet.<br />
+                          Create your first trade to see the comparison!
+                        </Typography>
+                      </Box>
+                    )}
+                  </Paper>
+                </Box>
 
-            {/* Second Row: ROI Trend and Units P/L Trend */}
-            {timeSeriesData.length > 0 && (
-              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 3 }}>
-                {/* ROI Trend Line Chart */}
-                <Paper sx={{
-                  p: 3,
-                  flex: 1,
+                {/* Second Row: ROI Trend and Units P/L Trend */}
+                {timeSeriesData.length > 0 && (
+                  <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 3 }}>
+                    {/* ROI Trend Line Chart */}
+                    <Paper sx={{
+                      p: 3,
+                      flex: 1,
                       background: 'var(--surface-bg)',
-                  backdropFilter: 'blur(20px)',
+                      backdropFilter: 'blur(20px)',
                       border: '1px solid var(--surface-border)',
-                  borderRadius: 2
-                }}>
+                      borderRadius: 2
+                    }}>
                       <Typography variant="h6" mb={2} sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
-                    ROI Trend
-                  </Typography>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={timeSeriesData}>
-                      <defs>
-                        <linearGradient id="roiGradient" x1="0" y1="0" x2="0" y2="1">
+                        ROI Trend
+                      </Typography>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={timeSeriesData}>
+                          <defs>
+                            <linearGradient id="roiGradient" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
                               <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
+                            </linearGradient>
+                          </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 197, 94, 0.2)" />
-                      <XAxis
-                        dataKey="date"
-                        stroke="#a1a1aa"
-                        tick={{ fill: '#a1a1aa', fontSize: 12 }}
-                      />
-                      <YAxis
-                        stroke="#a1a1aa"
-                        tick={{ fill: '#a1a1aa' }}
-                        label={{ value: 'ROI %', angle: -90, position: 'insideLeft', fill: '#a1a1aa' }}
-                      />
-                      <Tooltip
-                        contentStyle={{
+                          <XAxis
+                            dataKey="date"
+                            stroke="#a1a1aa"
+                            tick={{ fill: '#a1a1aa', fontSize: 12 }}
+                          />
+                          <YAxis
+                            stroke="#a1a1aa"
+                            tick={{ fill: '#a1a1aa' }}
+                            label={{ value: 'ROI %', angle: -90, position: 'insideLeft', fill: '#a1a1aa' }}
+                          />
+                          <Tooltip
+                            contentStyle={{
                               backgroundColor: 'rgba(240, 253, 244, 0.95)',
                               border: '1px solid var(--surface-border)',
-                          borderRadius: '8px',
+                              borderRadius: '8px',
                               color: 'var(--app-text)'
-                        }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="roi"
+                            }}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="roi"
                             stroke="#22c55e"
-                        strokeWidth={3}
-                        fillOpacity={1}
-                        fill="url(#roiGradient)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </Paper>
+                            strokeWidth={3}
+                            fillOpacity={1}
+                            fill="url(#roiGradient)"
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </Paper>
 
-                {/* Units P/L Trend */}
-                <Paper sx={{
-                  p: 3,
-                  flex: 1,
+                    {/* Units P/L Trend */}
+                    <Paper sx={{
+                      p: 3,
+                      flex: 1,
                       background: 'var(--surface-bg)',
-                  backdropFilter: 'blur(20px)',
+                      backdropFilter: 'blur(20px)',
                       border: '1px solid var(--surface-border)',
-                  borderRadius: 2
-                }}>
+                      borderRadius: 2
+                    }}>
                       <Typography variant="h6" mb={2} sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
-                    Units Profit/Loss Trend
-                  </Typography>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={timeSeriesData}>
-                      <defs>
-                        <linearGradient id="unitsGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
+                        Units Profit/Loss Trend
+                      </Typography>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={timeSeriesData}>
+                          <defs>
+                            <linearGradient id="unitsGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(34, 197, 94, 0.2)" />
-                      <XAxis
-                        dataKey="date"
-                        stroke="#a1a1aa"
-                        tick={{ fill: '#a1a1aa', fontSize: 12 }}
-                      />
-                      <YAxis
-                        stroke="#a1a1aa"
-                        tick={{ fill: '#a1a1aa' }}
-                        label={{ value: 'Units', angle: -90, position: 'insideLeft', fill: '#a1a1aa' }}
-                      />
-                      <Tooltip
-                        contentStyle={{
+                          <XAxis
+                            dataKey="date"
+                            stroke="#a1a1aa"
+                            tick={{ fill: '#a1a1aa', fontSize: 12 }}
+                          />
+                          <YAxis
+                            stroke="#a1a1aa"
+                            tick={{ fill: '#a1a1aa' }}
+                            label={{ value: 'Units', angle: -90, position: 'insideLeft', fill: '#a1a1aa' }}
+                          />
+                          <Tooltip
+                            contentStyle={{
                               backgroundColor: 'rgba(240, 253, 244, 0.95)',
                               border: '1px solid var(--surface-border)',
-                          borderRadius: '8px',
+                              borderRadius: '8px',
                               color: 'var(--app-text)'
-                        }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="netPnl"
-                        stroke="#10b981"
-                        strokeWidth={3}
-                        fillOpacity={1}
-                        fill="url(#unitsGradient)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </Paper>
+                            }}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="netPnl"
+                            stroke="#10b981"
+                            strokeWidth={3}
+                            fillOpacity={1}
+                            fill="url(#unitsGradient)"
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </Paper>
+                  </Box>
+                )}
               </Box>
-            )}
-          </Box>
 
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-              <Card sx={{
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
+                  <Card sx={{
                     background: 'var(--surface-bg)',
-                backdropFilter: 'blur(20px)',
+                    backdropFilter: 'blur(20px)',
                     border: '1px solid var(--surface-border)',
-                borderRadius: 2
-              }}>
-                <CardContent>
+                    borderRadius: 2
+                  }}>
+                    <CardContent>
                       <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
-                    Total Trades
-                  </Typography>
+                        Total Trades
+                      </Typography>
                       <Typography variant="h4" sx={{ color: 'var(--app-text)', fontWeight: 700 }}>{personalStats?.totalTrades || 0}</Typography>
-                </CardContent>
-              </Card>
-            </Box>
-            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-              <Card sx={{
+                    </CardContent>
+                  </Card>
+                </Box>
+                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
+                  <Card sx={{
                     background: 'var(--surface-bg)',
-                backdropFilter: 'blur(20px)',
+                    backdropFilter: 'blur(20px)',
                     border: '1px solid var(--surface-border)',
-                borderRadius: 2
-              }}>
-                <CardContent>
+                    borderRadius: 2
+                  }}>
+                    <CardContent>
                       <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
-                    Win Rate
-                  </Typography>
+                        Win Rate
+                      </Typography>
                       <Typography variant="h4" sx={{ color: 'var(--app-text)', fontWeight: 700 }}>{(personalStats?.winRate ?? 0).toFixed(2)}%</Typography>
-                </CardContent>
-              </Card>
-            </Box>
-            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-              <Card sx={{
+                    </CardContent>
+                  </Card>
+                </Box>
+                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
+                  <Card sx={{
                     background: 'var(--surface-bg)',
-                backdropFilter: 'blur(20px)',
+                    backdropFilter: 'blur(20px)',
                     border: '1px solid var(--surface-border)',
-                borderRadius: 2
-              }}>
-                <CardContent>
+                    borderRadius: 2
+                  }}>
+                    <CardContent>
                       <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
-                    ROI
-                  </Typography>
-                  <Typography
-                    variant="h4"
-                    sx={{
-                      color: (personalStats?.roi || 0) >= 0 ? '#10b981' : '#ef4444',
-                      fontWeight: 700
-                    }}
-                  >
-                    {(personalStats?.roi ?? 0) >= 0 ? '+' : ''}{(personalStats?.roi ?? 0).toFixed(2)}%
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Box>
-            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-              <Card sx={{
+                        ROI
+                      </Typography>
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          color: (personalStats?.roi || 0) >= 0 ? '#10b981' : '#ef4444',
+                          fontWeight: 700
+                        }}
+                      >
+                        {(personalStats?.roi ?? 0) >= 0 ? '+' : ''}{(personalStats?.roi ?? 0).toFixed(2)}%
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Box>
+                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
+                  <Card sx={{
                     background: 'var(--surface-bg)',
-                backdropFilter: 'blur(20px)',
+                    backdropFilter: 'blur(20px)',
                     border: '1px solid var(--surface-border)',
-                borderRadius: 2
-              }}>
-                <CardContent>
+                    borderRadius: 2
+                  }}>
+                    <CardContent>
                       <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
-                    Net P&L
-                  </Typography>
-                  <Typography
-                    variant="h4"
-                    sx={{
-                      color: (personalStats?.netPnl || 0) >= 0 ? '#10b981' : '#ef4444',
-                      fontWeight: 700
-                    }}
-                  >
-                    {(personalStats?.netPnl ?? 0) >= 0 ? '+' : ''}${(personalStats?.netPnl ?? 0).toFixed(2)}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Box>
-            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-              <Card sx={{
+                        Net P&L
+                      </Typography>
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          color: (personalStats?.netPnl || 0) >= 0 ? '#10b981' : '#ef4444',
+                          fontWeight: 700
+                        }}
+                      >
+                        {(personalStats?.netPnl ?? 0) >= 0 ? '+' : ''}${(personalStats?.netPnl ?? 0).toFixed(2)}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Box>
+                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
+                  <Card sx={{
                     background: 'var(--surface-bg)',
-                backdropFilter: 'blur(20px)',
+                    backdropFilter: 'blur(20px)',
                     border: '1px solid var(--surface-border)',
-                borderRadius: 2
-              }}>
-                <CardContent>
+                    borderRadius: 2
+                  }}>
+                    <CardContent>
                       <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
-                    Current Streak
-                  </Typography>
-                  <Typography 
-                    variant="h4" 
-                    display="flex" 
-                    alignItems="center" 
-                    gap={1} 
-                    sx={{ 
+                        Current Streak
+                      </Typography>
+                      <Typography
+                        variant="h4"
+                        display="flex"
+                        alignItems="center"
+                        gap={1}
+                        sx={{
                           color: (personalStats?.currentStreak || 0) > 0 ? '#10b981' : '#ffffff',
-                      fontWeight: 700 
-                    }}
-                  >
-                    {(personalStats?.currentStreak || 0) > 0 && <LocalFireDepartmentIcon sx={{ color: '#f59e0b' }} />}
-                    {personalStats?.currentStreak || 0}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Box>
-            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-              <Card sx={{
+                          fontWeight: 700
+                        }}
+                      >
+                        {(personalStats?.currentStreak || 0) > 0 && <LocalFireDepartmentIcon sx={{ color: '#f59e0b' }} />}
+                        {personalStats?.currentStreak || 0}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Box>
+                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
+                  <Card sx={{
                     background: 'var(--surface-bg)',
-                backdropFilter: 'blur(20px)',
+                    backdropFilter: 'blur(20px)',
                     border: '1px solid var(--surface-border)',
-                borderRadius: 2
-              }}>
-                <CardContent>
+                    borderRadius: 2
+                  }}>
+                    <CardContent>
                       <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
-                    Longest Streak
-                  </Typography>
-                  <Typography 
-                    variant="h4" 
-                    display="flex" 
-                    alignItems="center" 
-                    gap={1}
-                    sx={{ 
+                        Longest Streak
+                      </Typography>
+                      <Typography
+                        variant="h4"
+                        display="flex"
+                        alignItems="center"
+                        gap={1}
+                        sx={{
                           color: (personalStats?.longestStreak || 0) > 0 ? '#10b981' : '#ffffff',
-                      fontWeight: 700 
-                    }}
-                  >
-                    {(personalStats?.longestStreak || 0) > 0 && <LocalFireDepartmentIcon sx={{ color: '#f59e0b' }} />}
-                    {personalStats?.longestStreak || 0}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Box>
-            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-              <Card sx={{
+                          fontWeight: 700
+                        }}
+                      >
+                        {(personalStats?.longestStreak || 0) > 0 && <LocalFireDepartmentIcon sx={{ color: '#f59e0b' }} />}
+                        {personalStats?.longestStreak || 0}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Box>
+                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
+                  <Card sx={{
                     background: 'var(--surface-bg)',
-                backdropFilter: 'blur(20px)',
+                    backdropFilter: 'blur(20px)',
                     border: '1px solid var(--surface-border)',
-                borderRadius: 2
-              }}> 
-                <CardContent>
+                    borderRadius: 2
+                  }}>
+                    <CardContent>
                       <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
-                    Wins
-                  </Typography>
-                  <Typography variant="h4" sx={{ color: '#10b981', fontWeight: 700 }}>{personalStats?.winCount || 0}</Typography>
-                </CardContent>
-              </Card>
-            </Box>
-            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
-              <Card sx={{
+                        Wins
+                      </Typography>
+                      <Typography variant="h4" sx={{ color: '#10b981', fontWeight: 700 }}>{personalStats?.winCount || 0}</Typography>
+                    </CardContent>
+                  </Card>
+                </Box>
+                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
+                  <Card sx={{
                     background: 'var(--surface-bg)',
-                backdropFilter: 'blur(20px)',
+                    backdropFilter: 'blur(20px)',
                     border: '1px solid var(--surface-border)',
-                borderRadius: 2
-              }}>
-                <CardContent>
+                    borderRadius: 2
+                  }}>
+                    <CardContent>
                       <Typography sx={{ color: 'var(--text-muted)', mb: 1 }} gutterBottom>
-                    Losses
-                  </Typography>
-                  <Typography variant="h4" sx={{ color: '#ef4444', fontWeight: 700 }}>{personalStats?.lossCount || 0}</Typography>
-                </CardContent>
-              </Card>
+                        Losses
+                      </Typography>
+                      <Typography variant="h4" sx={{ color: '#ef4444', fontWeight: 700 }}>{personalStats?.lossCount || 0}</Typography>
+                    </CardContent>
+                  </Card>
+                </Box>
+              </Box>
             </Box>
-          </Box>
-        </Box>
-      )}
+          )}
         </>
       )}
 
@@ -1414,12 +1415,12 @@ export default function ProfileForm() {
             Company information is automatically set from your Whop account. Company ID, name, and description are managed through Whop.
           </Typography>
 
-          {/* Opt-in to Leaderboard */}
+          {/* Opt out of Leaderboard */}
           <FormControlLabel
             control={
               <Switch
-                checked={optIn}
-                onChange={(e) => setOptIn(e.target.checked)}
+                checked={!optIn}
+                onChange={(e) => setOptIn(!e.target.checked)}
                 sx={{
                   '& .MuiSwitch-switchBase.Mui-checked': {
                     color: '#22c55e',
@@ -1433,10 +1434,10 @@ export default function ProfileForm() {
             label={
               <Box>
                 <Typography variant="body2" sx={{ color: 'var(--app-text)', fontWeight: 500 }}>
-                  Opt-in to Leaderboard
+                  Opt out of Leaderboard
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'var(--text-muted)', display: 'block' }}>
-                  Your company will appear on the leaderboard with aggregated stats from all company trades.
+                  Your company will appear on the leaderboard by default. Toggle this to opt out.
                 </Typography>
               </Box>
             }
@@ -1770,7 +1771,7 @@ export default function ProfileForm() {
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} gap={2} flexWrap="wrap">
             <Typography variant="h5" component="h2" sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
               Company Stats
-          </Typography>
+            </Typography>
             <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
               <FormControl size="small" sx={{ minWidth: 140 }}>
                 <InputLabel id="company-stats-range-label">Range</InputLabel>
@@ -1778,7 +1779,7 @@ export default function ProfileForm() {
                   labelId="company-stats-range-label"
                   label="Range"
                   value={statsRange}
-                  onChange={(e) => setStatsRange(e.target.value as any)}
+                  onChange={(e) => setStatsRange(e.target.value as string as '7d' | '30d' | '90d' | 'ytd' | 'all')}
                 >
                   <MenuItem value="7d">Last 7 days</MenuItem>
                   <MenuItem value="30d">Last 30 days</MenuItem>
@@ -1802,7 +1803,7 @@ export default function ProfileForm() {
                   // Get company owner from users list
                   let companyOwnerProfilePictureUrl: string | undefined;
                   let companyOwnerAlias: string | undefined;
-                  
+
                   try {
                     const usersResponse = await apiRequest('/api/users?page=1&pageSize=100', { userId, companyId, method: 'GET' });
                     if (usersResponse.ok) {

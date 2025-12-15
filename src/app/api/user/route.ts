@@ -226,7 +226,7 @@ const updateUserSchema = z.object({
   // companyId is auto-set from Whop headers, cannot be manually updated
   companyName: z.string().max(100).optional(), // Only companyOwners can set
   companyDescription: z.string().max(500).optional(), // Only companyOwners can set
-  optIn: z.boolean().optional(), // Only owners and companyOwners can opt-in
+  optIn: z.boolean().optional(), // Only owners and companyOwners can opt out (default is opted in)
   hideLeaderboardFromMembers: z.boolean().optional(), // Only companyOwners can set
   hideCompanyStatsFromMembers: z.boolean().optional(), // Only companyOwners can set
   webhooks: z.array(webhookSchema).optional(), // Array of webhooks with names
@@ -259,7 +259,7 @@ export async function GET() {
   try {
     await connectDB();
     const headers = await import('next/headers').then(m => m.headers());
-    
+
     // Read userId and companyId from headers (set by client from context)
     const verifiedUserId = headers.get('x-user-id');
     const companyId = headers.get('x-company-id');
@@ -303,12 +303,12 @@ export async function GET() {
     if ((user.role === 'owner' || user.role === 'companyOwner') && user.companyId) {
       // Get all users in the same company with roles that contribute to company stats
       // Exclude members - only include owner/admin/companyOwner roles
-      const companyUsers = await User.find({ 
+      const companyUsers = await User.find({
         companyId: user.companyId,
         role: { $in: ['companyOwner', 'owner', 'admin'] }
       }).select('whopUserId');
       const companyWhopUserIds = companyUsers.map(u => u.whopUserId).filter((id): id is string => Boolean(id));
-      
+
       // Get all trades from all users in the company (by whopUserId for cross-company aggregation)
       if (companyWhopUserIds.length > 0) {
         const companyCacheKey = `company:${companyId}`;
@@ -377,7 +377,7 @@ export async function GET() {
 /**
  * PATCH /api/user
  * Update user profile
- * - Only owners can opt-in to leaderboard
+ * - Only owners can opt out of leaderboard (default is opted in)
  * - Only owners can manage membership plans
  * - Only owners can set companyName and companyDescription
  * - Enforce only 1 owner per companyId
@@ -386,7 +386,7 @@ export async function PATCH(request: NextRequest) {
   try {
     await connectDB();
     const headers = await import('next/headers').then(m => m.headers());
-    
+
     // Read userId and companyId from headers (set by client from context)
     const userId = headers.get('x-user-id');
     const companyId = headers.get('x-company-id');
@@ -409,7 +409,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // companyId is auto-set from Whop headers, cannot be manually updated
-    
+
     // Update companyName and companyDescription (only companyOwners can manually update)
     // These are auto-fetched from Whop, but companyOwner can override them
     if (user.role === 'companyOwner') {
@@ -419,31 +419,31 @@ export async function PATCH(request: NextRequest) {
       if (validated.companyDescription !== undefined) {
         user.companyDescription = validated.companyDescription || undefined;
       }
-      
-      // Only owners and companyOwners can opt-in to leaderboard
+
+      // Only owners and companyOwners can opt out of leaderboard (default is opted in)
       if (validated.optIn !== undefined) {
         user.optIn = validated.optIn;
       }
-      
+
       // Only owners can manage membership plans
       if (validated.membershipPlans !== undefined) {
         user.membershipPlans = validated.membershipPlans as MembershipPlan[];
       }
-      
+
       // Only companyOwners can set hideLeaderboardFromMembers
       if (validated.hideLeaderboardFromMembers !== undefined) {
         user.hideLeaderboardFromMembers = validated.hideLeaderboardFromMembers;
       }
-      
+
       // Only companyOwners can set hideCompanyStatsFromMembers
       if (validated.hideCompanyStatsFromMembers !== undefined) {
         user.hideCompanyStatsFromMembers = validated.hideCompanyStatsFromMembers;
       }
     } else {
-      // Admins cannot opt-in or manage membership plans
+      // Admins cannot opt out or manage membership plans
       if (validated.optIn !== undefined || validated.membershipPlans !== undefined) {
         return NextResponse.json(
-          { error: 'Only owners and company owners can opt-in to leaderboard and manage membership plans' },
+          { error: 'Only owners and company owners can opt out of leaderboard and manage membership plans' },
           { status: 403 }
         );
       }
@@ -453,15 +453,15 @@ export async function PATCH(request: NextRequest) {
     if (validated.webhooks !== undefined) {
       user.webhooks = validated.webhooks as Webhook[];
     }
-    
+
     if (validated.notifyOnSettlement !== undefined) {
       user.notifyOnSettlement = validated.notifyOnSettlement;
     }
-    
+
     if (validated.onlyNotifyWinningSettlements !== undefined) {
       user.onlyNotifyWinningSettlements = validated.onlyNotifyWinningSettlements;
     }
-    
+
     // Update following webhooks (all roles can update - anyone with a Following page)
     // Allow null to clear the webhook, undefined means no update
     if (validated.followingDiscordWebhook !== undefined) {
@@ -482,7 +482,7 @@ export async function PATCH(request: NextRequest) {
 
     await user.save();
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'User updated successfully',
       user: {
         alias: user.alias,

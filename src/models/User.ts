@@ -39,7 +39,7 @@ export interface IUser extends Document {
   webullAccountId?: string; // Webull account identifier (optional)
   membershipPlans?: MembershipPlan[]; // Array of membership plans for this Whop (only for owners)
   membershipUrl?: string; // Legacy: Primary membership URL (deprecated, use membershipPlans)
-  optIn: boolean; // Only owners can opt-in to leaderboard
+  optIn: boolean; // Whether user is opted into leaderboard (default true, can opt out)
   hideLeaderboardFromMembers?: boolean; // Company owner setting to hide leaderboard from members
   hideCompanyStatsFromMembers?: boolean; // Company owner setting to hide company stats toggle from members and admins
   followOfferEnabled?: boolean; // Whether follow offer is enabled
@@ -95,7 +95,7 @@ const UserSchema = new Schema<IUser>({
   webullAccountId: { type: String, trim: true },
   membershipPlans: { type: [MembershipPlanSchema], default: [] }, //only for owners
   membershipUrl: { type: String }, // Legacy field for backward compatibility
-  optIn: { type: Boolean, default: false }, // Default false, only owners can opt-in
+  optIn: { type: Boolean, default: true }, // Default true, everyone is opted in by default
   hideLeaderboardFromMembers: { type: Boolean, default: false }, // Company owner setting to hide leaderboard from members
   hideCompanyStatsFromMembers: { type: Boolean, default: false }, // Company owner setting to hide company stats toggle from members and admins
   followOfferEnabled: { type: Boolean, default: false }, // Whether follow offer is enabled
@@ -116,7 +116,7 @@ const UserSchema = new Schema<IUser>({
 
 // Compound indexes for efficient queries
 UserSchema.index({ companyId: 1, whopUserId: 1 }, { unique: true, sparse: true }); // Unique user per company (sparse since companyId can be null)
-UserSchema.index({ companyId: 1, role: 1 }, { unique: true, partialFilterExpression: { $or: [ { role: 'owner' }, { role: 'companyOwner' } ], companyId: { $exists: true, $ne: null } } }); // Only 1 owner or companyOwner per companyId
+UserSchema.index({ companyId: 1, role: 1 }, { unique: true, partialFilterExpression: { $or: [{ role: 'owner' }, { role: 'companyOwner' }], companyId: { $exists: true, $ne: null } } }); // Only 1 owner or companyOwner per companyId
 UserSchema.index({ companyId: 1, optIn: 1, 'stats.roi': -1, 'stats.winRate': -1 }); // For company-scoped leaderboard
 UserSchema.index({ role: 1, optIn: 1, companyId: 1 });
 UserSchema.index({ followOfferPlanId: 1, followOfferEnabled: 1 }); // For webhook lookup by plan_id

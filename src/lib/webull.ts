@@ -278,16 +278,17 @@ async function placeWebullOptionOrder(
     ],
   };
   
-  // Options endpoint: /openapi/trade/option/order/place (from official API docs)
+  // Options endpoint: /openapi/account/orders/option/place (confirmed by Webull support)
   // Uses x-version: v2 and account_id in body
+  // Note: Support confirmed endpoints are /openapi/account/orders/option/* (not /openapi/trade/option/order/*)
   const resp = await doRequest<{ client_order_id?: string }>(
     creds,
     {
       method: 'POST',
-      path: '/openapi/trade/option/order/place', // No query params
+      path: '/openapi/account/orders/option/place', // Confirmed endpoint from Webull support
       body: optionOrder,
       headers: {
-        'x-version': 'v2', // Use v2 as per example
+        'x-version': 'v2', // Use v2 as per support response
         ...(creds.accessToken ? { 'x-access-token': creds.accessToken } : {}), // Add access token if available
       },
     }
