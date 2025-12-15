@@ -35,6 +35,12 @@ type CalendarResponse = {
   scope: 'personal' | 'company';
 };
 
+type WeeklySummary = {
+  totalPnl: number;
+  totalTrades: number;
+  weekIndex: number;
+};
+
 function buildCalendar(days: CalendarDay[], monthAnchor: Date) {
   const byDate = new Map<string, CalendarDay>();
   days.forEach((d) => byDate.set(d.date, d));
@@ -124,6 +130,45 @@ export default function StatsCalendarPage() {
   }, [currentMonth, scope, userId, companyId]);
 
   const weeks = useMemo(() => buildCalendar(data?.days || [], currentMonth), [data, currentMonth]);
+
+  // Pre-compute weekly summaries so Saturdays can show a weekly recap
+  const weeklySummaries = useMemo(() => {
+    if (!weeks.length || !data?.days?.length) return {} as Record<string, WeeklySummary>;
+
+    const dayMap = new Map<string, CalendarDay>();
+    data.days.forEach((d) => dayMap.set(d.date, d));
+
+    const summaries: Record<string, WeeklySummary> = {};
+
+    weeks.forEach((week, index) => {
+      let totalPnl = 0;
+      let totalTrades = 0;
+
+      week.days.forEach((day) => {
+        const dayDate = new Date(day.date + 'T00:00:00');
+        // Only include days that fall within the visible month
+        if (
+          dayDate.getMonth() !== currentMonth.getMonth() ||
+          dayDate.getFullYear() !== currentMonth.getFullYear()
+        ) {
+          return;
+        }
+        const dayData = dayMap.get(day.date);
+        if (dayData) {
+          totalPnl += dayData.netPnl;
+          totalTrades += dayData.trades;
+        }
+      });
+
+      summaries[week.weekOf] = {
+        totalPnl,
+        totalTrades,
+        weekIndex: index + 1,
+      };
+    });
+
+    return summaries;
+  }, [weeks, data, currentMonth]);
 
   const pnlColor = (val: number) =>
     val >= 0 ? theme.palette.success.main : theme.palette.error.main;
@@ -223,14 +268,14 @@ export default function StatsCalendarPage() {
         )}
       </Box>
 
-       <Card
-         sx={{
-           border: `1px solid ${alpha(theme.palette.primary.main, isDark ? 0.12 : 0.1)}`,
-           background: alpha(theme.palette.background.default, isDark ? 0.5 : 0.9),
-           borderRadius: 1,
-           boxShadow: 'none',
-         }}
-       >
+      <Card
+        sx={{
+          border: `1px solid ${alpha(theme.palette.primary.main, isDark ? 0.12 : 0.1)}`,
+          background: alpha(theme.palette.background.default, isDark ? 0.5 : 0.9),
+          borderRadius: 1,
+          boxShadow: 'none',
+        }}
+      >
         <CardContent>
           {loading && (
             <Box display="flex" justifyContent="center" py={6}>
@@ -242,57 +287,65 @@ export default function StatsCalendarPage() {
               {error}
             </Typography>
           )}
-          
-           {!loading && !error && weeks.length > 0 && (
-             <Box
-               display="grid"
-               gridTemplateColumns={{
-                 xs: 'repeat(2, minmax(0, 1fr))',
-                 sm: 'repeat(4, minmax(0, 1fr))',
-                 md: 'repeat(7, minmax(0, 1fr))',
-               }}
-             >
-               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-                 <Typography
-                   key={d}
-                   variant="caption"
-                   textAlign="center"
-                   sx={{ color: 'text.secondary', display: { xs: 'none', md: 'block' } }}
-                 >
-                   {d}
-                 </Typography>
-               ))}
-               {weeks.map((week) =>
-                 week.days.map((d) => {
-                   const pnl = d.data?.netPnl ?? 0;
-                   const trades = d.data?.trades ?? 0;
-                   const isEmpty = !d.data;
-                   const dateObj = new Date(d.date + 'T00:00:00');
-                   const isCurrentMonth =
-                     dateObj.getMonth() === currentMonth.getMonth() &&
-                     dateObj.getFullYear() === currentMonth.getFullYear();
-                   const muted = !isCurrentMonth;
-                   const today = new Date();
-                   today.setHours(0, 0, 0, 0);
-                   const isToday = dateObj.getTime() === today.getTime();
 
-                   return (
-                     <Box
-                       key={d.date}
+          {!loading && !error && weeks.length > 0 && (
+            <Box
+              display="grid"
+              gridTemplateColumns={{
+                xs: 'repeat(2, minmax(0, 1fr))',
+                sm: 'repeat(4, minmax(0, 1fr))',
+                md: 'repeat(7, minmax(0, 1fr))',
+              }}
+            >
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+                <Typography
+                  key={d}
+                  variant="caption"
+                  textAlign="center"
+                  sx={{ color: 'text.secondary', display: { xs: 'none', md: 'block' } }}
+                >
+                  {d}
+                </Typography>
+              ))}
+              {weeks.map((week) =>
+                week.days.map((d) => {
+                  const pnl = d.data?.netPnl ?? 0;
+                  const trades = d.data?.trades ?? 0;
+                  const dateObj = new Date(d.date + 'T00:00:00');
+                  const isSaturday = dateObj.getDay() === 6;
+                  const isCurrentMonth =
+                    dateObj.getMonth() === currentMonth.getMonth() &&
+                    dateObj.getFullYear() === currentMonth.getFullYear();
+                  const weekSummary = weeklySummaries[week.weekOf];
+                  const hasWeeklyRecap =
+                    isSaturday &&
+                    isCurrentMonth &&
+                    weekSummary &&
+                    typeof weekSummary.totalTrades === 'number' &&
+                    weekSummary.totalTrades > 0;
+                  const effectivePnl = hasWeeklyRecap ? weekSummary.totalPnl : pnl;
+                  const isEmpty = !d.data && !hasWeeklyRecap;
+                  const muted = !isCurrentMonth;
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const isToday = dateObj.getTime() === today.getTime();
+
+                  return (
+                    <Box
+                      key={d.date}
                       sx={{
                         p: { xs: 0.6, md: 0.75 },
                         borderRadius: 0,
                         minHeight: { xs: 92, md: 110 },
-                        border: `1px solid ${
-                          isToday
-                            ? alpha(theme.palette.primary.main, 0.8)
-                            : alpha(theme.palette.divider, 0.35)
-                        }`,
+                        border: `1px solid ${isToday
+                          ? alpha(theme.palette.primary.main, 0.8)
+                          : alpha(theme.palette.divider, 0.35)
+                          }`,
                         backgroundColor: isEmpty
                           ? alpha(theme.palette.background.default, isDark ? 0.55 : 0.9)
-                          : pnl > 0
+                          : effectivePnl > 0
                             ? alpha(theme.palette.success.main, 0.2)
-                            : pnl < 0
+                            : effectivePnl < 0
                               ? alpha(theme.palette.error.main, 0.25)
                               : alpha(theme.palette.background.default, isDark ? 0.55 : 0.9),
                         display: 'flex',
@@ -303,7 +356,7 @@ export default function StatsCalendarPage() {
                         opacity: muted ? 0.45 : 1,
                         boxShadow: 'none',
                       }}
-                     >
+                    >
                       <Typography
                         variant="body2"
                         sx={{
@@ -330,18 +383,67 @@ export default function StatsCalendarPage() {
                             width: '100%',
                           }}
                         >
-                          <Typography
-                            variant="subtitle2"
-                            sx={{ color: pnlColor(pnl), fontWeight: 900, lineHeight: 1.15, fontSize: 20 }}
-                          >
-                            {pnl >= 0 ? '+' : '-'}${Math.abs(pnl).toFixed(2)}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{ color: muted ? 'text.disabled' : 'text.secondary', fontSize: 12, fontWeight: 600 }}
-                          >
-                            {trades} trade{trades === 1 ? '' : 's'}
-                          </Typography>
+                          {hasWeeklyRecap && weekSummary ? (
+                            <>
+                              <Typography
+                                variant="subtitle2"
+                                sx={{
+                                  color: pnlColor(weekSummary.totalPnl),
+                                  fontWeight: 900,
+                                  lineHeight: 1.15,
+                                  fontSize: 18,
+                                }}
+                              >
+                                {weekSummary.totalPnl >= 0 ? '+' : '-'}$
+                                {Math.abs(weekSummary.totalPnl).toFixed(2)}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  color: muted ? 'text.disabled' : 'text.secondary',
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                }}
+                              >
+                                Week {weekSummary.weekIndex}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  color: muted ? 'text.disabled' : 'text.secondary',
+                                  fontSize: 11,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {weekSummary.totalTrades} trade
+                                {weekSummary.totalTrades === 1 ? '' : 's'}
+                              </Typography>
+                            </>
+                          ) : (
+                            <>
+                              <Typography
+                                variant="subtitle2"
+                                sx={{
+                                  color: pnlColor(pnl),
+                                  fontWeight: 900,
+                                  lineHeight: 1.15,
+                                  fontSize: 20,
+                                }}
+                              >
+                                {pnl >= 0 ? '+' : '-'}${Math.abs(pnl).toFixed(2)}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  color: muted ? 'text.disabled' : 'text.secondary',
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {trades} trade{trades === 1 ? '' : 's'}
+                              </Typography>
+                            </>
+                          )}
                         </Box>
                       ) : (
                         <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -350,12 +452,12 @@ export default function StatsCalendarPage() {
                           </Typography>
                         </Box>
                       )}
-                     </Box>
-                   );
-                 })
-               )}
-             </Box>
-           )}
+                    </Box>
+                  );
+                })
+              )}
+            </Box>
+          )}
         </CardContent>
       </Card>
     </Box>

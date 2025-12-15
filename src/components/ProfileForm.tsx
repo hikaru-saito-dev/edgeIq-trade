@@ -23,7 +23,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Alert
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -139,7 +138,6 @@ export default function ProfileForm() {
   const [followOfferEnabled, setFollowOfferEnabled] = useState(false);
   const [followOfferPriceDollars, setFollowOfferPriceDollars] = useState<number>(0);
   const [followOfferNumPlays, setFollowOfferNumPlays] = useState<number>(0);
-  const [followOfferCheckoutUrl, setFollowOfferCheckoutUrl] = useState<string | null>(null);
   const [savingFollowOffer, setSavingFollowOffer] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [personalStats, setPersonalStats] = useState<UserStats | null>(null);
@@ -239,7 +237,6 @@ export default function ProfileForm() {
       setFollowOfferEnabled(profileData.user.followOfferEnabled ?? false);
       setFollowOfferPriceDollars((profileData.user.followOfferPriceCents ?? 0));
       setFollowOfferNumPlays(profileData.user.followOfferNumPlays ?? 0);
-      setFollowOfferCheckoutUrl(profileData.user.followOfferCheckoutUrl ?? null);
       setPersonalStats(profileData.personalStats || null);
       setCompanyStats(profileData.companyStats || null);
       setTrades(tradesData.trades || []);
@@ -351,8 +348,6 @@ export default function ProfileForm() {
         throw new Error(error.error || 'Failed to create follow offer');
       }
 
-      const data = await response.json();
-      setFollowOfferCheckoutUrl(data.checkoutUrl);
     } finally {
       setSavingFollowOffer(false);
     }

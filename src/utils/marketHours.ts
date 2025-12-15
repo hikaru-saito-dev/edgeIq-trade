@@ -42,12 +42,17 @@ export function convertToEST(utcTimestamp: Date): Date {
  * NOTE: Set DISABLE_MARKET_HOURS_CHECK=true in .env.local to bypass market hours for testing
  */
 export function isMarketOpen(timestamp?: Date): boolean {
+  // Allow bypass via env for local/testing
+  if (process.env.DISABLE_MARKET_HOURS_CHECK === 'true') {
+    return true;
+  }
+
   const checkTime = timestamp || new Date();
-  
+
   // Get EST/EDT time components using Intl API
   const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/New_York',
-    //weekday: 'short',
+    weekday: 'short',
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
@@ -57,7 +62,7 @@ export function isMarketOpen(timestamp?: Date): boolean {
   const weekday = parts.find(p => p.type === 'weekday')?.value || '';
   const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0');
   const minute = parseInt(parts.find(p => p.type === 'minute')?.value || '0');
-  
+
   if (weekday === 'Sat' || weekday === 'Sun') {
     return false;
   }
@@ -67,17 +72,17 @@ export function isMarketOpen(timestamp?: Date): boolean {
   const marketOpenMinute = 30;
   const marketCloseHour = 16;
   const marketCloseMinute = 30;
-  
+
   // Check if before market open
   if (hour < marketOpenHour || (hour === marketOpenHour && minute < marketOpenMinute)) {
     return false;
   }
-  
+
   // Check if after market close
   if (hour > marketCloseHour || (hour === marketCloseHour && minute >= marketCloseMinute)) {
     return false;
   }
-  
+
   return true;
 }
 
@@ -87,7 +92,7 @@ export function isMarketOpen(timestamp?: Date): boolean {
  */
 export function getMarketStatusMessage(): string {
   const now = new Date();
-  
+
   if (isMarketOpen(now)) {
     // Calculate minutes until close (16:30 EST)
     const formatter = new Intl.DateTimeFormat('en-US', {
@@ -99,25 +104,25 @@ export function getMarketStatusMessage(): string {
     const parts = formatter.formatToParts(now);
     const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0');
     const minute = parseInt(parts.find(p => p.type === 'minute')?.value || '0');
-    
+
     const currentMinutes = hour * 60 + minute;
     const closeMinutes = 16 * 60 + 30; // 16:30
     const minutesUntilClose = closeMinutes - currentMinutes;
-    
+
     return `Market is open. Closes in ${minutesUntilClose} minutes.`;
   }
-  
+
   // Get weekday to check if weekend
   const weekdayFormatter = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/New_York',
     weekday: 'short',
   });
   const weekday = weekdayFormatter.format(now);
-  
+
   if (weekday === 'Sat' || weekday === 'Sun') {
     return 'Market is closed (weekend). Trades can only be created/settled between 09:30–16:30 EST on weekdays.';
   }
-  
+
   // Before or after market hours
   return 'Market is closed. Trades can only be created/settled between 09:30–16:30 EST.';
 }
