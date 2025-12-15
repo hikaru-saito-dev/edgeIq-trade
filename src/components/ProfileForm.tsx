@@ -150,7 +150,7 @@ export default function ProfileForm() {
   const [activeTab, setActiveTab] = useState<'personal' | 'company'>('personal');
   const [downloadingPersonalSnapshot, setDownloadingPersonalSnapshot] = useState(false);
   const [downloadingCompanySnapshot, setDownloadingCompanySnapshot] = useState(false);
-  const { isAuthorized, loading: accessLoading, userId, companyId } = useAccess();
+  const { isAuthorized, loading: accessLoading, userId, companyId, hideCompanyStatsFromMembers: hideCompanyStats} = useAccess();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const controlBg = alpha(theme.palette.background.paper, isDark ? 0.75 : 0.98);
@@ -632,7 +632,7 @@ export default function ProfileForm() {
       </Box>
 
       {/* Tabs for owners and companyOwners to switch between Personal and Company profiles */}
-      {(role === 'companyOwner' || role === 'owner') && (
+      {((role === 'companyOwner' || role === 'owner') || ((role === 'member' || role === 'admin') && !hideCompanyStats)) && (
         <Paper
           sx={{
             mb: 3,
