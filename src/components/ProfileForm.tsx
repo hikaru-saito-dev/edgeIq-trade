@@ -150,7 +150,7 @@ export default function ProfileForm() {
   const [activeTab, setActiveTab] = useState<'personal' | 'company'>('personal');
   const [downloadingPersonalSnapshot, setDownloadingPersonalSnapshot] = useState(false);
   const [downloadingCompanySnapshot, setDownloadingCompanySnapshot] = useState(false);
-  const { isAuthorized, loading: accessLoading, userId, companyId, hideCompanyStatsFromMembers: hideCompanyStats} = useAccess();
+  const { isAuthorized, loading: accessLoading, userId, companyId, hideCompanyStatsFromMembers: hideCompanyStats } = useAccess();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const controlBg = alpha(theme.palette.background.paper, isDark ? 0.75 : 0.98);
@@ -364,7 +364,7 @@ export default function ProfileForm() {
       },
     ]);
   };
-
+  const canSetCompanyStats = role === 'companyOwner' || role === 'owner' || (role === 'member' || role === 'admin') && !hideCompanyStats;
   const handleRemoveWebhook = (id: string) => {
     setWebhooks(webhooks.filter(webhook => webhook.id !== id));
   };
@@ -632,7 +632,7 @@ export default function ProfileForm() {
       </Box>
 
       {/* Tabs for owners and companyOwners to switch between Personal and Company profiles */}
-      {((role === 'companyOwner' || role === 'owner') || ((role === 'member' || role === 'admin') && !hideCompanyStats)) && (
+      {canSetCompanyStats && (
         <Paper
           sx={{
             mb: 3,
@@ -1760,8 +1760,8 @@ export default function ProfileForm() {
           </Box>
         </Paper>
       )}
-      {/* Company Stats - Only for owners and companyOwners */}
-      {((role === 'owner' || role === 'companyOwner') || ((role === 'member' || role === 'admin') && !hideCompanyStats)) && (activeTab === 'company') && companyStats && (
+      {/* Company Stats - Only for companyOwners, owners, members and admins who have not opted out of company stats */}
+      {canSetCompanyStats && (activeTab === 'company') && companyStats && (
         <Box mt={4}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} gap={2} flexWrap="wrap">
             <Typography variant="h5" component="h2" sx={{ color: 'var(--app-text)', fontWeight: 600 }}>
