@@ -121,7 +121,21 @@ function buildCalendar(days: CalendarDay[], monthAnchor: Date) {
     weeks.push({ weekOf: weekDays[0].date, days: weekDays });
   }
 
-  return weeks;
+  // Filter weeks: only include weeks that have at least one day in the current month (NY time)
+  const filteredWeeks = weeks.filter((week) => {
+    return week.days.some((d) => {
+      const [year, month, dayNum] = d.date.split('-').map(Number);
+      const dateObj = new Date(Date.UTC(year, month - 1, dayNum, 12, 0, 0));
+      const dateInNY = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        year: 'numeric',
+        month: 'numeric',
+      }).format(dateObj);
+      const [nyMonth, nyYear] = dateInNY.split('/').map(Number);
+      return nyMonth === monthAnchor.getMonth() + 1 && nyYear === monthAnchor.getFullYear();
+    });
+  });
+  return filteredWeeks;
 }
 
 export default function StatsCalendarPage() {
