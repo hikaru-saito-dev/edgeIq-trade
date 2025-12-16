@@ -41,33 +41,82 @@ type WeeklySummary = {
   weekIndex: number;
 };
 
+/**
+ * Get day of week (0=Sunday, 1=Monday, ..., 6=Saturday) in America/New_York timezone
+ */
+function getDayOfWeekInNY(date: Date): number {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    weekday: 'long',
+  });
+  const weekday = formatter.format(date);
+  const dayMap: Record<string, number> = {
+    Sunday: 0,
+    Monday: 1,
+    Tuesday: 2,
+    Wednesday: 3,
+    Thursday: 4,
+    Friday: 5,
+    Saturday: 6,
+  };
+  return dayMap[weekday] ?? 0;
+}
+
 function buildCalendar(days: CalendarDay[], monthAnchor: Date) {
   const byDate = new Map<string, CalendarDay>();
   days.forEach((d) => byDate.set(d.date, d));
 
-  const startOfMonth = new Date(monthAnchor);
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
+  // Create dates representing the first and last day of the month in America/New_York timezone
+  const year = monthAnchor.getFullYear();
+  const month = monthAnchor.getMonth();
 
-  const endOfMonth = new Date(monthAnchor);
-  endOfMonth.setMonth(endOfMonth.getMonth() + 1);
-  endOfMonth.setDate(0);
-  endOfMonth.setHours(0, 0, 0, 0);
+  // Get start of month in NY timezone
+  const startOfMonthStr = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(year, month, 1));
 
-  // Grid starts Monday
+  const [startMonth, startDay, startYear] = startOfMonthStr.split('/').map(Number);
+  const startOfMonth = new Date(Date.UTC(startYear, startMonth - 1, startDay, 0, 0, 0));
+
+  // Get end of month in NY timezone
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const endOfMonthStr = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(year, month, lastDay));
+
+  const [endMonth, endDay, endYear] = endOfMonthStr.split('/').map(Number);
+  const endOfMonth = new Date(Date.UTC(endYear, endMonth - 1, endDay, 0, 0, 0));
+
+  // Grid starts Sunday - go back to the previous Sunday
   const startOfGrid = new Date(startOfMonth);
-  startOfGrid.setDate(startOfGrid.getDate() - ((startOfGrid.getDay() + 6) % 7));
+  const dayOfWeek = getDayOfWeekInNY(startOfGrid);
+  startOfGrid.setUTCDate(startOfGrid.getUTCDate() - dayOfWeek);
+
+  // Grid ends Saturday - go forward to the next Saturday
   const endOfGrid = new Date(endOfMonth);
-  endOfGrid.setDate(endOfGrid.getDate() + (6 - ((endOfGrid.getDay() + 6) % 7)));
+  const endDayOfWeek = getDayOfWeekInNY(endOfGrid);
+  endOfGrid.setUTCDate(endOfGrid.getUTCDate() + (6 - endDayOfWeek));
 
   const weeks: { weekOf: string; days: Array<{ date: string; data?: CalendarDay }> }[] = [];
   const cursor = new Date(startOfGrid);
   while (cursor.getTime() <= endOfGrid.getTime()) {
     const weekDays: Array<{ date: string; data?: CalendarDay }> = [];
     for (let i = 0; i < 7; i += 1) {
-      const key = cursor.toISOString().slice(0, 10);
-      weekDays.push({ date: key, data: byDate.get(key) });
-      cursor.setDate(cursor.getDate() + 1);
+      // Format date as YYYY-MM-DD in America/New_York timezone
+      const dateStr = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/New_York',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(cursor);
+      weekDays.push({ date: dateStr, data: byDate.get(dateStr) });
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
     weeks.push({ weekOf: weekDays[0].date, days: weekDays });
   }
@@ -145,11 +194,19 @@ export default function StatsCalendarPage() {
       let totalTrades = 0;
 
       week.days.forEach((day) => {
-        const dayDate = new Date(day.date + 'T00:00:00');
-        // Only include days that fall within the visible month
+        // Parse date string (YYYY-MM-DD) and check month in NY timezone
+        const [year, month, dayNum] = day.date.split('-').map(Number);
+        const dayDate = new Date(Date.UTC(year, month - 1, dayNum, 12, 0, 0));
+        const dateInNY = new Intl.DateTimeFormat('en-US', {
+          timeZone: 'America/New_York',
+          year: 'numeric',
+          month: 'numeric',
+        }).format(dayDate);
+        const [nyMonth, nyYear] = dateInNY.split('/').map(Number);
+        // Only include days that fall within the visible month (in NY timezone)
         if (
-          dayDate.getMonth() !== currentMonth.getMonth() ||
-          dayDate.getFullYear() !== currentMonth.getFullYear()
+          nyMonth !== currentMonth.getMonth() + 1 ||
+          nyYear !== currentMonth.getFullYear()
         ) {
           return;
         }
@@ -297,6 +354,7 @@ export default function StatsCalendarPage() {
                 md: 'repeat(7, minmax(0, 1fr))',
               }}
             >
+              {/* Grid starts Sunday */}
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
                 <Typography
                   key={d}
@@ -311,11 +369,20 @@ export default function StatsCalendarPage() {
                 week.days.map((d) => {
                   const pnl = d.data?.netPnl ?? 0;
                   const trades = d.data?.trades ?? 0;
-                  const dateObj = new Date(d.date + 'T00:00:00');
-                  const isSaturday = dateObj.getDay() === 6;
+                  // Parse date string (YYYY-MM-DD) as NY timezone date
+                  const [year, month, day] = d.date.split('-').map(Number);
+                  const dateObj = new Date(Date.UTC(year, month - 1, day, 12, 0, 0)); // Use noon UTC to avoid timezone edge cases
+                  const isSaturday = getDayOfWeekInNY(dateObj) === 6;
+                  // Check if date is in current month using NY timezone
+                  const dateInNY = new Intl.DateTimeFormat('en-US', {
+                    timeZone: 'America/New_York',
+                    year: 'numeric',
+                    month: 'numeric',
+                  }).format(dateObj);
+                  const [nyMonth, nyYear] = dateInNY.split('/').map(Number);
                   const isCurrentMonth =
-                    dateObj.getMonth() === currentMonth.getMonth() &&
-                    dateObj.getFullYear() === currentMonth.getFullYear();
+                    nyMonth === currentMonth.getMonth() + 1 &&
+                    nyYear === currentMonth.getFullYear();
                   const weekSummary = weeklySummaries[week.weekOf];
                   const hasWeeklyRecap =
                     isSaturday &&
@@ -326,9 +393,14 @@ export default function StatsCalendarPage() {
                   const effectivePnl = hasWeeklyRecap ? weekSummary.totalPnl : pnl;
                   const isEmpty = !d.data && !hasWeeklyRecap;
                   const muted = !isCurrentMonth;
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  const isToday = dateObj.getTime() === today.getTime();
+                  // Check if today in NY timezone
+                  const todayInNY = new Intl.DateTimeFormat('en-CA', {
+                    timeZone: 'America/New_York',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                  }).format(new Date());
+                  const isToday = d.date === todayInNY;
 
                   return (
                     <Box
