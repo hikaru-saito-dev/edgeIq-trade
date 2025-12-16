@@ -188,10 +188,12 @@ export default function StatsCalendarPage() {
     data.days.forEach((d) => dayMap.set(d.date, d));
 
     const summaries: Record<string, WeeklySummary> = {};
+    let weekNumber = 0; // Track week number for current month only
 
-    weeks.forEach((week, index) => {
+    weeks.forEach((week) => {
       let totalPnl = 0;
       let totalTrades = 0;
+      let hasDaysInCurrentMonth = false;
 
       week.days.forEach((day) => {
         // Parse date string (YYYY-MM-DD) and check month in NY timezone
@@ -203,25 +205,29 @@ export default function StatsCalendarPage() {
           month: 'numeric',
         }).format(dayDate);
         const [nyMonth, nyYear] = dateInNY.split('/').map(Number);
-        // Only include days that fall within the visible month (in NY timezone)
-        if (
-          nyMonth !== currentMonth.getMonth() + 1 ||
-          nyYear !== currentMonth.getFullYear()
-        ) {
-          return;
-        }
-        const dayData = dayMap.get(day.date);
-        if (dayData) {
-          totalPnl += dayData.netPnl;
-          totalTrades += dayData.trades;
+        const isInCurrentMonth =
+          nyMonth === currentMonth.getMonth() + 1 &&
+          nyYear === currentMonth.getFullYear();
+
+        if (isInCurrentMonth) {
+          hasDaysInCurrentMonth = true;
+          const dayData = dayMap.get(day.date);
+          if (dayData) {
+            totalPnl += dayData.netPnl;
+            totalTrades += dayData.trades;
+          }
         }
       });
 
-      summaries[week.weekOf] = {
-        totalPnl,
-        totalTrades,
-        weekIndex: index + 1,
-      };
+      // Only assign week number if this week has days in the current month
+      if (hasDaysInCurrentMonth) {
+        weekNumber += 1;
+        summaries[week.weekOf] = {
+          totalPnl,
+          totalTrades,
+          weekIndex: weekNumber,
+        };
+      }
     });
 
     return summaries;
@@ -394,13 +400,12 @@ export default function StatsCalendarPage() {
                   const isEmpty = !d.data && !hasWeeklyRecap;
                   const muted = !isCurrentMonth;
                   // Check if today in NY timezone
-                  const todayInNY = new Intl.DateTimeFormat('en-CA', {
-                    timeZone: 'America/New_York',
+                  const todayInNY = new Date();
+                  const isToday = d.date === todayInNY.toLocaleDateString('en-CA', {
                     year: 'numeric',
                     month: '2-digit',
                     day: '2-digit',
-                  }).format(new Date());
-                  const isToday = d.date === todayInNY;
+                  });
 
                   return (
                     <Box
